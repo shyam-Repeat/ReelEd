@@ -1,0 +1,9 @@
+.gemini/settings.json
+node_modules/
+.DS_Store
+build/
+.gradle/
+*.iml
+.idea/
+app/build/
+local.properties

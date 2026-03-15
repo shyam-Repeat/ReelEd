@@ -44,6 +44,13 @@ class TriggerPrefs(private val context: Context) {
         context.triggerDataStore.edit { it[OVERLAY_ACTIVE] = active }
     }
 
+    suspend fun setPause(active: Boolean, expiry: Long) {
+        context.triggerDataStore.edit {
+            it[PAUSE_ACTIVE] = active
+            it[PAUSE_EXPIRY] = expiry
+        }
+    }
+
     suspend fun clearParentPause() {
         context.triggerDataStore.edit {
             it[PAUSE_ACTIVE] = false

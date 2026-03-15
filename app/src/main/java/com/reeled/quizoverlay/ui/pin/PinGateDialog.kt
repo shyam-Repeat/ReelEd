@@ -73,7 +73,7 @@ fun PinGateDialog(
 
                 // PIN Dots
                 Row(
-                    horizontalArrangement = Modifier.spacedBy(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     repeat(4) { index ->
@@ -95,9 +95,9 @@ fun PinGateDialog(
                 if (!isLocked) {
                     // Numpad
                     val keys = listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "C", "0", "DEL")
-                    Column(verticalArrangement = Modifier.spacedBy(8.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         keys.chunked(3).forEach { row ->
-                            Row(horizontalArrangement = Modifier.spacedBy(8.dp)) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 row.forEach { key ->
                                     NumpadKey(
                                         text = key,

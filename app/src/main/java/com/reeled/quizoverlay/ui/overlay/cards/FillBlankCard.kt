@@ -99,6 +99,6 @@ fun FillBlankCard(
             }
         }
 
-        if (!config.rules.strictMode) ParentCornerButton(onDismissed)
+        if (!config.rules.strictMode) ParentCornerButton()
     }
 }

@@ -5,6 +5,7 @@ import com.reeled.quizoverlay.data.local.AppDatabase
 import com.reeled.quizoverlay.data.local.entity.EventLogEntity
 import com.reeled.quizoverlay.data.local.entity.QuizAttemptEntity
 import com.reeled.quizoverlay.data.local.entity.QuizQuestionEntity
+import com.reeled.quizoverlay.data.local.entity.toDomain
 import com.reeled.quizoverlay.data.remote.SupabaseClient
 import com.reeled.quizoverlay.data.remote.dto.toDto
 import com.reeled.quizoverlay.data.remote.dto.toEntity

@@ -6,9 +6,11 @@ import android.content.Intent
 import android.os.Build
 import androidx.core.content.ContextCompat
 import com.reeled.quizoverlay.prefs.AppPrefs
+import com.reeled.quizoverlay.prefs.TriggerPrefs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -79,8 +81,9 @@ class ServiceRestartReceiver : BroadcastReceiver() {
         receiverScope.launch {
             try {
                 val appPrefs = AppPrefs(context)
-                val overlayEnabled = appPrefs.isOverlayEnabled()
-                val onboardingComplete = appPrefs.isOnboardingComplete()
+                val triggerPrefs = TriggerPrefs(context)
+                val overlayEnabled = triggerPrefs.getTriggerState().overlayActive
+                val onboardingComplete = appPrefs.onboardingComplete.first()
 
                 // Only restart if:
                 //   - Onboarding is done (permissions granted, PIN set)

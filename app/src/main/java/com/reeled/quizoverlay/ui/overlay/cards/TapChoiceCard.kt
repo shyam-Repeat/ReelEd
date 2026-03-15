@@ -121,6 +121,6 @@ fun TapChoiceCard(
             }
         }
 
-        if (!rules.strictMode) ParentCornerButton(onDismissed)
+        if (!rules.strictMode) ParentCornerButton()
     }
 }

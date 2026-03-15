@@ -90,7 +90,12 @@ fun AppNavGraph(
             )
         }
         composable(Screen.ChildHome.route) {
-            ChildHomeScreen(onParentClick = { navController.navigate(Screen.ParentDashboard.route) })
+            val context = androidx.compose.ui.platform.LocalContext.current
+            val pinPrefs = androidx.compose.runtime.remember { com.reeled.quizoverlay.prefs.PinPrefs(context) }
+            ChildHomeScreen(
+                pinPrefs = pinPrefs,
+                onNavigateToDashboard = { navController.navigate(Screen.ParentDashboard.route) }
+            )
         }
         composable(Screen.ParentDashboard.route) {
             ParentDashboardScreen(viewModel = DashboardViewModel())

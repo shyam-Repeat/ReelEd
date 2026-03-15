@@ -16,6 +16,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -84,44 +85,46 @@ fun BatteryOptScreen(
                 // Background Blobs
                 Box(modifier = Modifier.size(320.dp).background(Primary.copy(alpha = 0.05f), CircleShape))
                 
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    shape = RoundedCornerShape(40.dp),
-                    brush = Brush.sweepGradient(listOf(Color(0xFF3B82F6), Primary, Color(0xFF10B981))),
-                    shadowElevation = 24.dp
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .shadow(24.dp, RoundedCornerShape(40.dp))
+                        .background(
+                            brush = Brush.sweepGradient(listOf(Color(0xFF3B82F6), Primary, Color(0xFF10B981))),
+                            shape = RoundedCornerShape(40.dp)
+                        ),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Surface(
-                            modifier = Modifier.size(120.dp),
-                            shape = RoundedCornerShape(32.dp),
-                            color = Color.White.copy(alpha = 0.2f),
-                            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.3f))
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(Icons.Outlined.BatteryChargingFull, contentDescription = null, tint = Color.White, modifier = Modifier.size(72.dp))
-                            }
+                    Surface(
+                        modifier = Modifier.size(120.dp),
+                        shape = RoundedCornerShape(32.dp),
+                        color = Color.White.copy(alpha = 0.2f),
+                        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.3f))
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(Icons.Outlined.BatteryChargingFull, contentDescription = null, tint = Color.White, modifier = Modifier.size(72.dp))
                         }
-                        
-                        // Floating bubbles
-                        Surface(
-                            modifier = Modifier.size(40.dp).align(Alignment.TopEnd).offset(x = (-20).dp, y = 40.dp),
-                            shape = CircleShape,
-                            color = Color(0xFF10B981),
-                            border = BorderStroke(2.dp, Color.White)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(Icons.Outlined.Bolt, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
-                            }
+                    }
+                    
+                    // Floating bubbles
+                    Surface(
+                        modifier = Modifier.size(40.dp).align(Alignment.TopEnd).offset(x = (-20).dp, y = 40.dp),
+                        shape = CircleShape,
+                        color = Color(0xFF10B981),
+                        border = BorderStroke(2.dp, Color.White)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(Icons.Outlined.Bolt, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
                         }
-                        Surface(
-                            modifier = Modifier.size(32.dp).align(Alignment.BottomStart).offset(x = 40.dp, y = (-40).dp),
-                            shape = CircleShape,
-                            color = Color(0xFF93C5FD),
-                            border = BorderStroke(2.dp, Color.White)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(Icons.Outlined.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
-                            }
+                    }
+                    Surface(
+                        modifier = Modifier.size(32.dp).align(Alignment.BottomStart).offset(x = 40.dp, y = (-40).dp),
+                        shape = CircleShape,
+                        color = Color(0xFF93C5FD),
+                        border = BorderStroke(2.dp, Color.White)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(Icons.Outlined.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
                         }
                     }
                 }

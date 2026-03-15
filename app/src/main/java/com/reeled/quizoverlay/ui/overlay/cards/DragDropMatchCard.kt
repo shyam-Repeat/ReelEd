@@ -24,6 +24,7 @@ import com.reeled.quizoverlay.model.QuizAttemptResult
 import com.reeled.quizoverlay.model.QuizCardConfig
 import com.reeled.quizoverlay.model.QuizPayload
 import com.reeled.quizoverlay.ui.overlay.components.ChipItem
+import com.reeled.quizoverlay.ui.overlay.components.ParentCornerButton
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -104,5 +105,7 @@ fun DragDropMatchCard(
                 }
             }) { Text("Submit") }
         }
+
+        if (!config.rules.strictMode) ParentCornerButton()
     }
 }

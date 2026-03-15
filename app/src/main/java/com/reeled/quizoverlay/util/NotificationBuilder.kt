@@ -75,4 +75,13 @@ object NotificationBuilder {
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .build()
     }
+
+    fun buildPinActivityPendingIntent(context: Context): PendingIntent {
+        val intent = Intent(context, PinActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_HISTORY)
+        }
+        return PendingIntent.getActivity(
+            context, 0, intent, PendingIntent.FLAG_IMMUTABLE
+        )
+    }
 }

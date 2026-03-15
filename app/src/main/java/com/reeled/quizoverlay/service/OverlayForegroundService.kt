@@ -69,6 +69,8 @@ class OverlayForegroundService : Service() {
     private var overlayView: ComposeView? = null
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var pollingJob: Job? = null
+    private var sessionActive: Boolean = false
+    private var audioMutedForSession: Boolean = false
 
     override fun onCreate() {
         super.onCreate()
@@ -98,9 +100,11 @@ class OverlayForegroundService : Service() {
             return START_NOT_STICKY
         }
 
+        sessionActive = true
         startForeground(NOTIF_ID, buildNotification(paused = false))
         lifecycleOwner.onStart()
         lifecycleOwner.onResume()
+        syncAudioState()
 
         startPollingLoop()
 
@@ -108,6 +112,7 @@ class OverlayForegroundService : Service() {
     }
 
     override fun onDestroy() {
+        sessionActive = false
         pollingJob?.cancel()
         serviceScope.cancel()
         removeOverlayIfShowing()
@@ -164,7 +169,7 @@ class OverlayForegroundService : Service() {
 
         windowManager.addView(composeView, params)
         overlayView = composeView
-        audioMuter.mute()
+        syncAudioState()
     }
 
     private fun onQuizResult(result: QuizAttemptResult) {
@@ -172,7 +177,6 @@ class OverlayForegroundService : Service() {
             try {
                 withContext(Dispatchers.Main) {
                     removeOverlayIfShowing()
-                    audioMuter.restore()
                 }
 
                 repository.saveAttempt(
@@ -208,6 +212,21 @@ class OverlayForegroundService : Service() {
                 windowManager.removeView(view)
             } catch (_: Exception) {}
             overlayView = null
+        }
+        syncAudioState()
+    }
+
+    private fun syncAudioState() {
+        val shouldMute = sessionActive && overlayView != null
+        when {
+            shouldMute && !audioMutedForSession -> {
+                audioMuter.mute()
+                audioMutedForSession = true
+            }
+            !shouldMute && audioMutedForSession -> {
+                audioMuter.restore()
+                audioMutedForSession = false
+            }
         }
     }
 
@@ -256,6 +275,7 @@ class OverlayForegroundService : Service() {
     }
 
     private fun stopForegroundService() {
+        sessionActive = false
         removeOverlayIfShowing()
         pollingJob?.cancel()
         stopForeground(true)

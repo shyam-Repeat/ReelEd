@@ -1,78 +1,66 @@
 # TODO LIST - AI Quiz Overlay MVP (R1)
 
-This list tracks the pending work required to complete the MVP based on `Documents/MVP_R01.md`, `Documents/tech.md`, and `Documents/project_layput.md`.
+This checklist was re-audited against the current codebase and docs (`Documents/MVP_R01.md`, `Documents/tech.md`, `Documents/project_layput.md`, and implementation under `app/src/main`).
 
 ---
 
-## 🟥 HIGH PRIORITY: DATA & GLUE LAYER
-*Status: Room and Supabase infrastructure implemented.*
+## ✅ COMPLETED FOUNDATIONS
+*Status: Core architecture and most MVP plumbing are implemented.*
 
 - [x] **Data - Local (Room)**
-    - [x] Complete `data/local/AppDatabase.kt` definition.
-    - [x] Implement `QuizQuestionDao`, `QuizAttemptDao`, and `EventLogDao` with required queries.
-    - [x] Add Room annotations (`@Entity`, `@PrimaryKey`, etc.) to classes in `data/local/entity/`.
+    - [x] `AppDatabase` configured.
+    - [x] `QuizQuestionDao`, `QuizAttemptDao`, and `EventLogDao` implemented.
+    - [x] Room entities and mappers implemented.
 - [x] **Data - Remote (Supabase)**
-    - [x] Complete `data/remote/SupabaseClient.kt`.
-    - [x] Implement `data/remote/SupabaseApi.kt` endpoints.
+    - [x] `SupabaseClient` configured.
+    - [x] `SupabaseApi` endpoints implemented.
 - [x] **Repository**
-    - [x] Implement `data/repository/QuizRepository.kt` as the single source of truth.
+    - [x] `QuizRepository` implemented and used by workers/service.
 - [x] **App Infrastructure**
-    - [x] Implement `App.kt`: Initialize background tasks.
-    - [x] Implement `MainActivity.kt`: Setup `NavHost` and basic entry routing.
+    - [x] `App.kt` initializes WorkManager jobs.
+    - [x] `MainActivity.kt` sets up entry routing.
+- [x] **Background Tasks (Workers)**
+    - [x] `QuizFetchWorker` fetches and caches questions.
+    - [x] `SyncWorker` syncs attempts/events.
+    - [x] `ServiceWatchdogWorker` + restart receiver path wired.
+- [x] **Service Baseline**
+    - [x] `OverlayForegroundService` shows overlay and records attempts.
+    - [x] Notification channel + foreground lifecycle present.
 
 ---
 
-## 🟧 UI & ONBOARDING
-*Status: NavGraph implemented; Most screens still stubs.*
+## 🟧 PENDING / INCOMPLETE LOGIC
 
-- [ ] **Onboarding Flow (8 Steps)**
-    - [x] Verify/Complete `WelcomeScreen` (Stub).
-    - [x] Verify/Complete `ConsentScreen` (Stub).
-    - [x] Verify/Complete `PinSetupScreen` (Partial implementation exists).
-    - [x] Verify/Complete `PermissionOverlayScreen` (Stub).
-    - [x] Verify/Complete `PermissionUsageScreen` (Stub).
-    - [x] Verify/Complete `PermissionNotifScreen` (Stub).
-    - [x] Verify/Complete `BatteryOptScreen` (Stub).
-- [ ] **Parent Dashboard**
-    - [x] Implement `ParentDashboardScreen` cards: `TodaySummary`, `WeekBar`, `SubjectBreakdown`, and `RecentAttempts`.
-    - [ ] Connect `DashboardViewModel` to `QuizRepository`.
-    - [ ] Implement `showPinPrompt` and `openFeedback` logic in `DashboardViewModel`.
-- [ ] **Overlay UI**
-    - [x] `QuizCardRouter` implemented with mode switching (Strict vs Non-Strict).
-    - [ ] Verify `TimerBar` and `OptionButton` state management.
+### 1) Onboarding & Navigation glue
+- [ ] Persist PIN in onboarding flow (`AppNavGraph` still has "Save PIN logic would go here" placeholder).
+- [ ] Wire real settings intents for:
+    - [ ] Overlay permission open-settings action.
+    - [ ] Usage access grant action.
+    - [ ] Notification permission action.
+    - [ ] Battery optimization exemption action.
+- [ ] Implement `OnboardingViewModel` (currently empty file).
 
----
+### 2) Parent Dashboard integration
+- [ ] Connect `DashboardViewModel` to `QuizRepository` (currently sample/static state).
+- [ ] Implement real `showPinPrompt` flow.
+- [ ] Implement real `openFeedback` flow.
 
-## 🟨 BACKGROUND TASKS (WORKERS)
-*Status: Implementations fixed and connected to Repository.*
+### 3) Overlay strict-mode behavior gaps
+- [ ] Enforce true strict-mode overlay interaction behavior (strict flag is passed, but window flags are currently not differentiated).
+- [ ] Apply audio muting only for strict sessions (currently muting happens whenever overlay is shown).
+- [ ] Ensure audio restore is guaranteed on all overlay/service teardown paths.
+- [ ] Implement pause/resume notification action handling in service command routing.
 
-- [x] **QuizFetchWorker**: Fetch questions from Supabase if Room count < 30.
-- [x] **SyncWorker**: Batch sync unsynced attempts and logs to Supabase every 30 mins.
-- [x] **ServiceWatchdogWorker**: Ensure `OverlayForegroundService` is restarted if killed.
-
----
-
-## 🟦 SERVICE & INTEGRATION
-*Status: Service implementation fixed and connected.*
-
-- [x] **OverlayForegroundService**
-    - [x] Fix package name and imports.
-    - [x] Connect to `QuizRepository` to write results.
-    - [x] Connect to `TriggerEngine`.
-    - [ ] Implement Audio Muting/Restoring for "Strict Mode" (Muter stub needs implementation).
-- [x] **Manifest & Permissions**
-    - [x] Verify all permissions and service types in `AndroidManifest.xml`.
-    - [x] Ensure `RECEIVE_BOOT_COMPLETED` is wired to restart the service.
+### 4) UI quality + platform hardening
+- [ ] Verify `TimerBar` and `OptionButton` behavior with real countdown/answer states (beyond static rendering).
+- [ ] Move hardcoded UI text to `res/values/strings.xml`.
+- [ ] Verify dependency boundaries: UI should talk to ViewModel/Repository interfaces and prefs only where intended.
 
 ---
 
-## ⬜️ REFINEMENT
-- [ ] Move all hardcoded strings to `res/values/strings.xml`.
-- [ ] Verify dependency map: UI should only talk to `Repository` or `AppPrefs`.
-- [x] Setup GitHub Actions build pipeline in `.github/workflows/build.yml`.
-- [x] Initialize Gradle build system.
-- [x] Generate Gradle wrapper (`gradlew`).
-- [x] Initialize basic resources and App/MainActivity.
+## 🟨 DOCS / AUDIT CLEANUP
+- [ ] Update `Documents/bugs.md` to reflect current (post-skeleton) implementation state; large sections are now outdated.
+- [ ] Keep TODO and blockers docs synchronized after each milestone.
 
 ---
-*Updated on: March 15, 2026*
+*Updated on: March 15, 2026 (codebase re-audit)*

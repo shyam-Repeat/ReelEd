@@ -18,6 +18,7 @@ sealed class Screen(val route: String) {
     object PermissionUsage : Screen("permission_usage")
     object PermissionNotif : Screen("permission_notif")
     object BatteryOpt : Screen("battery_opt")
+    object Success : Screen("success")
     object ChildHome : Screen("child_home")
     object ParentDashboard : Screen("parent_dashboard")
 }
@@ -37,28 +38,56 @@ fun AppNavGraph(
             WelcomeScreen(onNext = { navController.navigate(Screen.Consent.route) })
         }
         composable(Screen.Consent.route) {
-            ConsentScreen(onAccepted = { navController.navigate(Screen.PinSetup.route) })
+            ConsentScreen(
+                onAccepted = { navController.navigate(Screen.PinSetup.route) },
+                onBack = { navController.popBackStack() }
+            )
         }
         composable(Screen.PinSetup.route) {
-            // Placeholder for PinSetupScreen which needs prefs
-            Text("Pin Setup Screen") 
+            PinSetupScreen(
+                onPinSet = { pin -> 
+                    // Save PIN logic would go here
+                    navController.navigate(Screen.PermissionOverlay.route) 
+                },
+                onBack = { navController.popBackStack() }
+            )
         }
         composable(Screen.PermissionOverlay.route) {
-            PermissionOverlayScreen(onNext = { navController.navigate(Screen.PermissionUsage.route) })
+            PermissionOverlayScreen(
+                onNext = { navController.navigate(Screen.PermissionUsage.route) },
+                onBack = { navController.popBackStack() },
+                onOpenSettings = { /* Open Settings Intent */ }
+            )
         }
         composable(Screen.PermissionUsage.route) {
-            PermissionUsageScreen(onNext = { navController.navigate(Screen.PermissionNotif.route) })
+            PermissionUsageScreen(
+                onNext = { navController.navigate(Screen.PermissionNotif.route) },
+                onBack = { navController.popBackStack() },
+                onGrantAccess = { /* Grant Access Intent */ }
+            )
         }
         composable(Screen.PermissionNotif.route) {
-            PermissionNotifScreen(onNext = { navController.navigate(Screen.BatteryOpt.route) })
+            PermissionNotifScreen(
+                onNext = { navController.navigate(Screen.BatteryOpt.route) },
+                onBack = { navController.popBackStack() },
+                onAllowNotifications = { /* Allow Notif Intent */ }
+            )
         }
         composable(Screen.BatteryOpt.route) {
-            BatteryOptScreen(onNext = { 
-                // Mark onboarding complete and go home
-                navController.navigate(Screen.ChildHome.route) {
-                    popUpTo(Screen.Welcome.route) { inclusive = true }
+            BatteryOptScreen(
+                onNext = { navController.navigate(Screen.Success.route) },
+                onBack = { navController.popBackStack() },
+                onDisableOptimization = { /* Disable Opt Intent */ }
+            )
+        }
+        composable(Screen.Success.route) {
+            OnboardingSuccessScreen(
+                onEnterChildMode = {
+                    navController.navigate(Screen.ChildHome.route) {
+                        popUpTo(Screen.Welcome.route) { inclusive = true }
+                    }
                 }
-            })
+            )
         }
         composable(Screen.ChildHome.route) {
             ChildHomeScreen(onParentClick = { navController.navigate(Screen.ParentDashboard.route) })
@@ -67,10 +96,4 @@ fun AppNavGraph(
             ParentDashboardScreen(viewModel = DashboardViewModel())
         }
     }
-}
-
-// Temporary for compilation
-@androidx.compose.runtime.Composable
-fun Text(text: String) {
-    androidx.compose.material3.Text(text = text)
 }

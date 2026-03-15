@@ -26,13 +26,13 @@ This list tracks the pending work required to complete the MVP based on `Documen
 *Status: NavGraph implemented; Most screens still stubs.*
 
 - [ ] **Onboarding Flow (8 Steps)**
-    - [ ] Verify/Complete `WelcomeScreen` (Stub).
-    - [ ] Verify/Complete `ConsentScreen` (Stub).
-    - [ ] Verify/Complete `PinSetupScreen` (Partial implementation exists).
-    - [ ] Verify/Complete `PermissionOverlayScreen` (Stub).
-    - [ ] Verify/Complete `PermissionUsageScreen` (Stub).
-    - [ ] Verify/Complete `PermissionNotifScreen` (Stub).
-    - [ ] Verify/Complete `BatteryOptScreen` (Stub).
+    - [x] Verify/Complete `WelcomeScreen` (Stub).
+    - [x] Verify/Complete `ConsentScreen` (Stub).
+    - [x] Verify/Complete `PinSetupScreen` (Partial implementation exists).
+    - [x] Verify/Complete `PermissionOverlayScreen` (Stub).
+    - [x] Verify/Complete `PermissionUsageScreen` (Stub).
+    - [x] Verify/Complete `PermissionNotifScreen` (Stub).
+    - [x] Verify/Complete `BatteryOptScreen` (Stub).
 - [ ] **Parent Dashboard**
     - [x] Implement `ParentDashboardScreen` cards: `TodaySummary`, `WeekBar`, `SubjectBreakdown`, and `RecentAttempts`.
     - [ ] Connect `DashboardViewModel` to `QuizRepository`.

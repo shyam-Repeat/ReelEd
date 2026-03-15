@@ -1,14 +1,32 @@
 package com.reeled.quizoverlay.ui.navigation
 
+import android.Manifest
+import android.app.Application
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.os.PowerManager
+import android.provider.Settings
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.reeled.quizoverlay.prefs.PinPrefs
 import com.reeled.quizoverlay.ui.childhome.ChildHomeScreen
-import com.reeled.quizoverlay.ui.dashboard.ParentDashboardScreen
 import com.reeled.quizoverlay.ui.dashboard.DashboardViewModel
-import com.reeled.quizoverlay.ui.onboarding.*
+import com.reeled.quizoverlay.ui.dashboard.ParentDashboardScreen
+import com.reeled.quizoverlay.ui.onboarding.BatteryOptScreen
+import com.reeled.quizoverlay.ui.onboarding.ConsentScreen
+import com.reeled.quizoverlay.ui.onboarding.OnboardingSuccessScreen
+import com.reeled.quizoverlay.ui.onboarding.OnboardingViewModel
+import com.reeled.quizoverlay.ui.onboarding.PermissionNotifScreen
+import com.reeled.quizoverlay.ui.onboarding.PermissionOverlayScreen
+import com.reeled.quizoverlay.ui.onboarding.PermissionUsageScreen
+import com.reeled.quizoverlay.ui.onboarding.PinSetupScreen
+import com.reeled.quizoverlay.ui.onboarding.WelcomeScreen
 
 sealed class Screen(val route: String) {
     object Welcome : Screen("welcome")
@@ -29,6 +47,21 @@ fun AppNavGraph(
     startDestination: String,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    val application = context.applicationContext as Application
+
+    val onboardingViewModel: OnboardingViewModel = viewModel(
+        factory = OnboardingViewModel.provideFactory(application)
+    )
+    val dashboardViewModel: DashboardViewModel = viewModel(
+        factory = DashboardViewModel.provideFactory(application)
+    )
+
+    fun launchIntent(intent: Intent) {
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        context.startActivity(intent)
+    }
+
     NavHost(
         navController = navController,
         startDestination = startDestination,
@@ -39,15 +72,18 @@ fun AppNavGraph(
         }
         composable(Screen.Consent.route) {
             ConsentScreen(
-                onAccepted = { navController.navigate(Screen.PinSetup.route) },
+                onAccepted = {
+                    onboardingViewModel.onConsentAccepted()
+                    navController.navigate(Screen.PinSetup.route)
+                },
                 onBack = { navController.popBackStack() }
             )
         }
         composable(Screen.PinSetup.route) {
             PinSetupScreen(
-                onPinSet = { pin -> 
-                    // Save PIN logic would go here
-                    navController.navigate(Screen.PermissionOverlay.route) 
+                onPinSet = { pin ->
+                    onboardingViewModel.onPinSet(pin)
+                    navController.navigate(Screen.PermissionOverlay.route)
                 },
                 onBack = { navController.popBackStack() }
             )
@@ -56,33 +92,60 @@ fun AppNavGraph(
             PermissionOverlayScreen(
                 onNext = { navController.navigate(Screen.PermissionUsage.route) },
                 onBack = { navController.popBackStack() },
-                onOpenSettings = { /* Open Settings Intent */ }
+                onOpenSettings = {
+                    launchIntent(Intent(
+                        Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                        Uri.parse("package:${context.packageName}")
+                    ))
+                }
             )
         }
         composable(Screen.PermissionUsage.route) {
             PermissionUsageScreen(
                 onNext = { navController.navigate(Screen.PermissionNotif.route) },
                 onBack = { navController.popBackStack() },
-                onGrantAccess = { /* Grant Access Intent */ }
+                onGrantAccess = {
+                    launchIntent(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+                }
             )
         }
         composable(Screen.PermissionNotif.route) {
             PermissionNotifScreen(
                 onNext = { navController.navigate(Screen.BatteryOpt.route) },
                 onBack = { navController.popBackStack() },
-                onAllowNotifications = { /* Allow Notif Intent */ }
+                onAllowNotifications = {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        launchIntent(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                            data = Uri.parse("package:${context.packageName}")
+                            putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                            putExtra("android.provider.extra.APP_PACKAGE", context.packageName)
+                            putExtra("permission", Manifest.permission.POST_NOTIFICATIONS)
+                        })
+                    }
+                }
             )
         }
         composable(Screen.BatteryOpt.route) {
             BatteryOptScreen(
                 onNext = { navController.navigate(Screen.Success.route) },
                 onBack = { navController.popBackStack() },
-                onDisableOptimization = { /* Disable Opt Intent */ }
+                onDisableOptimization = {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        val pm = context.getSystemService(PowerManager::class.java)
+                        if (!pm.isIgnoringBatteryOptimizations(context.packageName)) {
+                            launchIntent(Intent(
+                                Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                                Uri.parse("package:${context.packageName}")
+                            ))
+                        }
+                    }
+                }
             )
         }
         composable(Screen.Success.route) {
             OnboardingSuccessScreen(
                 onEnterChildMode = {
+                    onboardingViewModel.onOnboardingCompleted()
                     navController.navigate(Screen.ChildHome.route) {
                         popUpTo(Screen.Welcome.route) { inclusive = true }
                     }
@@ -90,15 +153,14 @@ fun AppNavGraph(
             )
         }
         composable(Screen.ChildHome.route) {
-            val context = androidx.compose.ui.platform.LocalContext.current
-            val pinPrefs = androidx.compose.runtime.remember { com.reeled.quizoverlay.prefs.PinPrefs(context) }
+            val pinPrefs = androidx.compose.runtime.remember { PinPrefs(context) }
             ChildHomeScreen(
                 pinPrefs = pinPrefs,
                 onNavigateToDashboard = { navController.navigate(Screen.ParentDashboard.route) }
             )
         }
         composable(Screen.ParentDashboard.route) {
-            ParentDashboardScreen(viewModel = DashboardViewModel())
+            ParentDashboardScreen(viewModel = dashboardViewModel)
         }
     }
 }

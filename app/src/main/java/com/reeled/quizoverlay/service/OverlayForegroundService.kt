@@ -3,6 +3,7 @@ package com.reeled.quizoverlay.service
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
@@ -16,19 +17,17 @@ import androidx.core.app.NotificationCompat
 import androidx.lifecycle.setViewTreeLifecycleOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.reeled.quizoverlay.R
-import com.reeled.quizoverlay.data.local.entity.QuizQuestionEntity
 import com.reeled.quizoverlay.data.repository.QuizRepository
 import com.reeled.quizoverlay.model.QuizAttemptResult
 import com.reeled.quizoverlay.model.QuizCardConfig
-import com.reeled.quizoverlay.prefs.AppPrefs
 import com.reeled.quizoverlay.prefs.TriggerPrefs
 import com.reeled.quizoverlay.trigger.ForegroundAppDetector
 import com.reeled.quizoverlay.trigger.TriggerDecision
 import com.reeled.quizoverlay.trigger.TriggerEngine
 import com.reeled.quizoverlay.trigger.VideoPlaybackDetector
 import com.reeled.quizoverlay.ui.overlay.QuizCardRouter
+import com.reeled.quizoverlay.ui.pin.PinActivity
 import com.reeled.quizoverlay.util.AudioMuter
-import com.reeled.quizoverlay.util.NotificationBuilder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -48,6 +47,7 @@ class OverlayForegroundService : Service() {
 
         const val ACTION_PAUSE = "com.reeled.quizoverlay.ACTION_PAUSE"
         const val ACTION_RESUME = "com.reeled.quizoverlay.ACTION_RESUME"
+        const val ACTION_EXTEND = "com.reeled.quizoverlay.ACTION_EXTEND"
 
         fun startIntent(context: Context): Intent =
             Intent(context, OverlayForegroundService::class.java)
@@ -61,7 +61,6 @@ class OverlayForegroundService : Service() {
     private lateinit var triggerEngine: TriggerEngine
     private lateinit var repository: QuizRepository
     private lateinit var triggerPrefs: TriggerPrefs
-    private lateinit var appPrefs: AppPrefs
     private lateinit var audioMuter: AudioMuter
     private lateinit var windowManager: WindowManager
     private lateinit var lifecycleOwner: OverlayLifecycleOwner
@@ -69,23 +68,24 @@ class OverlayForegroundService : Service() {
     private var overlayView: ComposeView? = null
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var pollingJob: Job? = null
+    private var sessionActive: Boolean = false
+    private var audioMutedForSession: Boolean = false
 
     override fun onCreate() {
         super.onCreate()
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         lifecycleOwner = OverlayLifecycleOwner().also { it.onCreate() }
-        
+
         audioMuter = AudioMuter(this)
         triggerPrefs = TriggerPrefs(this)
-        appPrefs = AppPrefs(this)
         repository = QuizRepository(this)
-        
+
         val foregroundAppDetector = ForegroundAppDetector(this)
         val videoPlaybackDetector = VideoPlaybackDetector(this, foregroundAppDetector)
         triggerEngine = TriggerEngine(
-            repository, 
-            triggerPrefs, 
-            foregroundAppDetector, 
+            repository,
+            triggerPrefs,
+            foregroundAppDetector,
             videoPlaybackDetector
         )
 
@@ -93,14 +93,28 @@ class OverlayForegroundService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.action == "STOP") {
-            stopForegroundService()
-            return START_NOT_STICKY
+        when (intent?.action) {
+            "STOP" -> {
+                stopForegroundService()
+                return START_NOT_STICKY
+            }
+            ACTION_RESUME -> {
+                serviceScope.launch { triggerPrefs.clearParentPause() }
+            }
+            ACTION_EXTEND -> {
+                serviceScope.launch {
+                    val state = triggerPrefs.getTriggerState()
+                    val base = maxOf(System.currentTimeMillis(), state.parentPauseExpiryMs)
+                    triggerPrefs.setPause(true, base + 30 * 60 * 1000)
+                }
+            }
         }
 
+        sessionActive = true
         startForeground(NOTIF_ID, buildNotification(paused = false))
         lifecycleOwner.onStart()
         lifecycleOwner.onResume()
+        syncAudioState()
 
         startPollingLoop()
 
@@ -108,6 +122,7 @@ class OverlayForegroundService : Service() {
     }
 
     override fun onDestroy() {
+        sessionActive = false
         pollingJob?.cancel()
         serviceScope.cancel()
         removeOverlayIfShowing()
@@ -133,10 +148,10 @@ class OverlayForegroundService : Service() {
                             }
                         }
                     }
-                } catch (e: Exception) {
-                    // Log error
+                } catch (_: Exception) {
+                    // Keep service alive and continue polling.
                 }
-                delay(30000L) // 30 seconds
+                delay(30000L)
             }
         }
     }
@@ -144,14 +159,13 @@ class OverlayForegroundService : Service() {
     private fun showOverlay(question: com.reeled.quizoverlay.model.QuizQuestion, sourceApp: String) {
         if (overlayView != null) return
 
-        val params = buildWindowParams(question.strictMode)
+        val params = buildWindowParams(strictMode = question.strictMode)
 
         val composeView = ComposeView(this).apply {
             setViewTreeLifecycleOwner(lifecycleOwner)
             setViewTreeSavedStateRegistryOwner(lifecycleOwner)
 
             setContent {
-                // Mapping Entity to Config for UI
                 val config = QuizCardConfig.from(question)
                 QuizCardRouter(
                     config = config,
@@ -164,7 +178,8 @@ class OverlayForegroundService : Service() {
 
         windowManager.addView(composeView, params)
         overlayView = composeView
-        audioMuter.mute()
+        serviceScope.launch(Dispatchers.IO) { triggerPrefs.setOverlayActive(true) }
+        syncAudioState()
     }
 
     private fun onQuizResult(result: QuizAttemptResult) {
@@ -172,7 +187,6 @@ class OverlayForegroundService : Service() {
             try {
                 withContext(Dispatchers.Main) {
                     removeOverlayIfShowing()
-                    audioMuter.restore()
                 }
 
                 repository.saveAttempt(
@@ -183,31 +197,55 @@ class OverlayForegroundService : Service() {
                     sourceApp = result.sourceApp,
                     dismissed = result.wasDismissed
                 )
+                triggerPrefs.recordQuizShown(
+                    questionId = result.questionId,
+                    wasCorrect = result.isCorrect,
+                    wasDismissed = result.wasDismissed
+                )
 
-            } catch (e: Exception) {
-                // Log error
+            } catch (_: Exception) {
+                // no-op to keep service resilient
             }
         }
     }
 
     private fun onQuizDismissed(question: com.reeled.quizoverlay.model.QuizQuestion, sourceApp: String) {
-        onQuizResult(QuizAttemptResult(
-            questionId = question.id,
-            selectedOptionId = null,
-            isCorrect = false,
-            wasDismissed = true,
-            wasTimerExpired = false,
-            responseTimeMs = 0,
-            sourceApp = sourceApp
-        ))
+        onQuizResult(
+            QuizAttemptResult(
+                questionId = question.id,
+                selectedOptionId = null,
+                isCorrect = false,
+                wasDismissed = true,
+                wasTimerExpired = false,
+                responseTimeMs = 0,
+                sourceApp = sourceApp
+            )
+        )
     }
 
     private fun removeOverlayIfShowing() {
         overlayView?.let { view ->
             try {
                 windowManager.removeView(view)
-            } catch (_: Exception) {}
+            } catch (_: Exception) {
+            }
             overlayView = null
+        }
+        serviceScope.launch(Dispatchers.IO) { triggerPrefs.setOverlayActive(false) }
+        syncAudioState()
+    }
+
+    private fun syncAudioState() {
+        val shouldMute = sessionActive && overlayView != null
+        when {
+            shouldMute && !audioMutedForSession -> {
+                audioMuter.mute()
+                audioMutedForSession = true
+            }
+            !shouldMute && audioMutedForSession -> {
+                audioMuter.restore()
+                audioMutedForSession = false
+            }
         }
     }
 
@@ -219,12 +257,18 @@ class OverlayForegroundService : Service() {
             WindowManager.LayoutParams.TYPE_PHONE
         }
 
+        val baseFlags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+        val flags = if (strictMode) {
+            baseFlags
+        } else {
+            baseFlags or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+        }
+
         return WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT,
             WindowManager.LayoutParams.MATCH_PARENT,
             type,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+            flags,
             PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.TOP or Gravity.START
@@ -234,12 +278,45 @@ class OverlayForegroundService : Service() {
     }
 
     private fun buildNotification(paused: Boolean): Notification {
+        val pauseIntent = Intent(this, PinActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_HISTORY)
+        }
+        val pausePendingIntent = PendingIntent.getActivity(
+            this,
+            100,
+            pauseIntent,
+            PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val resumeIntent = Intent(this, OverlayForegroundService::class.java).apply {
+            action = ACTION_RESUME
+        }
+        val resumePendingIntent = PendingIntent.getService(
+            this,
+            101,
+            resumeIntent,
+            PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val extendIntent = Intent(this, OverlayForegroundService::class.java).apply {
+            action = ACTION_EXTEND
+        }
+        val extendPendingIntent = PendingIntent.getService(
+            this,
+            102,
+            extendIntent,
+            PendingIntent.FLAG_IMMUTABLE
+        )
+
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(if (paused) "Learning mode paused" else "Learning mode active")
             .setContentText(if (paused) "Quiz overlay is paused" else "Quiz overlay is running")
             .setSmallIcon(R.drawable.ic_brain)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true)
+            .addAction(0, "Pause Quizzes", pausePendingIntent)
+            .addAction(0, "Resume", resumePendingIntent)
+            .addAction(0, "Extend", extendPendingIntent)
             .build()
     }
 
@@ -256,6 +333,7 @@ class OverlayForegroundService : Service() {
     }
 
     private fun stopForegroundService() {
+        sessionActive = false
         removeOverlayIfShowing()
         pollingJob?.cancel()
         stopForeground(true)

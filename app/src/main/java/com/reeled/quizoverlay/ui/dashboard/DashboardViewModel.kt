@@ -1,9 +1,22 @@
 package com.reeled.quizoverlay.ui.dashboard
 
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
+import com.reeled.quizoverlay.data.local.dao.QuizAttemptDao
+import com.reeled.quizoverlay.data.repository.QuizRepository
+import com.reeled.quizoverlay.util.TimeUtils
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import java.util.Calendar
+
 
 data class TodaySummary(
     val shown: Int = 0,
@@ -49,73 +62,125 @@ data class DashboardUiState(
     val recentAttempts: List<AttemptPreview> = emptyList(),
 )
 
-class DashboardViewModel : ViewModel() {
-    private val _uiState = MutableStateFlow(sampleUiState())
+sealed class DashboardAction {
+    object ShowPinPrompt : DashboardAction()
+    object OpenFeedback : DashboardAction()
+}
+
+class DashboardViewModel(application: Application) : AndroidViewModel(application) {
+    private val repository = QuizRepository(application)
+
+    private val _uiState = MutableStateFlow(DashboardUiState())
     val uiState: StateFlow<DashboardUiState> = _uiState.asStateFlow()
 
+    private val _actions = MutableSharedFlow<DashboardAction>()
+    val actions: SharedFlow<DashboardAction> = _actions.asSharedFlow()
+
+    init {
+        refreshDashboard()
+    }
+
+    fun refreshDashboard() {
+        viewModelScope.launch {
+            val startOfDay = TimeUtils.getStartOfDay()
+            val shown = repository.getShownCountToday(startOfDay)
+            val answered = repository.getAnsweredCountToday(startOfDay)
+            val correct = repository.getCorrectCountToday(startOfDay)
+            val dismissed = (shown - answered).coerceAtLeast(0)
+            val avgMs = repository.getAvgResponseTimeToday(startOfDay) ?: 0f
+
+            val recent = repository.getRecentAttemptDetails(limit = 200)
+            val todayRecent = recent.filter { it.shownAt >= startOfDay }
+
+            val bySubject = todayRecent
+                .groupBy { it.subject }
+                .map { (subject, attempts) ->
+                    SubjectStat(
+                        subject = subject,
+                        shown = attempts.size,
+                        correct = attempts.count { it.isCorrect && !it.dismissed }
+                    )
+                }
+                .sortedByDescending { it.shown }
+
+            val recentPreview = recent.take(20).map { attempt ->
+                AttemptPreview(
+                    questionText = attempt.questionText,
+                    responseSeconds = attempt.responseTimeMs / 1000f,
+                    subject = attempt.subject,
+                    status = when {
+                        attempt.dismissed -> AttemptStatus.DISMISSED
+                        attempt.isCorrect -> AttemptStatus.CORRECT
+                        else -> AttemptStatus.WRONG
+                    }
+                )
+            }
+
+            _uiState.value = DashboardUiState(
+                todaySummary = TodaySummary(
+                    shown = shown,
+                    answered = answered,
+                    correct = correct,
+                    dismissed = dismissed,
+                    avgResponseSeconds = avgMs / 1000f,
+                ),
+                weekData = buildWeekSummaries(recent),
+                todayBySubject = bySubject,
+                recentAttempts = recentPreview,
+            )
+        }
+    }
+
     fun showPinPrompt() {
-        // Hook for disable overlay flow.
+        viewModelScope.launch {
+            _actions.emit(DashboardAction.ShowPinPrompt)
+        }
     }
 
     fun openFeedback() {
-        // Hook for feedback flow.
+        viewModelScope.launch {
+            _actions.emit(DashboardAction.OpenFeedback)
+        }
     }
 
-    private fun sampleUiState(): DashboardUiState {
-        return DashboardUiState(
-            todaySummary = TodaySummary(
-                shown = 8,
-                answered = 6,
-                correct = 4,
-                dismissed = 2,
-                avgResponseSeconds = 9.4f,
-            ),
-            weekData = listOf(
-                DaySummary(dayLabel = "Mon", shown = 10, correct = 8),
-                DaySummary(dayLabel = "Tue", shown = 10, correct = 6),
-                DaySummary(dayLabel = "Wed", shown = 0, correct = 0),
-                DaySummary(dayLabel = "Thu", shown = 10, correct = 9, isToday = true),
-                DaySummary(dayLabel = "Fri", shown = 0, correct = 0),
-                DaySummary(dayLabel = "Sat", shown = 0, correct = 0),
-                DaySummary(dayLabel = "Sun", shown = 0, correct = 0),
-            ),
-            todayBySubject = listOf(
-                SubjectStat(subject = "Math", correct = 3, shown = 4),
-                SubjectStat(subject = "English", correct = 1, shown = 2),
-                SubjectStat(subject = "General", correct = 0, shown = 2),
-            ),
-            recentAttempts = listOf(
-                AttemptPreview(
-                    questionText = "What is 6×7?",
-                    responseSeconds = 3.2f,
-                    subject = "Math",
-                    status = AttemptStatus.CORRECT,
-                ),
-                AttemptPreview(
-                    questionText = "Capital of France?",
-                    responseSeconds = 12f,
-                    subject = "General",
-                    status = AttemptStatus.WRONG,
-                ),
-                AttemptPreview(
-                    questionText = "Fill: The ___ star",
-                    responseSeconds = 7.8f,
-                    subject = "English",
-                    status = AttemptStatus.CORRECT,
-                ),
-                AttemptPreview(
-                    questionText = "Dismissed",
-                    responseSeconds = 0f,
-                    subject = "—",
-                    status = AttemptStatus.DISMISSED,
-                ),
-                AttemptPreview(
-                    questionText = "Match animals",
-                    responseSeconds = 15f,
-                    subject = "Science",
-                    status = AttemptStatus.CORRECT,
-                ),
-            ),
-        )
+    private fun buildWeekSummaries(recent: List<QuizAttemptDao.RecentAttemptDetail>): List<DaySummary> {
+        val now = Calendar.getInstance()
+        val dayStarts = mutableListOf<Pair<String, Long>>()
+        repeat(7) { index ->
+            val cal = (now.clone() as Calendar).apply {
+                add(Calendar.DAY_OF_YEAR, -(6 - index))
+                set(Calendar.HOUR_OF_DAY, 0)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }
+            val dayLabel = cal.getDisplayName(Calendar.DAY_OF_WEEK, Calendar.SHORT, java.util.Locale.getDefault()) ?: "-"
+            dayStarts += dayLabel to cal.timeInMillis
+        }
+
+        val dayRanges = dayStarts.mapIndexed { index, (label, start) ->
+            val end = dayStarts.getOrNull(index + 1)?.second ?: Long.MAX_VALUE
+            Triple(label, start, end)
+        }
+
+        return dayRanges.mapIndexed { idx, (label, start, end) ->
+            val attempts = recent.filter { it.shownAt in start until end }
+            DaySummary(
+                dayLabel = label,
+                shown = attempts.size,
+                correct = attempts.count { it.isCorrect && !it.dismissed },
+                isToday = idx == dayRanges.lastIndex,
+            )
+        }
+    }
+
+    companion object {
+        fun provideFactory(application: Application): ViewModelProvider.Factory =
+            object : ViewModelProvider.Factory {
+                @Suppress("UNCHECKED_CAST")
+                override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                    return DashboardViewModel(application) as T
+                }
+            }
     }
 }

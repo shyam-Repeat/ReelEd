@@ -1,1 +1,193 @@
 package com.reeled.quizoverlay.ui.onboarding
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBackIosNew
+import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.reeled.quizoverlay.ui.theme.Primary
+
+@Composable
+fun PermissionOverlayScreen(
+    onNext: () -> Unit,
+    onBack: () -> Unit,
+    onOpenSettings: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
+        // Header
+        CenterAlignedTopAppBar(
+            title = { Text("Permissions", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
+            navigationIcon = {
+                IconButton(onClick = onBack) {
+                    Icon(Icons.Default.ArrowBackIosNew, contentDescription = "Back", modifier = Modifier.size(20.dp))
+                }
+            }
+        )
+
+        // Progress
+        Column(modifier = Modifier.padding(horizontal = 24.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Bottom
+            ) {
+                Text("Setup Progress", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                Text("4 of 8", color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Medium, fontSize = 14.sp)
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            LinearProgressIndicator(
+                progress = 0.5f,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(8.dp),
+                color = Primary,
+                trackColor = Primary.copy(alpha = 0.2f),
+                strokeCap = androidx.compose.ui.graphics.StrokeCap.Round
+            )
+        }
+
+        // Illustration Card
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .padding(24.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                shape = RoundedCornerShape(24.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+            ) {
+                Column {
+                    // Mockup Area
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(0.6f)
+                            .background(
+                                brush = Brush.linearGradient(
+                                    colors = listOf(Color(0xFFE0F2FE), Color(0xFFFAE8FF), Color(0xFFFCE7F3))
+                                )
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        // Social App Mockup
+                        Surface(
+                            modifier = Modifier
+                                .size(width = 140.dp, height = 100.dp)
+                                .offset(x = (-20).dp)
+                                .rotate((-5).dp.value),
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.surface,
+                            shadowElevation = 8.dp
+                        ) {
+                            Column(modifier = Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    Box(modifier = Modifier.size(16.dp).background(MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(8.dp)))
+                                    Box(modifier = Modifier.width(48.dp).height(8.dp).background(MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(4.dp)))
+                                }
+                                Box(modifier = Modifier.fillMaxWidth().weight(1f).background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp)))
+                            }
+                        }
+
+                        // Quiz Overlay Mockup
+                        Surface(
+                            modifier = Modifier
+                                .size(width = 100.dp, height = 140.dp)
+                                .offset(x = 40.dp)
+                                .rotate(10.dp.value),
+                            shape = RoundedCornerShape(16.dp),
+                            color = MaterialTheme.colorScheme.surface,
+                            border = BorderStroke(2.dp, Primary),
+                            shadowElevation = 16.dp
+                        ) {
+                            Column(modifier = Modifier.padding(10.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Surface(color = Color(0xFFFFD700), shape = RoundedCornerShape(12.dp), modifier = Modifier.size(24.dp)) {
+                                    Box(contentAlignment = Alignment.Center) { Text("?", fontWeight = FontWeight.Bold, fontSize = 10.sp, color = Color.White) }
+                                }
+                                Box(modifier = Modifier.width(60.dp).height(6.dp).background(MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(3.dp)))
+                                Box(modifier = Modifier.width(40.dp).height(6.dp).background(MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(3.dp)))
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Box(modifier = Modifier.fillMaxWidth().height(16.dp).background(Primary.copy(alpha = 0.2f), RoundedCornerShape(4.dp)))
+                                Box(modifier = Modifier.fillMaxWidth().height(16.dp).background(Primary, RoundedCornerShape(4.dp)))
+                            }
+                        }
+                    }
+
+                    // Content Area
+                    Column(
+                        modifier = Modifier
+                            .padding(24.dp)
+                            .weight(0.4f),
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text("Enable Overlay", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            "Required to show quizzes over Instagram and YouTube. This allows the educational content to appear seamlessly while you browse.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            lineHeight = 18.sp
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(
+                            onClick = onOpenSettings,
+                            modifier = Modifier.fillMaxWidth().height(48.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Primary)
+                        ) {
+                            Text("Open Settings", fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+        }
+
+        // Bottom Navigation
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+            color = MaterialTheme.colorScheme.surface
+        ) {
+            Row(
+                modifier = Modifier.padding(24.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Button(
+                    onClick = onBack,
+                    modifier = Modifier.weight(1f).height(48.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant, contentColor = MaterialTheme.colorScheme.onSurface)
+                ) {
+                    Text("Back", fontWeight = FontWeight.Bold)
+                }
+                Button(
+                    onClick = onNext,
+                    modifier = Modifier.weight(1f).height(48.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Primary)
+                ) {
+                    Text("Next", fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+    }
+}

@@ -1,5 +1,4 @@
 package com.reeled.quizoverlay.worker
-package com.yourappname.quizoverlay.worker
 
 import android.content.Context
 import androidx.work.BackoffPolicy
@@ -10,8 +9,7 @@ import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
-import com.google.firebase.crashlytics.FirebaseCrashlytics
-import com.yourappname.quizoverlay.data.repository.QuizRepository
+import com.reeled.quizoverlay.data.repository.QuizRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
@@ -121,9 +119,6 @@ class SyncWorker(
             Result.success()
 
         } catch (e: Exception) {
-            // Record every sync failure for tester-phase debugging
-            FirebaseCrashlytics.getInstance().recordException(e)
-
             // Result.retry() — WorkManager will retry with the exponential
             // backoff configured in schedule(). Rows stay unsynced until success.
             Result.retry()

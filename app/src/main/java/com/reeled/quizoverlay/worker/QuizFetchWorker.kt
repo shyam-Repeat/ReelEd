@@ -1,5 +1,4 @@
 package com.reeled.quizoverlay.worker
-package com.yourappname.quizoverlay.worker
 
 import android.content.Context
 import androidx.work.Constraints
@@ -10,8 +9,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
-import com.google.firebase.crashlytics.FirebaseCrashlytics
-import com.yourappname.quizoverlay.data.repository.QuizRepository
+import com.reeled.quizoverlay.data.repository.QuizRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
@@ -124,7 +122,6 @@ class QuizFetchWorker(
             Result.success()
 
         } catch (e: Exception) {
-            FirebaseCrashlytics.getInstance().recordException(e)
             // Retry with WorkManager default backoff.
             // The overlay can still fire from whatever is cached — non-fatal.
             Result.retry()

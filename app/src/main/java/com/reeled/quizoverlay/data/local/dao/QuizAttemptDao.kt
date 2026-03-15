@@ -34,7 +34,7 @@ interface QuizAttemptDao {
 
     // Recent attempts with question text and subject
     @Query("""
-        SELECT a.responseTimeMs, a.isCorrect, a.dismissed, q.questionText, q.subject
+        SELECT a.shownAt, a.responseTimeMs, a.isCorrect, a.dismissed, q.questionText, q.subject
         FROM quiz_attempts a
         JOIN quiz_questions q ON a.questionId = q.id
         ORDER BY a.shownAt DESC
@@ -43,6 +43,7 @@ interface QuizAttemptDao {
     suspend fun getRecentAttemptDetails(limit: Int): List<RecentAttemptDetail>
 
     data class RecentAttemptDetail(
+        val shownAt: Long,
         val questionText: String,
         val subject: String,
         val responseTimeMs: Long,

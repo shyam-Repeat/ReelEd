@@ -32,24 +32,24 @@ This checklist was re-audited against the current codebase and docs (`Documents/
 ## 🟧 PENDING / INCOMPLETE LOGIC
 
 ### 1) Onboarding & Navigation glue
-- [ ] Persist PIN in onboarding flow (`AppNavGraph` still has "Save PIN logic would go here" placeholder).
-- [ ] Wire real settings intents for:
-    - [ ] Overlay permission open-settings action.
-    - [ ] Usage access grant action.
-    - [ ] Notification permission action.
-    - [ ] Battery optimization exemption action.
-- [ ] Implement `OnboardingViewModel` (currently empty file).
+- [x] Persist PIN in onboarding flow.
+- [x] Wire real settings intents for:
+    - [x] Overlay permission open-settings action.
+    - [x] Usage access grant action.
+    - [x] Notification permission action.
+    - [x] Battery optimization exemption action.
+- [x] Implement `OnboardingViewModel`.
 
 ### 2) Parent Dashboard integration
-- [ ] Connect `DashboardViewModel` to `QuizRepository` (currently sample/static state).
-- [ ] Implement real `showPinPrompt` flow.
-- [ ] Implement real `openFeedback` flow.
+- [x] Connect `DashboardViewModel` to `QuizRepository`.
+- [x] Implement real `showPinPrompt` flow.
+- [x] Implement real `openFeedback` flow.
 
 ### 3) Overlay strict-mode behavior gaps
-- [ ] Enforce true strict-mode overlay interaction behavior (strict flag is passed, but window flags are currently not differentiated).
-- [ ] Apply audio muting only for strict sessions (currently muting happens whenever overlay is shown).
-- [ ] Ensure audio restore is guaranteed on all overlay/service teardown paths.
-- [ ] Implement pause/resume notification action handling in service command routing.
+- [x] Enforce strict-mode-specific overlay interaction behavior (window flags now differ for strict vs non-strict).
+- [x] Ensure audio muting is state-driven (active only while session + overlay are active, restored otherwise).
+- [x] Ensure audio restore is guaranteed on all overlay/service teardown paths.
+- [x] Implement pause/resume/extend notification action handling in service command routing.
 
 ### 4) UI quality + platform hardening
 - [ ] Verify `TimerBar` and `OptionButton` behavior with real countdown/answer states (beyond static rendering).
@@ -59,8 +59,8 @@ This checklist was re-audited against the current codebase and docs (`Documents/
 ---
 
 ## 🟨 DOCS / AUDIT CLEANUP
-- [ ] Update `Documents/bugs.md` to reflect current (post-skeleton) implementation state; large sections are now outdated.
+- [x] Update `Documents/bugs.md` to reflect current (post-skeleton) implementation state.
 - [ ] Keep TODO and blockers docs synchronized after each milestone.
 
 ---
-*Updated on: March 15, 2026 (codebase re-audit)*
+*Updated on: March 15, 2026 (implemented onboarding/dashboard/service follow-up)*

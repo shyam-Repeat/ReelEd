@@ -79,13 +79,13 @@ class OverlayForegroundService : Service() {
         appPrefs = AppPrefs(this)
         repository = QuizRepository(this)
         
-        // Note: ForegroundAppDetector and VideoPlaybackDetector might need context
-        // Assuming they are objects or properly initialized
+        val foregroundAppDetector = ForegroundAppDetector(this)
+        val videoPlaybackDetector = VideoPlaybackDetector(this, foregroundAppDetector)
         triggerEngine = TriggerEngine(
             repository, 
             triggerPrefs, 
-            ForegroundAppDetector, 
-            VideoPlaybackDetector
+            foregroundAppDetector, 
+            videoPlaybackDetector
         )
 
         createNotificationChannel()
@@ -128,7 +128,7 @@ class OverlayForegroundService : Service() {
                     if (decision is TriggerDecision.Fire) {
                         withContext(Dispatchers.Main) {
                             if (overlayView == null) {
-                                showOverlay(decision.question)
+                                showOverlay(decision.question, decision.sourceApp)
                             }
                         }
                     }
@@ -140,7 +140,7 @@ class OverlayForegroundService : Service() {
         }
     }
 
-    private fun showOverlay(question: QuizQuestionEntity) {
+    private fun showOverlay(question: com.reeled.quizoverlay.model.QuizQuestion, sourceApp: String) {
         if (overlayView != null) return
 
         val params = buildWindowParams(question.strictMode)
@@ -154,9 +154,9 @@ class OverlayForegroundService : Service() {
                 val config = QuizCardConfig.from(question)
                 QuizCardRouter(
                     config = config,
-                    sourceApp = "com.example.app", // Should get from TriggerEngine
+                    sourceApp = sourceApp,
                     onResult = { result -> onQuizResult(result) },
-                    onDismissed = { onQuizDismissed(question) }
+                    onDismissed = { onQuizDismissed(question, sourceApp) }
                 )
             }
         }
@@ -189,7 +189,7 @@ class OverlayForegroundService : Service() {
         }
     }
 
-    private fun onQuizDismissed(question: QuizQuestionEntity) {
+    private fun onQuizDismissed(question: com.reeled.quizoverlay.model.QuizQuestion, sourceApp: String) {
         onQuizResult(QuizAttemptResult(
             questionId = question.id,
             selectedOptionId = null,
@@ -197,7 +197,7 @@ class OverlayForegroundService : Service() {
             wasDismissed = true,
             wasTimerExpired = false,
             responseTimeMs = 0,
-            sourceApp = "com.example.app"
+            sourceApp = sourceApp
         ))
     }
 

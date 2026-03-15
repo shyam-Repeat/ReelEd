@@ -39,6 +39,27 @@ data class QuizCardConfig(
             )
         }
 
+        fun from(question: QuizQuestion): QuizCardConfig {
+            val type = QuizCardType.valueOf(question.cardType)
+            return QuizCardConfig(
+                id = question.id,
+                cardType = type,
+                subject = question.subject,
+                difficulty = question.difficulty,
+                display = QuizDisplay(
+                    questionText = question.questionText,
+                    instructionLabel = question.instructionLabel,
+                    mediaUrl = question.mediaUrl
+                ),
+                payload = parsePayload(type, question.payloadJson),
+                rules = QuizRules(
+                    timerSeconds = question.timerSeconds,
+                    strictMode = question.strictMode,
+                    showCorrectOnWrong = question.showCorrectOnWrong
+                )
+            )
+        }
+
         private fun parsePayload(type: QuizCardType, json: String): QuizPayload {
             val root = JSONObject(json)
             return when (type) {

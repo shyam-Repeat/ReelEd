@@ -1,12 +1,11 @@
 package com.reeled.quizoverlay.service
-package com.yourappname.quizoverlay.service
 
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.core.content.ContextCompat
-import com.yourappname.quizoverlay.prefs.AppPrefs
+import com.reeled.quizoverlay.prefs.AppPrefs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -35,7 +34,7 @@ import kotlinx.coroutines.launch
 //       android:exported="false">
 //       <intent-filter>
 //           <action android:name="android.intent.action.BOOT_COMPLETED" />
-//           <action android:name="com.yourappname.quizoverlay.RESTART_SERVICE" />
+//           <action android:name="com.reeled.quizoverlay.RESTART_SERVICE" />
 //       </intent-filter>
 //   </receiver>
 //
@@ -46,7 +45,7 @@ class ServiceRestartReceiver : BroadcastReceiver() {
 
     companion object {
         const val ACTION_RESTART_SERVICE =
-            "com.yourappname.quizoverlay.RESTART_SERVICE"
+            "com.reeled.quizoverlay.RESTART_SERVICE"
 
         /** Broadcast this from ServiceWatchdogWorker to trigger a restart. */
         fun restartIntent(context: Context): Intent =

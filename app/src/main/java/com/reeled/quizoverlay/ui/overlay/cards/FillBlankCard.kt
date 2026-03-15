@@ -27,7 +27,9 @@ import com.reeled.quizoverlay.ui.overlay.components.ChipItem
 import com.reeled.quizoverlay.ui.overlay.components.ParentCornerButton
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun FillBlankCard(
     config: QuizCardConfig,

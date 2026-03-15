@@ -27,7 +27,8 @@ class TriggerEngine(
             return TriggerDecision.Skip("overlay_active")
         }
 
-        if (!foregroundAppDetector.isTargetAppInForeground()) {
+        val foregroundPackage = foregroundAppDetector.getCurrentForegroundPackage()
+        if (foregroundPackage == null || !ForegroundAppDetector.TARGET_PACKAGES.contains(foregroundPackage)) {
             return TriggerDecision.Skip("target_app_not_foreground")
         }
 
@@ -67,7 +68,7 @@ class TriggerEngine(
             quizzesShownToday = state.quizzesShownToday
         )
 
-        return TriggerDecision.Fire(question)
+        return TriggerDecision.Fire(question, foregroundPackage)
     }
 
     private fun computeEffectiveCooldown(state: TriggerState): Long {

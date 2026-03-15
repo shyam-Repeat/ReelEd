@@ -1,5 +1,4 @@
 package com.reeled.quizoverlay.service
-package com.yourappname.quizoverlay.service
 
 import android.os.Bundle
 import androidx.lifecycle.Lifecycle

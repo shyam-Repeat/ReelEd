@@ -11,9 +11,8 @@ No multi-module setup for MVP — that adds complexity with
 zero benefit at 10-tester scale. Every package below is a
 folder inside the single app module.
 
-Root package name: com.yourappname.quizoverlay
-(Replace yourappname before creating the project in Android Studio
-or GitHub Codespaces. This name cannot change after first build
+Root package name: com.reeled.quizoverlay
+(The package name has been set to com.reeled.quizoverlay. This name cannot change after first build
 without breaking Room migrations and DataStore keys.)
 
 ---
@@ -28,7 +27,7 @@ quizoverlay/
 │   ├── src/
 │   │   ├── main/
 │   │   │   ├── AndroidManifest.xml
-│   │   │   ├── java/com/yourappname/quizoverlay/
+│   │   │   ├── java/com/reeled/quizoverlay/
 │   │   │   └── res/
 │   │   └── test/               ← unit tests (minimal for MVP)
 │   └── build.gradle.kts
@@ -41,7 +40,7 @@ quizoverlay/
 ---
 
 ## PACKAGE STRUCTURE
-### Inside java/com/yourappname/quizoverlay/
+### Inside java/com/reeled/quizoverlay/
 
 ---
 

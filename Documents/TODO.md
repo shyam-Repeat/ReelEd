@@ -33,8 +33,9 @@ This list tracks the pending work required to complete the MVP based on `Documen
     - [ ] Verify/Complete `PermissionNotifScreen` (API 33+).
     - [ ] Verify/Complete `BatteryOptScreen` (Disable optimization).
 - [ ] **Parent Dashboard**
-    - [ ] Connect `DashboardViewModel` to `QuizRepository`.
-    - [ ] Implement `ParentDashboardScreen` cards: `TodaySummary`, `WeekBar`, `SubjectBreakdown`, and `RecentAttempts`.
+    - [x] Implement `ParentDashboardScreen` cards: `TodaySummary`, `WeekBar`, `SubjectBreakdown`, and `RecentAttempts`.
+    - [ ] Connect `DashboardViewModel` to `QuizRepository` (currently using `sampleUiState`).
+    - [ ] Implement `showPinPrompt` and `openFeedback` logic in `DashboardViewModel`.
 - [ ] **Overlay UI**
     - [ ] Ensure `QuizCardRouter` correctly handles mode switching (Strict vs Non-Strict).
     - [ ] Verify `TimerBar` and `OptionButton` state management.
@@ -66,7 +67,10 @@ This list tracks the pending work required to complete the MVP based on `Documen
 ## ⬜️ REFINEMENT
 - [ ] Move all hardcoded strings to `res/values/strings.xml`.
 - [ ] Verify dependency map: UI should only talk to `Repository` or `AppPrefs`.
-- [ ] Setup GitHub Actions build pipeline in `.github/workflows/build.yml`.
+- [x] Setup GitHub Actions build pipeline in `.github/workflows/build.yml`.
+- [x] Initialize Gradle build system (root & app `build.gradle.kts`, `settings.gradle.kts`).
+- [x] Generate Gradle wrapper (`gradlew`).
+- [x] Initialize basic resources and App/MainActivity stubs for build stability.
 
 ---
 *Generated on: March 15, 2026*

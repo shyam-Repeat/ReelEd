@@ -13,17 +13,22 @@ import androidx.compose.material.icons.outlined.BatteryChargingFull
 import androidx.compose.material.icons.outlined.Bolt
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.reeled.quizoverlay.ui.theme.Primary
+import com.reeled.quizoverlay.util.PermissionChecker
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,6 +37,22 @@ fun BatteryOptScreen(
     onBack: () -> Unit,
     onDisableOptimization: () -> Unit
 ) {
+    val context = LocalContext.current
+    var isGranted by remember { mutableStateOf(PermissionChecker.isIgnoringBatteryOptimizations(context)) }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                isGranted = PermissionChecker.isIgnoringBatteryOptimizations(context)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -55,11 +76,11 @@ fun BatteryOptScreen(
                 verticalAlignment = Alignment.Bottom
             ) {
                 Text("Setup Progress", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp, fontWeight = FontWeight.Medium)
-                Text("Step 7 of 8", color = Primary, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                Text("Step 8 of 9", color = Primary, fontSize = 14.sp, fontWeight = FontWeight.Bold)
             }
             Spacer(modifier = Modifier.height(8.dp))
             LinearProgressIndicator(
-                progress = 0.875f,
+                progress = 8f / 9f,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(2.dp),
@@ -145,33 +166,45 @@ fun BatteryOptScreen(
             Spacer(modifier = Modifier.height(40.dp))
 
             // Action Card
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                color = MaterialTheme.colorScheme.surface,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                shadowElevation = 2.dp
-            ) {
-                Column(modifier = Modifier.padding(20.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                        Surface(color = Primary.copy(alpha = 0.1f), shape = CircleShape, modifier = Modifier.size(48.dp)) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(Icons.Outlined.Bolt, contentDescription = null, tint = Primary)
+            if (isGranted) {
+                Surface(
+                    shape = RoundedCornerShape(20.dp),
+                    color = Color(0xFFD7F5E1),
+                    modifier = Modifier.fillMaxWidth().height(64.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text("Optimization Disabled", color = Color(0xFF1B5E20), fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    }
+                }
+            } else {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(20.dp),
+                    color = MaterialTheme.colorScheme.surface,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                    shadowElevation = 2.dp
+                ) {
+                    Column(modifier = Modifier.padding(20.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                            Surface(color = Primary.copy(alpha = 0.1f), shape = CircleShape, modifier = Modifier.size(48.dp)) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(Icons.Outlined.Bolt, contentDescription = null, tint = Primary)
+                                }
+                            }
+                            Column {
+                                Text("Keep App Active", fontWeight = FontWeight.Bold)
+                                Text("Allow background processing anytime", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
-                        Column {
-                            Text("Keep App Active", fontWeight = FontWeight.Bold)
-                            Text("Allow background processing anytime", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Spacer(modifier = Modifier.height(24.dp))
+                        Button(
+                            onClick = onDisableOptimization,
+                            modifier = Modifier.fillMaxWidth().height(56.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Primary)
+                        ) {
+                            Text("Disable Optimization", fontWeight = FontWeight.Bold)
                         }
-                    }
-                    Spacer(modifier = Modifier.height(24.dp))
-                    Button(
-                        onClick = onDisableOptimization,
-                        modifier = Modifier.fillMaxWidth().height(56.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Primary)
-                    ) {
-                        Text("Disable Optimization", fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -204,9 +237,10 @@ fun BatteryOptScreen(
                 }
                 Button(
                     onClick = onNext,
+                    enabled = isGranted,
                     modifier = Modifier.weight(1f).height(48.dp),
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Black)
+                    colors = ButtonDefaults.buttonColors(containerColor = Primary)
                 ) {
                     Text("Next Step")
                 }

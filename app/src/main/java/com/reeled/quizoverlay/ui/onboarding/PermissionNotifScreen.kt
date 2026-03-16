@@ -10,17 +10,22 @@ import androidx.compose.material.icons.outlined.Celebration
 import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.reeled.quizoverlay.ui.theme.Primary
+import com.reeled.quizoverlay.util.PermissionChecker
 
 @Composable
 fun PermissionNotifScreen(
@@ -28,6 +33,22 @@ fun PermissionNotifScreen(
     onBack: () -> Unit,
     onAllowNotifications: () -> Unit
 ) {
+    val context = LocalContext.current
+    var isGranted by remember { mutableStateOf(PermissionChecker.hasNotificationPermission(context)) }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                isGranted = PermissionChecker.hasNotificationPermission(context)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -41,8 +62,8 @@ fun PermissionNotifScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                repeat(8) { index ->
-                    val isActive = index == 5
+                repeat(9) { index ->
+                    val isActive = index == 6
                     Box(
                         modifier = Modifier
                             .size(if (isActive) 8.dp else 6.dp)
@@ -56,7 +77,7 @@ fun PermissionNotifScreen(
             }
             Spacer(modifier = Modifier.height(12.dp))
             Text(
-                "Step 6 of 8",
+                "Step 7 of 9",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 letterSpacing = 1.sp,
@@ -160,15 +181,27 @@ fun PermissionNotifScreen(
 
             Spacer(modifier = Modifier.height(48.dp))
 
-            Button(
-                onClick = onAllowNotifications,
-                modifier = Modifier.fillMaxWidth().height(64.dp),
-                shape = RoundedCornerShape(20.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Primary)
-            ) {
-                Icon(Icons.Outlined.Notifications, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Allow Notifications", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            if (isGranted) {
+                Surface(
+                    shape = RoundedCornerShape(20.dp),
+                    color = Color(0xFFD7F5E1),
+                    modifier = Modifier.fillMaxWidth().height(64.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text("Permission Granted", color = Color(0xFF1B5E20), fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    }
+                }
+            } else {
+                Button(
+                    onClick = onAllowNotifications,
+                    modifier = Modifier.fillMaxWidth().height(64.dp),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Primary)
+                ) {
+                    Icon(Icons.Outlined.Notifications, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Allow Notifications", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                }
             }
         }
 
@@ -191,6 +224,7 @@ fun PermissionNotifScreen(
                 }
                 Button(
                     onClick = onNext,
+                    enabled = isGranted,
                     modifier = Modifier.weight(1f).height(48.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Primary)

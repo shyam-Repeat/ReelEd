@@ -11,16 +11,21 @@ import androidx.compose.material.icons.outlined.AutoStories
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.School
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.reeled.quizoverlay.ui.theme.Primary
+import com.reeled.quizoverlay.util.PermissionChecker
 
 @Composable
 fun PermissionUsageScreen(
@@ -28,6 +33,22 @@ fun PermissionUsageScreen(
     onBack: () -> Unit,
     onGrantAccess: () -> Unit
 ) {
+    val context = LocalContext.current
+    var isGranted by remember { mutableStateOf(PermissionChecker.hasUsageStatsPermission(context)) }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                isGranted = PermissionChecker.hasUsageStatsPermission(context)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -39,7 +60,7 @@ fun PermissionUsageScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)
             ) {
-                repeat(8) { index ->
+                repeat(9) { index ->
                     val isActive = index == 4
                     Box(
                         modifier = Modifier
@@ -151,13 +172,25 @@ fun PermissionUsageScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            Button(
-                onClick = onGrantAccess,
-                modifier = Modifier.fillMaxWidth().height(56.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Primary)
-            ) {
-                Text("Grant Access", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+            if (isGranted) {
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color(0xFFD7F5E1),
+                    modifier = Modifier.fillMaxWidth().height(56.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text("Permission Granted", color = Color(0xFF1B5E20), fontWeight = FontWeight.Bold)
+                    }
+                }
+            } else {
+                Button(
+                    onClick = onGrantAccess,
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Primary)
+                ) {
+                    Text("Grant Access", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                }
             }
             Spacer(modifier = Modifier.height(16.dp))
             Text(
@@ -186,9 +219,10 @@ fun PermissionUsageScreen(
                 }
                 Button(
                     onClick = onNext,
+                    enabled = isGranted,
                     modifier = Modifier.weight(1f).height(48.dp),
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Black)
+                    colors = ButtonDefaults.buttonColors(containerColor = Primary)
                 ) {
                     Text("Next")
                 }

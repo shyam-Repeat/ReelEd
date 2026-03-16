@@ -8,17 +8,22 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.reeled.quizoverlay.ui.theme.Primary
+import com.reeled.quizoverlay.util.PermissionChecker
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -27,6 +32,22 @@ fun PermissionOverlayScreen(
     onBack: () -> Unit,
     onOpenSettings: () -> Unit
 ) {
+    val context = LocalContext.current
+    var isGranted by remember { mutableStateOf(PermissionChecker.hasOverlayPermission(context)) }
+    
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                isGranted = PermissionChecker.hasOverlayPermission(context)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -50,11 +71,11 @@ fun PermissionOverlayScreen(
                 verticalAlignment = Alignment.Bottom
             ) {
                 Text("Setup Progress", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-                Text("4 of 8", color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Medium, fontSize = 14.sp)
+                Text("4 of 9", color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Medium, fontSize = 14.sp)
             }
             Spacer(modifier = Modifier.height(12.dp))
             LinearProgressIndicator(
-                progress = 0.5f,
+                progress = 4f / 9f,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(8.dp),
@@ -150,13 +171,25 @@ fun PermissionOverlayScreen(
                             lineHeight = 18.sp
                         )
                         Spacer(modifier = Modifier.height(16.dp))
-                        Button(
-                            onClick = onOpenSettings,
-                            modifier = Modifier.fillMaxWidth().height(48.dp),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Primary)
-                        ) {
-                            Text("Open Settings", fontWeight = FontWeight.Bold)
+                        if (isGranted) {
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = Color(0xFFD7F5E1),
+                                modifier = Modifier.fillMaxWidth().height(48.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Text("Permission Granted", color = Color(0xFF1B5E20), fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        } else {
+                            Button(
+                                onClick = onOpenSettings,
+                                modifier = Modifier.fillMaxWidth().height(48.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = Primary)
+                            ) {
+                                Text("Open Settings", fontWeight = FontWeight.Bold)
+                            }
                         }
                     }
                 }
@@ -183,6 +216,7 @@ fun PermissionOverlayScreen(
                 }
                 Button(
                     onClick = onNext,
+                    enabled = isGranted,
                     modifier = Modifier.weight(1f).height(48.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Primary)

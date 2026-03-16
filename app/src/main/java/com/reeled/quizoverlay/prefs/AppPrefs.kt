@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -19,6 +20,7 @@ class AppPrefs(private val context: Context) {
         private val ONBOARDING_COMPLETE = booleanPreferencesKey("onboarding_complete")
         private val PIN_SET = booleanPreferencesKey("pin_set")
         private val CONSENT_GIVEN = booleanPreferencesKey("consent_given")
+        private val MONITORED_APPS = stringSetPreferencesKey("monitored_apps")
     }
 
     suspend fun getTesterId(): String {
@@ -43,5 +45,10 @@ class AppPrefs(private val context: Context) {
     val consentGiven: Flow<Boolean> = context.appDataStore.data.map { it[CONSENT_GIVEN] ?: false }
     suspend fun setConsentGiven(given: Boolean) {
         context.appDataStore.edit { it[CONSENT_GIVEN] = given }
+    }
+
+    val monitoredApps: Flow<Set<String>> = context.appDataStore.data.map { it[MONITORED_APPS] ?: emptySet() }
+    suspend fun setMonitoredApps(apps: Set<String>) {
+        context.appDataStore.edit { it[MONITORED_APPS] = apps }
     }
 }

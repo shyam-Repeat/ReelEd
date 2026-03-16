@@ -12,7 +12,7 @@ import retrofit2.http.Query
 interface SupabaseApi {
     @GET("rest/v1/quiz_questions")
     suspend fun getActiveQuestions(
-        @Query("active") active: Boolean = true,
+        @Query("active", encoded = true) active: String = "eq.true",
         @Query("limit") limit: Int = 100,
         @Header("Range") range: String = "0-99"
     ): List<QuizQuestionDto>

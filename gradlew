@@ -141,6 +141,28 @@ location of your Java installation."
     fi
 fi
 
+java_major_version=$(
+    "$JAVACMD" -version 2>&1 |
+        sed -n '1{s/.*version "\([0-9][0-9]*\).*/\1/p;}'
+)
+if [ -n "$java_major_version" ] && [ "$java_major_version" -ge 25 ]; then
+    for java_home_candidate in \
+        "$JAVA21_HOME" \
+        "$JAVA_21_HOME" \
+        /root/.local/share/mise/installs/java/21.0.2 \
+        /root/.local/share/mise/installs/java/21 \
+        /usr/lib/jvm/java-21-openjdk \
+        /usr/lib/jvm/java-21-openjdk-amd64
+    do
+        if [ -n "$java_home_candidate" ] && [ -x "$java_home_candidate/bin/java" ]; then
+            warn "Detected Java $java_major_version, switching Gradle runtime to Java 21 from $java_home_candidate"
+            JAVA_HOME=$java_home_candidate
+            JAVACMD=$JAVA_HOME/bin/java
+            break
+        fi
+    done
+fi
+
 # Increase the maximum file descriptors if we can.
 if ! "$cygwin" && ! "$darwin" && ! "$nonstop" ; then
     case $MAX_FD in #(

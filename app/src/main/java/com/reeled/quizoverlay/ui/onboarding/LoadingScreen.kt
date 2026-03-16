@@ -16,6 +16,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -36,6 +37,15 @@ fun LoadingScreen(
             repeatMode = RepeatMode.Reverse
         ),
         label = "Pulse"
+    )
+    val shimmer by infiniteTransition.animateFloat(
+        initialValue = 0.25f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1100, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "Shimmer"
     )
 
     var progress by remember { mutableFloatStateOf(0f) }
@@ -106,29 +116,34 @@ fun LoadingScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Canvas(modifier = Modifier.fillMaxSize().alpha(pulse)) {
-                    val path = Path().apply {
-                        moveTo(size.width / 2, size.height / 4)
-                        cubicTo(size.width * 0.2f, size.height / 4, size.width * 0.1f, size.height * 0.4f, size.width * 0.1f, size.height / 2)
-                        cubicTo(size.width * 0.1f, size.height * 0.6f, size.width * 0.2f, size.height * 0.75f, size.width * 0.3f, size.height * 0.8f)
-                        lineTo(size.width / 2, size.height * 0.9f)
-                        lineTo(size.width * 0.7f, size.height * 0.8f)
-                        cubicTo(size.width * 0.8f, size.height * 0.75f, size.width * 0.9f, size.height * 0.6f, size.width * 0.9f, size.height / 2)
-                        cubicTo(size.width * 0.9f, size.height * 0.4f, size.width * 0.8f, size.height / 4, size.width / 2, size.height / 4)
+                    val leftWing = Path().apply {
+                        moveTo(size.width * 0.5f, size.height * 0.28f)
+                        cubicTo(size.width * 0.35f, size.height * 0.28f, size.width * 0.22f, size.height * 0.38f, size.width * 0.22f, size.height * 0.5f)
+                        cubicTo(size.width * 0.22f, size.height * 0.6f, size.width * 0.3f, size.height * 0.7f, size.width * 0.38f, size.height * 0.76f)
+                        cubicTo(size.width * 0.41f, size.height * 0.82f, size.width * 0.45f, size.height * 0.88f, size.width * 0.5f, size.height * 0.93f)
                         close()
                     }
-                    drawPath(path, color = Primary)
+                    val rightWing = Path().apply {
+                        moveTo(size.width * 0.5f, size.height * 0.28f)
+                        cubicTo(size.width * 0.65f, size.height * 0.28f, size.width * 0.78f, size.height * 0.38f, size.width * 0.78f, size.height * 0.5f)
+                        cubicTo(size.width * 0.78f, size.height * 0.63f, size.width * 0.68f, size.height * 0.73f, size.width * 0.58f, size.height * 0.82f)
+                        cubicTo(size.width * 0.55f, size.height * 0.87f, size.width * 0.52f, size.height * 0.9f, size.width * 0.5f, size.height * 0.95f)
+                        close()
+                    }
+                    drawPath(leftWing, color = Primary.copy(alpha = 0.9f))
+                    drawPath(rightWing, color = Primary)
                     
-                    val innerPath = Path().apply {
-                        moveTo(size.width / 2, size.height / 4)
-                        cubicTo(size.width * 0.7f, size.height / 4, size.width * 0.9f, size.height * 0.4f, size.width * 0.9f, size.height / 2)
-                        cubicTo(size.width * 0.9f, size.height * 0.6f, size.width * 0.8f, size.height * 0.75f, size.width * 0.7f, size.height * 0.8f)
-                        lineTo(size.width / 2, size.height * 0.9f)
-                        lineTo(size.width * 0.3f, size.height * 0.8f)
-                        cubicTo(size.width * 0.2f, size.height * 0.75f, size.width * 0.1f, size.height * 0.6f, size.width * 0.1f, size.height / 2)
-                        cubicTo(size.width * 0.1f, size.height * 0.4f, size.width * 0.2f, size.height / 4, size.width / 2, size.height / 4)
-                        close()
+                    drawCircle(color = Color.White.copy(alpha = 0.45f * shimmer), radius = 4.dp.toPx(), center = Offset(size.width * 0.5f, size.height * 0.45f))
+                    drawCircle(color = Color.White.copy(alpha = 0.45f * shimmer), radius = 3.dp.toPx(), center = Offset(size.width * 0.37f, size.height * 0.6f))
+                    drawCircle(color = Color.White.copy(alpha = 0.45f * shimmer), radius = 3.dp.toPx(), center = Offset(size.width * 0.62f, size.height * 0.74f))
+                    rotate(degrees = 20f, pivot = Offset(size.width * 0.88f, size.height * 0.5f)) {
+                        drawLine(
+                            color = Color.White.copy(alpha = 0.28f),
+                            start = Offset(size.width * 0.77f, size.height * 0.41f),
+                            end = Offset(size.width * 0.87f, size.height * 0.48f),
+                            strokeWidth = 4.dp.toPx()
+                        )
                     }
-                    drawPath(innerPath, color = Primary.copy(alpha = 0.5f), style = Stroke(width = 2.dp.toPx()))
                 }
             }
 
@@ -191,5 +206,15 @@ fun LoadingScreen(
                 }
             }
         }
+
+        Text(
+            text = "© 2024 REELED INC.",
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 20.dp),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f),
+            textAlign = TextAlign.Center
+        )
     }
 }

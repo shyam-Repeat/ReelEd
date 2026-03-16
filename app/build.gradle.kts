@@ -39,6 +39,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.8"
@@ -48,6 +49,22 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+}
+
+fun String.escapeForBuildConfig(): String =
+    replace("\\", "\\\\").replace("\"", "\\\"")
+
+val supabaseUrl = (project.findProperty("SUPABASE_URL") as String?)
+    ?.trim()
+    ?.removeSuffix("/")
+    .orEmpty()
+val supabaseAnonKey = (project.findProperty("SUPABASE_ANON_KEY") as String?)
+    ?.trim()
+    .orEmpty()
+
+android.defaultConfig {
+    buildConfigField("String", "SUPABASE_URL", "\"${supabaseUrl.escapeForBuildConfig()}\"")
+    buildConfigField("String", "SUPABASE_ANON_KEY", "\"${supabaseAnonKey.escapeForBuildConfig()}\"")
 }
 
 dependencies {

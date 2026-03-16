@@ -10,8 +10,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
+import androidx.core.content.ContextCompat
 import com.reeled.quizoverlay.prefs.AppPrefs
+import com.reeled.quizoverlay.service.OverlayForegroundService
 import com.reeled.quizoverlay.ui.navigation.AppNavGraph
+import com.reeled.quizoverlay.worker.QuizFetchWorker
 import com.reeled.quizoverlay.ui.navigation.Screen
 import com.reeled.quizoverlay.ui.theme.ReelEdTheme
 import kotlinx.coroutines.flow.first
@@ -27,6 +30,12 @@ class MainActivity : ComponentActivity() {
         // In a larger app, use a Splash Screen or a loading state
         val startDestination = runBlocking {
             getStartDestination(appPrefs)
+        }
+
+        QuizFetchWorker.runOnce(this)
+
+        if (startDestination == Screen.ChildHome.route) {
+            ContextCompat.startForegroundService(this, OverlayForegroundService.startIntent(this))
         }
 
         setContent {

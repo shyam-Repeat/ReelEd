@@ -1,5 +1,6 @@
 package com.reeled.quizoverlay.data.remote
 
+import com.reeled.quizoverlay.BuildConfig
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -7,13 +8,14 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object SupabaseClient {
-    private const val BASE_URL = "https://your-project-id.supabase.co/"
-    private const val API_KEY = "your-anon-key"
+    private val baseUrl: String = BuildConfig.SUPABASE_URL
+    private val apiKey: String = BuildConfig.SUPABASE_ANON_KEY
 
     private val authInterceptor = Interceptor { chain ->
         val request = chain.request().newBuilder()
-            .addHeader("apikey", API_KEY)
-            .addHeader("Authorization", "Bearer $API_KEY")
+            .addHeader("apikey", apiKey)
+            .addHeader("Authorization", "Bearer $apiKey")
+            .addHeader("Accept", "application/json")
             .build()
         chain.proceed(request)
     }
@@ -27,10 +29,19 @@ object SupabaseClient {
         .addInterceptor(loggingInterceptor)
         .build()
 
-    val api: SupabaseApi = Retrofit.Builder()
-        .baseUrl(BASE_URL)
-        .client(client)
-        .addConverterFactory(GsonConverterFactory.create())
-        .build()
-        .create(SupabaseApi::class.java)
+    val isConfigured: Boolean
+        get() = baseUrl.startsWith("http") && apiKey.isNotBlank()
+
+    val api: SupabaseApi? by lazy {
+        if (!isConfigured) {
+            null
+        } else {
+            Retrofit.Builder()
+                .baseUrl("$baseUrl/")
+                .client(client)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build()
+                .create(SupabaseApi::class.java)
+        }
+    }
 }

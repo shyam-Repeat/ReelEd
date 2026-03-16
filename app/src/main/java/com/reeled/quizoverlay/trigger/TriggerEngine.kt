@@ -29,8 +29,11 @@ class TriggerEngine(
 
         val foregroundPackage = foregroundAppDetector.getCurrentForegroundPackage()
         if (foregroundPackage == null || !ForegroundAppDetector.TARGET_PACKAGES.contains(foregroundPackage)) {
+            prefs.clearActiveSession()
             return TriggerDecision.Skip("target_app_not_foreground")
         }
+
+        prefs.updateSessionIfNeeded(foregroundPackage)
 
         if (state.quizzesShownToday >= TriggerConfig.MAX_DAILY) {
             return TriggerDecision.Skip("daily_cap_reached")

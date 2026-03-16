@@ -14,7 +14,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.reeled.quizoverlay.ui.theme.Primary
@@ -30,13 +29,10 @@ fun AppSelectionScreen(
     var selectedApps by remember { mutableStateOf(initialMonitoredApps) }
 
     val appOptions = listOf(
-        AppOption("YouTube", "com.google.android.youtube", "Social Video"),
+        AppOption("YouTube", "com.google.android.youtube", "Video"),
         AppOption("Instagram", "com.instagram.android", "Social Media"),
-        AppOption("TikTok", "com.zhiliaoapp.musically", "Short Video"),
-        AppOption("X (Twitter)", "com.twitter.android", "Social Media"),
-        AppOption("Facebook", "com.facebook.katana", "Social Media"),
-        AppOption("Snapchat", "com.snapchat.android", "Social Media"),
-        AppOption("Pinterest", "com.pinterest", "Social Media")
+        AppOption("X", "com.twitter.android", "Social Media"),
+        AppOption("Facebook", "com.facebook.katana", "Social Media")
     )
 
     fun toggleApp(packageName: String) {
@@ -57,7 +53,7 @@ fun AppSelectionScreen(
     ) {
         // Header
         CenterAlignedTopAppBar(
-            title = { Text("Select Apps", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
+            title = { Text("Detect Apps", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
             navigationIcon = {
                 IconButton(onClick = onBack) {
                     Icon(Icons.Default.ArrowBackIosNew, contentDescription = "Back", modifier = Modifier.size(20.dp))
@@ -73,11 +69,11 @@ fun AppSelectionScreen(
                 verticalAlignment = Alignment.Bottom
             ) {
                 Text("Setup Progress", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-                Text("5 of 9", color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Medium, fontSize = 14.sp)
+                Text("6 of 9", color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Medium, fontSize = 14.sp)
             }
             Spacer(modifier = Modifier.height(12.dp))
             LinearProgressIndicator(
-                progress = 5f / 9f,
+                progress = 6f / 9f,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(8.dp),
@@ -92,10 +88,10 @@ fun AppSelectionScreen(
                 .weight(1f)
                 .padding(24.dp)
         ) {
-            Text("Which apps should trigger quizzes?", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+            Text("Choose apps to detect", fontSize = 24.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                "Select the social media or entertainment apps you want ReelEd to monitor.",
+                "Pick social apps that should trigger monitoring and quiz overlays.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 lineHeight = 22.sp

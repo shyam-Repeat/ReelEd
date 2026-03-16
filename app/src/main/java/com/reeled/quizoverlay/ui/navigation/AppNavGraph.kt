@@ -1,19 +1,39 @@
 package com.reeled.quizoverlay.ui.navigation
 
+import android.Manifest
+import android.app.Application
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.os.PowerManager
+import android.provider.Settings
+import androidx.core.content.ContextCompat
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.reeled.quizoverlay.prefs.PinPrefs
+import com.reeled.quizoverlay.service.OverlayForegroundService
 import com.reeled.quizoverlay.ui.childhome.ChildHomeScreen
-import com.reeled.quizoverlay.ui.dashboard.ParentDashboardScreen
 import com.reeled.quizoverlay.ui.dashboard.DashboardViewModel
 import com.reeled.quizoverlay.ui.onboarding.*
 import kotlinx.coroutines.launch
+import com.reeled.quizoverlay.ui.dashboard.ParentDashboardScreen
+import com.reeled.quizoverlay.ui.onboarding.BatteryOptScreen
+import com.reeled.quizoverlay.ui.onboarding.ConsentScreen
+import com.reeled.quizoverlay.ui.onboarding.OnboardingSuccessScreen
+import com.reeled.quizoverlay.ui.onboarding.OnboardingViewModel
+import com.reeled.quizoverlay.ui.onboarding.PermissionNotifScreen
+import com.reeled.quizoverlay.ui.onboarding.PermissionOverlayScreen
+import com.reeled.quizoverlay.ui.onboarding.PermissionUsageScreen
+import com.reeled.quizoverlay.ui.onboarding.PinSetupScreen
+import com.reeled.quizoverlay.ui.onboarding.WelcomeScreen
 
 sealed class Screen(val route: String) {
     object Loading : Screen("loading")
@@ -39,6 +59,19 @@ fun AppNavGraph(
     val context = LocalContext.current
     val appPrefs = androidx.compose.runtime.remember { com.reeled.quizoverlay.prefs.AppPrefs(context) }
     val scope = rememberCoroutineScope()
+    val application = context.applicationContext as Application
+
+    val onboardingViewModel: OnboardingViewModel = viewModel(
+        factory = OnboardingViewModel.provideFactory(application)
+    )
+    val dashboardViewModel: DashboardViewModel = viewModel(
+        factory = DashboardViewModel.provideFactory(application)
+    )
+
+    fun launchIntent(intent: Intent) {
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        context.startActivity(intent)
+    }
 
     NavHost(
         navController = navController,
@@ -57,15 +90,18 @@ fun AppNavGraph(
         }
         composable(Screen.Consent.route) {
             ConsentScreen(
-                onAccepted = { navController.navigate(Screen.PinSetup.route) },
+                onAccepted = {
+                    onboardingViewModel.onConsentAccepted()
+                    navController.navigate(Screen.PinSetup.route)
+                },
                 onBack = { navController.popBackStack() }
             )
         }
         composable(Screen.PinSetup.route) {
             PinSetupScreen(
-                onPinSet = { pin -> 
-                    // Save PIN logic would go here
-                    navController.navigate(Screen.PermissionOverlay.route) 
+                onPinSet = { pin ->
+                    onboardingViewModel.onPinSet(pin)
+                    navController.navigate(Screen.PermissionOverlay.route)
                 },
                 onBack = { navController.popBackStack() }
             )
@@ -78,6 +114,11 @@ fun AppNavGraph(
                     val intent = android.content.Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION)
                     intent.data = android.net.Uri.parse("package:${context.packageName}")
                     context.startActivity(intent)
+                onOpenSettings = {
+                    launchIntent(Intent(
+                        Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                        Uri.parse("package:${context.packageName}")
+                    ))
                 }
             )
         }
@@ -101,6 +142,8 @@ fun AppNavGraph(
                     scope.launch {
                         appPrefs.setMonitoredApps(apps)
                     }
+                onGrantAccess = {
+                    launchIntent(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
                 }
             )
         }
@@ -112,6 +155,15 @@ fun AppNavGraph(
                     val intent = android.content.Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS)
                     intent.putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, context.packageName)
                     context.startActivity(intent)
+                onAllowNotifications = {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        launchIntent(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                            data = Uri.parse("package:${context.packageName}")
+                            putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                            putExtra("android.provider.extra.APP_PACKAGE", context.packageName)
+                            putExtra("permission", Manifest.permission.POST_NOTIFICATIONS)
+                        })
+                    }
                 }
             )
         }
@@ -123,6 +175,16 @@ fun AppNavGraph(
                     val intent = android.content.Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
                     intent.data = android.net.Uri.parse("package:${context.packageName}")
                     context.startActivity(intent)
+                onDisableOptimization = {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        val pm = context.getSystemService(PowerManager::class.java)
+                        if (!pm.isIgnoringBatteryOptimizations(context.packageName)) {
+                            launchIntent(Intent(
+                                Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                                Uri.parse("package:${context.packageName}")
+                            ))
+                        }
+                    }
                 }
             )
         }
@@ -130,6 +192,11 @@ fun AppNavGraph(
             OnboardingSuccessScreen(
                 onEnterChildMode = {
                     scope.launch { appPrefs.setOnboardingComplete(true) }
+                    onboardingViewModel.onOnboardingCompleted()
+                    ContextCompat.startForegroundService(
+                        context,
+                        OverlayForegroundService.startIntent(context)
+                    )
                     navController.navigate(Screen.ChildHome.route) {
                         popUpTo(Screen.Welcome.route) { inclusive = true }
                     }
@@ -138,13 +205,14 @@ fun AppNavGraph(
         }
         composable(Screen.ChildHome.route) {
             val pinPrefs = androidx.compose.runtime.remember { com.reeled.quizoverlay.prefs.PinPrefs(context) }
+            val pinPrefs = androidx.compose.runtime.remember { PinPrefs(context) }
             ChildHomeScreen(
                 pinPrefs = pinPrefs,
                 onNavigateToDashboard = { navController.navigate(Screen.ParentDashboard.route) }
             )
         }
         composable(Screen.ParentDashboard.route) {
-            ParentDashboardScreen(viewModel = DashboardViewModel())
+            ParentDashboardScreen(viewModel = dashboardViewModel)
         }
     }
 }

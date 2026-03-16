@@ -24,7 +24,8 @@ class QuizRepository(context: Context) {
     suspend fun getActiveQuestionCount(): Int = questionDao.getActiveCount()
 
     suspend fun fetchActiveQuestionsFromRemote(limit: Int): List<QuizQuestionEntity> {
-        return api.getActiveQuestions(limit = limit).map { it.toEntity() }
+        val remoteApi = api ?: return emptyList()
+        return remoteApi.getActiveQuestions(limit = limit).map { it.toEntity() }
     }
 
     suspend fun upsertQuestions(questions: List<QuizQuestionEntity>) {
@@ -62,7 +63,8 @@ class QuizRepository(context: Context) {
     suspend fun getUnsyncedAttempts(): List<QuizAttemptEntity> = attemptDao.getUnsynced()
 
     suspend fun batchUploadAttempts(attempts: List<QuizAttemptEntity>) {
-        api.postAttempts(attempts.map { it.toDto() })
+        val remoteApi = api ?: return
+        remoteApi.postAttempts(attempts.map { it.toDto() })
     }
 
     suspend fun markAttemptsSynced(ids: List<String>) {
@@ -85,7 +87,8 @@ class QuizRepository(context: Context) {
     suspend fun getUnsyncedEvents(): List<EventLogEntity> = eventLogDao.getUnsynced()
 
     suspend fun batchUploadEvents(events: List<EventLogEntity>) {
-        api.postEvents(events.map { it.toDto() })
+        val remoteApi = api ?: return
+        remoteApi.postEvents(events.map { it.toDto() })
     }
 
     suspend fun markEventsSynced(ids: List<String>) {

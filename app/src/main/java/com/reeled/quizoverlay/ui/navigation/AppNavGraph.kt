@@ -7,6 +7,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
+import androidx.core.content.ContextCompat
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -15,6 +16,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.reeled.quizoverlay.prefs.PinPrefs
+import com.reeled.quizoverlay.service.OverlayForegroundService
 import com.reeled.quizoverlay.ui.childhome.ChildHomeScreen
 import com.reeled.quizoverlay.ui.dashboard.DashboardViewModel
 import com.reeled.quizoverlay.ui.dashboard.ParentDashboardScreen
@@ -146,6 +148,10 @@ fun AppNavGraph(
             OnboardingSuccessScreen(
                 onEnterChildMode = {
                     onboardingViewModel.onOnboardingCompleted()
+                    ContextCompat.startForegroundService(
+                        context,
+                        OverlayForegroundService.startIntent(context)
+                    )
                     navController.navigate(Screen.ChildHome.route) {
                         popUpTo(Screen.Welcome.route) { inclusive = true }
                     }

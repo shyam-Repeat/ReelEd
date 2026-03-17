@@ -1,5 +1,6 @@
 package com.reeled.quizoverlay.trigger
 
+import android.util.Log
 import com.reeled.quizoverlay.data.repository.QuizRepository
 import com.reeled.quizoverlay.model.QuizQuestion
 import com.reeled.quizoverlay.prefs.TriggerPrefs
@@ -11,56 +12,60 @@ class TriggerEngine(
     private val videoPlaybackDetector: VideoPlaybackDetector
 ) {
 
-    suspend fun checkAndFire(): TriggerDecision {
+    private val TAG = "TriggerEngine"
+
+    suspend fun checkAndFire(monitoredApps: Set<String>): TriggerDecision {
         val now = System.currentTimeMillis()
         val state = prefs.getTriggerState()
 
         if (state.parentPauseActive) {
             if (now < state.parentPauseExpiryMs) {
-                return TriggerDecision.Skip("parent_paused")
+                return skip("parent_paused")
             } else {
                 prefs.clearParentPause()
             }
         }
 
         if (state.overlayActive) {
-            return TriggerDecision.Skip("overlay_active")
+            return skip("overlay_active")
         }
 
         val foregroundPackage = foregroundAppDetector.getCurrentForegroundPackage()
-        if (foregroundPackage == null || !ForegroundAppDetector.TARGET_PACKAGES.contains(foregroundPackage)) {
+        val allTargets = if (monitoredApps.isNotEmpty()) monitoredApps else ForegroundAppDetector.TARGET_PACKAGES
+        
+        if (foregroundPackage == null || !allTargets.contains(foregroundPackage)) {
             prefs.clearActiveSession()
-            return TriggerDecision.Skip("target_app_not_foreground")
+            return skip("target_app_not_foreground")
         }
 
         prefs.updateSessionIfNeeded(foregroundPackage)
 
         if (state.quizzesShownToday >= TriggerConfig.MAX_DAILY) {
-            return TriggerDecision.Skip("daily_cap_reached")
+            return skip("daily_cap_reached")
         }
 
         val effectiveCooldown = computeEffectiveCooldown(state)
         if (now - state.lastQuizShownTime < effectiveCooldown) {
-            return TriggerDecision.Skip("cooldown_active")
+            return skip("cooldown_active")
         }
 
         if (now - state.sessionStartTime < TriggerConfig.WARMUP_MS) {
-            return TriggerDecision.Skip("warmup_not_done")
+            return skip("warmup_not_done")
         }
 
         if (now - state.lastQuizShownTime < TriggerConfig.INTERVAL_MS) {
-            return TriggerDecision.Skip("interval_not_elapsed")
+            return skip("interval_not_elapsed")
         }
 
-        val interruptScore = videoPlaybackDetector.getInterruptScore()
+        val interruptScore = videoPlaybackDetector.getInterruptScore(monitoredApps)
         val remainingQuota = TriggerConfig.MAX_DAILY - state.quizzesShownToday
         if (interruptScore.isPoor && remainingQuota > 1) {
-            return TriggerDecision.Skip("poor_interrupt_moment")
+            return skip("poor_interrupt_moment")
         }
 
         val allQuestions = repository.getAllActiveQuestions()
         if (allQuestions.isEmpty()) {
-            return TriggerDecision.Skip("no_questions_cached")
+            return skip("no_questions_cached")
         }
 
         val attemptedTodayIds = repository.getAttemptedQuestionIdsToday().toSet()
@@ -71,7 +76,13 @@ class TriggerEngine(
             quizzesShownToday = state.quizzesShownToday
         )
 
+        Log.d(TAG, "FIRE: Quiz for $foregroundPackage")
         return TriggerDecision.Fire(question, foregroundPackage)
+    }
+
+    private fun skip(reason: String): TriggerDecision {
+        Log.d(TAG, "SKIP: $reason")
+        return TriggerDecision.Skip(reason)
     }
 
     private fun computeEffectiveCooldown(state: TriggerState): Long {

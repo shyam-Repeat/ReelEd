@@ -12,8 +12,8 @@ class VideoPlaybackDetector(
         context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
     }
 
-    fun getInterruptScore(): InterruptScore {
-        val isTargetForeground = foregroundAppDetector.isTargetAppInForeground()
+    fun getInterruptScore(monitoredApps: Set<String> = emptySet()): InterruptScore {
+        val isTargetForeground = foregroundAppDetector.isTargetAppInForeground(monitoredApps)
         val isAudioActive = audioManager.isMusicActive
         val ringerMode = audioManager.ringerMode
 
@@ -33,7 +33,8 @@ class VideoPlaybackDetector(
         )
     }
 
-    fun isAcceptableInterruptMoment(): Boolean = getInterruptScore().score >= 1
+    fun isAcceptableInterruptMoment(monitoredApps: Set<String> = emptySet()): Boolean = 
+        getInterruptScore(monitoredApps).score >= 1
 
     data class InterruptScore(
         val score: Int,

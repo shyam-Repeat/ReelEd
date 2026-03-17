@@ -20,8 +20,10 @@ import com.reeled.quizoverlay.R
 import com.reeled.quizoverlay.data.repository.QuizRepository
 import com.reeled.quizoverlay.model.QuizAttemptResult
 import com.reeled.quizoverlay.model.QuizCardConfig
+import com.reeled.quizoverlay.prefs.AppPrefs
 import com.reeled.quizoverlay.prefs.TriggerPrefs
 import com.reeled.quizoverlay.trigger.ForegroundAppDetector
+import com.reeled.quizoverlay.trigger.TriggerConfig
 import com.reeled.quizoverlay.trigger.TriggerDecision
 import com.reeled.quizoverlay.trigger.TriggerEngine
 import com.reeled.quizoverlay.trigger.VideoPlaybackDetector
@@ -34,6 +36,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -61,6 +64,7 @@ class OverlayForegroundService : Service() {
     private lateinit var triggerEngine: TriggerEngine
     private lateinit var repository: QuizRepository
     private lateinit var triggerPrefs: TriggerPrefs
+    private lateinit var appPrefs: AppPrefs
     private lateinit var audioMuter: AudioMuter
     private lateinit var windowManager: WindowManager
     private lateinit var lifecycleOwner: OverlayLifecycleOwner
@@ -84,6 +88,7 @@ class OverlayForegroundService : Service() {
 
         audioMuter = AudioMuter(this)
         triggerPrefs = TriggerPrefs(this)
+        appPrefs = AppPrefs(this)
         repository = QuizRepository(this)
 
         val foregroundAppDetector = ForegroundAppDetector(this)
@@ -168,7 +173,8 @@ class OverlayForegroundService : Service() {
         pollingJob = serviceScope.launch {
             while (isActive) {
                 try {
-                    val decision = triggerEngine.checkAndFire()
+                    val monitoredApps = appPrefs.monitoredApps.first()
+                    val decision = triggerEngine.checkAndFire(monitoredApps)
 
                     if (decision is TriggerDecision.Fire) {
                         withContext(Dispatchers.Main) {
@@ -182,7 +188,7 @@ class OverlayForegroundService : Service() {
                 } catch (_: Exception) {
                     // Keep service alive and continue polling.
                 }
-                delay(30000L)
+                delay(TriggerConfig.POLLING_INTERVAL_MS)
             }
         }
     }

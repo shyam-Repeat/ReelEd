@@ -37,6 +37,7 @@ import com.reeled.quizoverlay.ui.onboarding.PermissionUsageScreen
 import com.reeled.quizoverlay.ui.onboarding.PinSetupScreen
 import com.reeled.quizoverlay.ui.onboarding.WelcomeScreen
 import com.reeled.quizoverlay.util.PermissionChecker
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 sealed class Screen(val route: String) {

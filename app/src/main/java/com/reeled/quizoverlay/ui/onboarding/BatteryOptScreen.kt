@@ -53,6 +53,12 @@ fun BatteryOptScreen(
         }
     }
 
+    LaunchedEffect(isGranted) {
+        if (isGranted) {
+            onNext()
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -80,7 +86,7 @@ fun BatteryOptScreen(
             }
             Spacer(modifier = Modifier.height(8.dp))
             LinearProgressIndicator(
-                progress = 8f / 9f,
+                progress = { 8f / 9f },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(2.dp),

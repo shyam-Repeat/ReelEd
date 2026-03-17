@@ -5,9 +5,11 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.reeled.quizoverlay.data.local.dao.EventLogDao
+import com.reeled.quizoverlay.data.local.dao.OverlaySessionDao
 import com.reeled.quizoverlay.data.local.dao.QuizAttemptDao
 import com.reeled.quizoverlay.data.local.dao.QuizQuestionDao
 import com.reeled.quizoverlay.data.local.entity.EventLogEntity
+import com.reeled.quizoverlay.data.local.entity.OverlaySessionEntity
 import com.reeled.quizoverlay.data.local.entity.QuizAttemptEntity
 import com.reeled.quizoverlay.data.local.entity.QuizQuestionEntity
 
@@ -15,7 +17,8 @@ import com.reeled.quizoverlay.data.local.entity.QuizQuestionEntity
     entities = [
         QuizQuestionEntity::class,
         QuizAttemptEntity::class,
-        EventLogEntity::class
+        EventLogEntity::class,
+        OverlaySessionEntity::class
     ],
     version = 1,
     exportSchema = false
@@ -24,6 +27,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun quizQuestionDao(): QuizQuestionDao
     abstract fun quizAttemptDao(): QuizAttemptDao
     abstract fun eventLogDao(): EventLogDao
+    abstract fun overlaySessionDao(): OverlaySessionDao
 
     companion object {
         @Volatile

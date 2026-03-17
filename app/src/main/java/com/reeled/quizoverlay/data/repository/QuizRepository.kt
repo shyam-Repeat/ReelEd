@@ -1,8 +1,10 @@
 package com.reeled.quizoverlay.data.repository
 
 import android.content.Context
+import android.os.Build
 import com.reeled.quizoverlay.data.local.AppDatabase
 import com.reeled.quizoverlay.data.local.entity.EventLogEntity
+import com.reeled.quizoverlay.data.local.entity.OverlaySessionEntity
 import com.reeled.quizoverlay.data.local.entity.QuizAttemptEntity
 import com.reeled.quizoverlay.data.local.entity.QuizQuestionEntity
 import com.reeled.quizoverlay.data.local.entity.toDomain
@@ -19,6 +21,7 @@ class QuizRepository(internal val context: Context) {
     private val questionDao = database.quizQuestionDao()
     private val attemptDao = database.quizAttemptDao()
     private val eventLogDao = database.eventLogDao()
+    private val sessionDao = database.overlaySessionDao()
     private val appPrefs = AppPrefs(context)
     private val api = SupabaseClient.api
 

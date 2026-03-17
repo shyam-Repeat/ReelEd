@@ -35,8 +35,7 @@ import kotlinx.coroutines.launch
 fun TapChoiceCard(
     config: QuizCardConfig,
     sourceApp: String,
-    onResult: (QuizAttemptResult) -> Unit,
-    onDismissed: () -> Unit
+    onResult: (QuizAttemptResult) -> Unit
 ) {
     val payload = config.payload as QuizPayload.TapChoicePayload
     val rules = config.rules

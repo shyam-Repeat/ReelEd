@@ -34,8 +34,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 fun FillBlankCard(
     config: QuizCardConfig,
     sourceApp: String,
-    onResult: (QuizAttemptResult) -> Unit,
-    onDismissed: () -> Unit
+    onResult: (QuizAttemptResult) -> Unit
 ) {
     val payload = config.payload as QuizPayload.FillBlankPayload
     val parts = payload.sentenceTemplate.split("___")

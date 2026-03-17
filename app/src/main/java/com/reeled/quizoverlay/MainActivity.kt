@@ -55,10 +55,6 @@ class MainActivity : ComponentActivity() {
     }
 
     private suspend fun getStartDestination(prefs: AppPrefs): String {
-        return if (!prefs.onboardingComplete.first()) {
-            Screen.Welcome.route
-        } else {
-            Screen.ChildHome.route
-        }
+        return Screen.Loading.route
     }
 }

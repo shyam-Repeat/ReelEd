@@ -1,5 +1,6 @@
 package com.reeled.quizoverlay.data.remote
 import com.reeled.quizoverlay.data.remote.dto.EventLogDto
+import com.reeled.quizoverlay.data.remote.dto.OverlaySessionDto
 import com.reeled.quizoverlay.data.remote.dto.QuizAttemptDto
 import com.reeled.quizoverlay.data.remote.dto.QuizQuestionDto
 import com.reeled.quizoverlay.data.remote.dto.TesterDto
@@ -27,6 +28,12 @@ interface SupabaseApi {
 ...
     suspend fun postAttempts(
         @Body attempts: List<QuizAttemptDto>,
+        @Header("Prefer") prefer: String = "return=representation"
+    )
+
+    @POST("rest/v1/overlay_sessions")
+    suspend fun postSessions(
+        @Body sessions: List<OverlaySessionDto>,
         @Header("Prefer") prefer: String = "return=representation"
     )
 

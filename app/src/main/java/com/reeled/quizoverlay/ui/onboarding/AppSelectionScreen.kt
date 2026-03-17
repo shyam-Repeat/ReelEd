@@ -73,7 +73,7 @@ fun AppSelectionScreen(
             }
             Spacer(modifier = Modifier.height(12.dp))
             LinearProgressIndicator(
-                progress = 6f / 9f,
+                progress = { 6f / 9f },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(8.dp),

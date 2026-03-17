@@ -51,8 +51,8 @@ fun LoadingScreen(
     var progress by remember { mutableFloatStateOf(0f) }
 
     LaunchedEffect(Unit) {
-        val totalTime = 2500L
-        val steps = 50
+        val totalTime = 3000L
+        val steps = 60
         val delayPerStep = totalTime / steps
         for (i in 1..steps) {
             delay(delayPerStep)

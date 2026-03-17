@@ -37,6 +37,7 @@ import com.reeled.quizoverlay.ui.onboarding.PermissionUsageScreen
 import com.reeled.quizoverlay.ui.onboarding.PinSetupScreen
 import com.reeled.quizoverlay.ui.onboarding.WelcomeScreen
 import com.reeled.quizoverlay.util.PermissionChecker
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 sealed class Screen(val route: String) {
@@ -84,8 +85,12 @@ fun AppNavGraph(
     ) {
         composable(Screen.Loading.route) {
             LoadingScreen(onLoadingComplete = {
-                navController.navigate(Screen.Welcome.route) {
-                    popUpTo(Screen.Loading.route) { inclusive = true }
+                scope.launch {
+                    val isComplete = appPrefs.onboardingComplete.first()
+                    val destination = if (isComplete) Screen.ChildHome.route else Screen.Welcome.route
+                    navController.navigate(destination) {
+                        popUpTo(Screen.Loading.route) { inclusive = true }
+                    }
                 }
             })
         }
@@ -96,8 +101,8 @@ fun AppNavGraph(
 
         composable(Screen.Consent.route) {
             ConsentScreen(
-                onAccepted = {
-                    onboardingViewModel.onConsentAccepted()
+                onAccepted = { nickname ->
+                    onboardingViewModel.onConsentAccepted(nickname)
                     navController.navigate(Screen.PinSetup.route)
                 },
                 onBack = { navController.popBackStack() }
@@ -210,6 +215,13 @@ fun AppNavGraph(
                         OverlayForegroundService.startIntent(context)
                     )
                     navController.navigate(Screen.ChildHome.route) {
+                        popUpTo(Screen.Welcome.route) { inclusive = true }
+                    }
+                },
+                onGoToDashboard = {
+                    scope.launch { appPrefs.setOnboardingComplete(true) }
+                    onboardingViewModel.onOnboardingCompleted()
+                    navController.navigate(Screen.ParentDashboard.route) {
                         popUpTo(Screen.Welcome.route) { inclusive = true }
                     }
                 }

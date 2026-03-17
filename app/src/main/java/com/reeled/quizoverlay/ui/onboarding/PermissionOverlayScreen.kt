@@ -48,6 +48,12 @@ fun PermissionOverlayScreen(
         }
     }
 
+    LaunchedEffect(isGranted) {
+        if (isGranted) {
+            onNext()
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -75,7 +81,7 @@ fun PermissionOverlayScreen(
             }
             Spacer(modifier = Modifier.height(12.dp))
             LinearProgressIndicator(
-                progress = 4f / 9f,
+                progress = { 4f / 9f },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(8.dp),

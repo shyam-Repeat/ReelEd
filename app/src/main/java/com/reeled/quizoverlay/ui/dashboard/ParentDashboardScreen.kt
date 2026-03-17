@@ -24,6 +24,17 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.reeled.quizoverlay.ui.pin.PinActivity
 
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import com.reeled.quizoverlay.prefs.PinPrefs
+import com.reeled.quizoverlay.prefs.AppPrefs
+import com.reeled.quizoverlay.ui.pin.PinGateDialog
+import com.reeled.quizoverlay.service.OverlayForegroundService
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+
 @Composable
 fun ParentDashboardScreen(
     viewModel: DashboardViewModel,
@@ -31,14 +42,24 @@ fun ParentDashboardScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val pinPrefs = remember { PinPrefs(context) }
+    val appPrefs = remember { AppPrefs(context) }
+
+    var showPinDialog by remember { mutableStateOf(false) }
+    val pinHash by pinPrefs.pinHash.collectAsState(initial = null)
+    val failedAttempts by pinPrefs.failedAttempts.collectAsState(initial = 0)
+    val lockoutUntil by pinPrefs.lockoutUntil.collectAsState(initial = 0L)
+    
+    val currentTime = System.currentTimeMillis()
+    val isLocked = lockoutUntil > currentTime
+    val lockoutTimeRemaining = if (isLocked) lockoutUntil - currentTime else 0L
 
     LaunchedEffect(viewModel) {
         viewModel.actions.collect { action ->
             when (action) {
                 DashboardAction.ShowPinPrompt -> {
-                    context.startActivity(Intent(context, PinActivity::class.java).apply {
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    })
+                    showPinDialog = true
                 }
                 DashboardAction.OpenFeedback -> {
                     val intent = Intent(Intent.ACTION_SENDTO).apply {
@@ -71,6 +92,35 @@ fun ParentDashboardScreen(
                 onFeedback = viewModel::openFeedback,
             )
         }
+    }
+
+    if (showPinDialog) {
+        PinGateDialog(
+            title = "Disable Overlay",
+            subtitle = "Enter PIN to stop the service",
+            storedPinHash = pinHash ?: "",
+            isLocked = isLocked,
+            lockoutTimeRemaining = lockoutTimeRemaining,
+            onPinCorrect = {
+                scope.launch {
+                    pinPrefs.resetFailedAttempts()
+                    showPinDialog = false
+                    // Logic to disable overlay
+                    context.stopService(Intent(context, OverlayForegroundService::class.java))
+                    Toast.makeText(context, "Overlay Disabled", Toast.LENGTH_SHORT).show()
+                }
+            },
+            onPinIncorrect = {
+                scope.launch {
+                    pinPrefs.incrementFailedAttempts()
+                    val attempts = pinPrefs.failedAttempts.first()
+                    if (attempts >= 3) {
+                        pinPrefs.setLockout(System.currentTimeMillis() + 60_000)
+                    }
+                }
+            },
+            onDismiss = { showPinDialog = false }
+        )
     }
 }
 

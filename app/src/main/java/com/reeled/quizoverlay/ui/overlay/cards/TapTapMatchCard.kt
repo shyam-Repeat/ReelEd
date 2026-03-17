@@ -28,8 +28,7 @@ import kotlinx.coroutines.launch
 fun TapTapMatchCard(
     config: QuizCardConfig,
     sourceApp: String,
-    onResult: (QuizAttemptResult) -> Unit,
-    onDismissed: () -> Unit
+    onResult: (QuizAttemptResult) -> Unit
 ) {
     val payload = config.payload as QuizPayload.TapTapMatchPayload
     val startTime = remember { System.currentTimeMillis() }

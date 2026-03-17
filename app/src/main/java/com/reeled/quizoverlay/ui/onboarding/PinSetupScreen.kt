@@ -11,8 +11,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.outlined.Backspace
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.Backspace
 import androidx.compose.material.icons.outlined.EnhancedEncryption
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -91,7 +91,7 @@ fun PinSetupScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onBack) {
-                Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
             }
             Text(
                 "Security Setup",
@@ -115,7 +115,7 @@ fun PinSetupScreen(
             }
             Spacer(modifier = Modifier.height(8.dp))
             LinearProgressIndicator(
-                progress = 0.375f,
+                progress = { 0.375f },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(6.dp),
@@ -209,7 +209,7 @@ fun PinSetupScreen(
                     onClick = { handleBackspace() },
                     modifier = Modifier.size(64.dp)
                 ) {
-                    Icon(Icons.Outlined.Backspace, contentDescription = "Delete", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(32.dp))
+                    Icon(Icons.AutoMirrored.Outlined.Backspace, contentDescription = "Delete", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(32.dp))
                 }
             }
         }

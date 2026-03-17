@@ -1,24 +1,90 @@
 package com.reeled.quizoverlay.data.repository
 
 import android.content.Context
+import android.os.Build
 import com.reeled.quizoverlay.data.local.AppDatabase
 import com.reeled.quizoverlay.data.local.entity.EventLogEntity
+import com.reeled.quizoverlay.data.local.entity.OverlaySessionEntity
 import com.reeled.quizoverlay.data.local.entity.QuizAttemptEntity
 import com.reeled.quizoverlay.data.local.entity.QuizQuestionEntity
 import com.reeled.quizoverlay.data.local.entity.toDomain
 import com.reeled.quizoverlay.data.remote.SupabaseClient
+import com.reeled.quizoverlay.data.remote.dto.TesterDto
 import com.reeled.quizoverlay.data.remote.dto.toDto
 import com.reeled.quizoverlay.data.remote.dto.toEntity
 import com.reeled.quizoverlay.prefs.AppPrefs
+import com.reeled.quizoverlay.util.PermissionChecker
 import java.util.UUID
 
-class QuizRepository(context: Context) {
+class QuizRepository(private val context: Context) {
     private val database = AppDatabase.getDatabase(context)
     private val questionDao = database.quizQuestionDao()
     private val attemptDao = database.quizAttemptDao()
     private val eventLogDao = database.eventLogDao()
+    private val sessionDao = database.overlaySessionDao()
     private val appPrefs = AppPrefs(context)
     private val api = SupabaseClient.api
+
+    // Tester
+    suspend fun registerTester(nickname: String) {
+        val testerId = appPrefs.getTesterId()
+        val dto = TesterDto(
+            id = testerId,
+            nickname = nickname,
+            hasOverlayPerm = PermissionChecker.hasOverlayPermission(context),
+            hasUsageStatsPerm = PermissionChecker.hasUsageStatsPermission(context),
+            hasNotificationPerm = PermissionChecker.hasNotificationPermission(context),
+            isBatteryOptimized = !PermissionChecker.isIgnoringBatteryOptimizations(context),
+            appVersion = "1.0.0", // TODO: Get from BuildConfig
+            deviceInfo = "${Build.MANUFACTURER} ${Build.MODEL} (API ${Build.VERSION.SDK_INT})",
+            createdAt = System.currentTimeMillis()
+        )
+        api?.postTester(dto)
+    }
+
+    // Sessions
+    suspend fun startSession(sessionId: String) {
+        val session = OverlaySessionEntity(
+            id = sessionId,
+            testerId = appPrefs.getTesterId(),
+            startedAt = System.currentTimeMillis()
+        )
+        sessionDao.insert(session)
+    }
+
+    suspend fun updateSessionStats(
+        sessionId: String,
+        shown: Int,
+        answered: Int,
+        dismissed: Int,
+        expired: Int
+    ) {
+        sessionDao.getById(sessionId)?.let { session ->
+            session.totalQuizzesShown = shown
+            session.totalAnswered = answered
+            session.totalDismissed = dismissed
+            session.totalTimerExpired = expired
+            sessionDao.update(session)
+        }
+    }
+
+    suspend fun endSession(sessionId: String) {
+        sessionDao.getById(sessionId)?.let { session ->
+            session.endedAt = System.currentTimeMillis()
+            sessionDao.update(session)
+        }
+    }
+
+    suspend fun getUnsyncedSessions(): List<OverlaySessionEntity> = sessionDao.getUnsynced()
+
+    suspend fun batchUploadSessions(sessions: List<OverlaySessionEntity>) {
+        val remoteApi = api ?: return
+        remoteApi.postSessions(sessions.map { it.toDto() })
+    }
+
+    suspend fun markSessionsSynced(ids: List<String>) {
+        sessionDao.markSynced(ids)
+    }
 
     // Questions
     suspend fun getActiveQuestionCount(): Int = questionDao.getActiveCount()

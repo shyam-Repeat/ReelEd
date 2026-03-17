@@ -65,6 +65,12 @@ class OverlayForegroundService : Service() {
     private lateinit var windowManager: WindowManager
     private lateinit var lifecycleOwner: OverlayLifecycleOwner
 
+    private var currentSessionId: String? = null
+    private var totalQuizzesShown = 0
+    private var totalAnswered = 0
+    private var totalDismissed = 0
+    private var totalTimerExpired = 0
+
     private var overlayView: ComposeView? = null
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var pollingJob: Job? = null
@@ -90,6 +96,13 @@ class OverlayForegroundService : Service() {
         )
 
         createNotificationChannel()
+
+        // Start new session
+        val sessionId = java.util.UUID.randomUUID().toString()
+        currentSessionId = sessionId
+        serviceScope.launch(Dispatchers.IO) {
+            repository.startSession(sessionId)
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -124,7 +137,13 @@ class OverlayForegroundService : Service() {
     override fun onDestroy() {
         sessionActive = false
         pollingJob?.cancel()
-        serviceScope.cancel()
+        currentSessionId?.let { sessionId ->
+            serviceScope.launch(Dispatchers.IO) {
+                repository.endSession(sessionId)
+                serviceScope.cancel()
+            }
+        } ?: serviceScope.cancel()
+
         removeOverlayIfShowing()
         lifecycleOwner.onPause()
         lifecycleOwner.onStop()
@@ -144,6 +163,8 @@ class OverlayForegroundService : Service() {
                     if (decision is TriggerDecision.Fire) {
                         withContext(Dispatchers.Main) {
                             if (overlayView == null) {
+                                totalQuizzesShown++
+                                updateSessionStats()
                                 showOverlay(decision.question, decision.sourceApp)
                             }
                         }
@@ -153,6 +174,19 @@ class OverlayForegroundService : Service() {
                 }
                 delay(30000L)
             }
+        }
+    }
+
+    private fun updateSessionStats() {
+        val sessionId = currentSessionId ?: return
+        serviceScope.launch(Dispatchers.IO) {
+            repository.updateSessionStats(
+                sessionId,
+                totalQuizzesShown,
+                totalAnswered,
+                totalDismissed,
+                totalTimerExpired
+            )
         }
     }
 
@@ -186,6 +220,14 @@ class OverlayForegroundService : Service() {
         serviceScope.launch(Dispatchers.IO) {
             try {
                 withContext(Dispatchers.Main) {
+                    if (result.wasTimerExpired) {
+                        totalTimerExpired++
+                    } else if (result.wasDismissed) {
+                        totalDismissed++
+                    } else {
+                        totalAnswered++
+                    }
+                    updateSessionStats()
                     removeOverlayIfShowing()
                 }
 

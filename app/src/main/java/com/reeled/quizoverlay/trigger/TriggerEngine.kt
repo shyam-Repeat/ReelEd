@@ -46,16 +46,21 @@ class TriggerEngine(
         }
 
         val effectiveCooldown = computeEffectiveCooldown(state)
-        if (now - state.lastQuizShownTime < effectiveCooldown) {
-            return skip("cooldown_active", foregroundPackage)
+        val timeSinceLast = now - state.lastQuizShownTime
+        if (timeSinceLast < effectiveCooldown) {
+            val remaining = (effectiveCooldown - timeSinceLast) / 1000
+            return skip("cooldown_active (${remaining}s)", foregroundPackage)
         }
 
-        if (now - state.sessionStartTime < TriggerConfig.WARMUP_MS) {
-            return skip("warmup_not_done", foregroundPackage)
+        val timeSinceSessionStart = now - state.sessionStartTime
+        if (timeSinceSessionStart < TriggerConfig.WARMUP_MS) {
+            val remaining = (TriggerConfig.WARMUP_MS - timeSinceSessionStart) / 1000
+            return skip("warmup_not_done (${remaining}s)", foregroundPackage)
         }
 
-        if (now - state.lastQuizShownTime < TriggerConfig.INTERVAL_MS) {
-            return skip("interval_not_elapsed", foregroundPackage)
+        if (timeSinceLast < TriggerConfig.INTERVAL_MS) {
+            val remaining = (TriggerConfig.INTERVAL_MS - timeSinceLast) / 1000
+            return skip("interval_not_elapsed (${remaining}s)", foregroundPackage)
         }
 
         val interruptScore = videoPlaybackDetector.getInterruptScore(monitoredApps)

@@ -47,6 +47,10 @@ class TriggerPrefs(private val context: Context) {
 
     val lastSkipReason: Flow<String?> = context.triggerDataStore.data.map { it[LAST_SKIP_REASON] }
 
+    val lastForegroundApp: Flow<String?> = context.triggerDataStore.data.map { it[LAST_FOREGROUND_APP] }
+    
+    val sessionStartTime: Flow<Long> = context.triggerDataStore.data.map { it[SESSION_START_TIME] ?: 0L }
+
     suspend fun setOverlayActive(active: Boolean) {
         context.triggerDataStore.edit { it[OVERLAY_ACTIVE] = active }
     }

@@ -25,9 +25,7 @@ import com.reeled.quizoverlay.prefs.AppPrefs
 import com.reeled.quizoverlay.prefs.PinPrefs
 import com.reeled.quizoverlay.prefs.TriggerPrefs
 import com.reeled.quizoverlay.ui.overlay.components.OptionButton
-import com.reeled.quizoverlay.ui.pin.PinGateDialog
 import com.reeled.quizoverlay.util.PermissionChecker
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -40,22 +38,16 @@ fun ChildHomeScreen(
     onNavigateToDevMode: () -> Unit
 ) {
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
     val pagerState = rememberPagerState(pageCount = { 2 })
-    
-    var showPinDialog by remember { mutableStateOf(false) }
-    var pinPurpose by remember { mutableStateOf("dashboard") } // "dashboard" or "dev"
-    
-    val pinHash by pinPrefs.pinHash.collectAsState(initial = null)
-    val failedAttempts by pinPrefs.failedAttempts.collectAsState(initial = 0)
-    val lockoutUntil by pinPrefs.lockoutUntil.collectAsState(initial = 0L)
     
     val monitoredApps by appPrefs.monitoredApps.collectAsState(initial = emptySet())
     val lastSkipReason by triggerPrefs.lastSkipReason.collectAsState(initial = "None")
+    val lastApp by triggerPrefs.lastForegroundApp.collectAsState(initial = "Unknown")
+    val sessionStart by triggerPrefs.sessionStartTime.collectAsState(initial = 0L)
 
-    val currentTime = System.currentTimeMillis()
-    val isLocked = lockoutUntil > currentTime
-    val lockoutTimeRemaining = if (isLocked) lockoutUntil - currentTime else 0L
+    val sessionDuration = if (sessionStart > 0) {
+        (System.currentTimeMillis() - sessionStart) / 1000
+    } else 0
 
     Box(modifier = Modifier.fillMaxSize()) {
         HorizontalPager(
@@ -121,10 +113,7 @@ fun ChildHomeScreen(
                             label = "Dev Mode Logs",
                             enabled = true,
                             backgroundColor = MaterialTheme.colorScheme.tertiaryContainer,
-                            onClick = {
-                                pinPurpose = "dev"
-                                showPinDialog = true
-                            }
+                            onClick = onNavigateToDevMode
                         )
                     }
                 }
@@ -167,52 +156,29 @@ fun ChildHomeScreen(
             val hasUsage = PermissionChecker.hasUsageStatsPermission(context)
             val isBatteryIgnoring = PermissionChecker.isIgnoringBatteryOptimizations(context)
             
-            Text(
-                text = "Dev: O=$hasOverlay, U=$hasUsage, B=$isBatteryIgnoring | Apps: ${monitoredApps.size} | Skip: $lastSkipReason",
-                style = MaterialTheme.typography.labelSmall,
-                color = Color.Gray.copy(alpha = 0.5f),
-                fontSize = 10.sp
-            )
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = "Dev: O=$hasOverlay, U=$hasUsage, B=$isBatteryIgnoring | Skip: $lastSkipReason",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.Gray.copy(alpha = 0.7f),
+                    fontSize = 10.sp
+                )
+                Text(
+                    text = "App: ${lastApp?.substringAfterLast('.')} (${sessionDuration}s) | Monitored: ${monitoredApps.size}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.Gray.copy(alpha = 0.7f),
+                    fontSize = 10.sp
+                )
+            }
+            
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "Parent? Tap here",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                 textDecoration = TextDecoration.Underline,
-                modifier = Modifier.clickable { 
-                    pinPurpose = "dashboard"
-                    showPinDialog = true 
-                }
+                modifier = Modifier.clickable { onNavigateToDashboard() }
             )
         }
-    }
-
-    if (showPinDialog) {
-        PinGateDialog(
-            storedPinHash = pinHash ?: "",
-            isLocked = isLocked,
-            lockoutTimeRemaining = lockoutTimeRemaining,
-            onPinCorrect = {
-                scope.launch {
-                    pinPrefs.resetFailedAttempts()
-                    showPinDialog = false
-                    if (pinPurpose == "dashboard") {
-                        onNavigateToDashboard()
-                    } else {
-                        onNavigateToDevMode()
-                    }
-                }
-            },
-            onPinIncorrect = {
-                scope.launch {
-                    pinPrefs.incrementFailedAttempts()
-                    val attempts = pinPrefs.failedAttempts.first()
-                    if (attempts >= 3) {
-                        pinPrefs.setLockout(System.currentTimeMillis() + 60_000)
-                    }
-                }
-            },
-            onDismiss = { showPinDialog = false }
-        )
     }
 }

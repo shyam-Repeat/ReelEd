@@ -1,8 +1,10 @@
 package com.reeled.quizoverlay.trigger
 
+import android.util.Log
 import com.reeled.quizoverlay.data.repository.QuizRepository
 import com.reeled.quizoverlay.model.QuizQuestion
 import com.reeled.quizoverlay.prefs.TriggerPrefs
+import com.reeled.quizoverlay.util.PermissionChecker
 
 class TriggerEngine(
     private val repository: QuizRepository,
@@ -11,56 +13,60 @@ class TriggerEngine(
     private val videoPlaybackDetector: VideoPlaybackDetector
 ) {
 
-    suspend fun checkAndFire(): TriggerDecision {
+    private val TAG = "TriggerEngine"
+
+    suspend fun checkAndFire(monitoredApps: Set<String>): TriggerDecision {
         val now = System.currentTimeMillis()
         val state = prefs.getTriggerState()
 
         if (state.parentPauseActive) {
             if (now < state.parentPauseExpiryMs) {
-                return TriggerDecision.Skip("parent_paused")
+                return skip("parent_paused")
             } else {
                 prefs.clearParentPause()
             }
         }
 
         if (state.overlayActive) {
-            return TriggerDecision.Skip("overlay_active")
+            return skip("overlay_active")
         }
 
         val foregroundPackage = foregroundAppDetector.getCurrentForegroundPackage()
-        if (foregroundPackage == null || !ForegroundAppDetector.TARGET_PACKAGES.contains(foregroundPackage)) {
+        val allTargets = if (monitoredApps.isNotEmpty()) monitoredApps else ForegroundAppDetector.TARGET_PACKAGES
+        
+        if (foregroundPackage == null || !allTargets.contains(foregroundPackage)) {
             prefs.clearActiveSession()
-            return TriggerDecision.Skip("target_app_not_foreground")
+            return skip("target_app_not_foreground", foregroundPackage)
         }
 
         prefs.updateSessionIfNeeded(foregroundPackage)
 
         if (state.quizzesShownToday >= TriggerConfig.MAX_DAILY) {
-            return TriggerDecision.Skip("daily_cap_reached")
+            return skip("daily_cap_reached", foregroundPackage)
         }
 
         val effectiveCooldown = computeEffectiveCooldown(state)
         if (now - state.lastQuizShownTime < effectiveCooldown) {
-            return TriggerDecision.Skip("cooldown_active")
+            return skip("cooldown_active", foregroundPackage)
         }
 
         if (now - state.sessionStartTime < TriggerConfig.WARMUP_MS) {
-            return TriggerDecision.Skip("warmup_not_done")
+            return skip("warmup_not_done", foregroundPackage)
         }
 
         if (now - state.lastQuizShownTime < TriggerConfig.INTERVAL_MS) {
-            return TriggerDecision.Skip("interval_not_elapsed")
+            return skip("interval_not_elapsed", foregroundPackage)
         }
 
-        val interruptScore = videoPlaybackDetector.getInterruptScore()
+        val interruptScore = videoPlaybackDetector.getInterruptScore(monitoredApps)
         val remainingQuota = TriggerConfig.MAX_DAILY - state.quizzesShownToday
         if (interruptScore.isPoor && remainingQuota > 1) {
-            return TriggerDecision.Skip("poor_interrupt_moment")
+            return skip("poor_interrupt_moment", foregroundPackage)
         }
 
         val allQuestions = repository.getAllActiveQuestions()
         if (allQuestions.isEmpty()) {
-            return TriggerDecision.Skip("no_questions_cached")
+            return skip("no_questions_cached", foregroundPackage)
         }
 
         val attemptedTodayIds = repository.getAttemptedQuestionIdsToday().toSet()
@@ -71,7 +77,16 @@ class TriggerEngine(
             quizzesShownToday = state.quizzesShownToday
         )
 
+        Log.d(TAG, "FIRE: Quiz for $foregroundPackage")
         return TriggerDecision.Fire(question, foregroundPackage)
+    }
+
+    private suspend fun skip(reason: String, foregroundPackage: String? = null): TriggerDecision {
+        val overlayPerm = PermissionChecker.hasOverlayPermission(repository.context)
+        val usagePerm = PermissionChecker.hasUsageStatsPermission(repository.context)
+        Log.d(TAG, "SKIP: $reason | app: $foregroundPackage | perm: O=$overlayPerm, U=$usagePerm")
+        prefs.setLastSkipReason(reason)
+        return TriggerDecision.Skip(reason)
     }
 
     private fun computeEffectiveCooldown(state: TriggerState): Long {

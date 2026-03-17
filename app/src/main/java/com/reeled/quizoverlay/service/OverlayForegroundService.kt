@@ -20,8 +20,10 @@ import com.reeled.quizoverlay.R
 import com.reeled.quizoverlay.data.repository.QuizRepository
 import com.reeled.quizoverlay.model.QuizAttemptResult
 import com.reeled.quizoverlay.model.QuizCardConfig
+import com.reeled.quizoverlay.prefs.AppPrefs
 import com.reeled.quizoverlay.prefs.TriggerPrefs
 import com.reeled.quizoverlay.trigger.ForegroundAppDetector
+import com.reeled.quizoverlay.trigger.TriggerConfig
 import com.reeled.quizoverlay.trigger.TriggerDecision
 import com.reeled.quizoverlay.trigger.TriggerEngine
 import com.reeled.quizoverlay.trigger.VideoPlaybackDetector
@@ -34,6 +36,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -61,9 +64,16 @@ class OverlayForegroundService : Service() {
     private lateinit var triggerEngine: TriggerEngine
     private lateinit var repository: QuizRepository
     private lateinit var triggerPrefs: TriggerPrefs
+    private lateinit var appPrefs: AppPrefs
     private lateinit var audioMuter: AudioMuter
     private lateinit var windowManager: WindowManager
     private lateinit var lifecycleOwner: OverlayLifecycleOwner
+
+    private var currentSessionId: String? = null
+    private var totalQuizzesShown = 0
+    private var totalAnswered = 0
+    private var totalDismissed = 0
+    private var totalTimerExpired = 0
 
     private var overlayView: ComposeView? = null
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -78,6 +88,7 @@ class OverlayForegroundService : Service() {
 
         audioMuter = AudioMuter(this)
         triggerPrefs = TriggerPrefs(this)
+        appPrefs = AppPrefs(this)
         repository = QuizRepository(this)
 
         val foregroundAppDetector = ForegroundAppDetector(this)
@@ -90,6 +101,13 @@ class OverlayForegroundService : Service() {
         )
 
         createNotificationChannel()
+
+        // Start new session
+        val sessionId = java.util.UUID.randomUUID().toString()
+        currentSessionId = sessionId
+        serviceScope.launch(Dispatchers.IO) {
+            repository.startSession(sessionId)
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -124,7 +142,13 @@ class OverlayForegroundService : Service() {
     override fun onDestroy() {
         sessionActive = false
         pollingJob?.cancel()
-        serviceScope.cancel()
+        currentSessionId?.let { sessionId ->
+            serviceScope.launch(Dispatchers.IO) {
+                repository.endSession(sessionId)
+                serviceScope.cancel()
+            }
+        } ?: serviceScope.cancel()
+
         removeOverlayIfShowing()
         lifecycleOwner.onPause()
         lifecycleOwner.onStop()
@@ -139,11 +163,14 @@ class OverlayForegroundService : Service() {
         pollingJob = serviceScope.launch {
             while (isActive) {
                 try {
-                    val decision = triggerEngine.checkAndFire()
+                    val monitoredApps = appPrefs.monitoredApps.first()
+                    val decision = triggerEngine.checkAndFire(monitoredApps)
 
                     if (decision is TriggerDecision.Fire) {
                         withContext(Dispatchers.Main) {
                             if (overlayView == null) {
+                                totalQuizzesShown++
+                                updateSessionStats()
                                 showOverlay(decision.question, decision.sourceApp)
                             }
                         }
@@ -151,8 +178,21 @@ class OverlayForegroundService : Service() {
                 } catch (_: Exception) {
                     // Keep service alive and continue polling.
                 }
-                delay(30000L)
+                delay(TriggerConfig.POLLING_INTERVAL_MS)
             }
+        }
+    }
+
+    private fun updateSessionStats() {
+        val sessionId = currentSessionId ?: return
+        serviceScope.launch(Dispatchers.IO) {
+            repository.updateSessionStats(
+                sessionId,
+                totalQuizzesShown,
+                totalAnswered,
+                totalDismissed,
+                totalTimerExpired
+            )
         }
     }
 
@@ -186,6 +226,14 @@ class OverlayForegroundService : Service() {
         serviceScope.launch(Dispatchers.IO) {
             try {
                 withContext(Dispatchers.Main) {
+                    if (result.wasTimerExpired) {
+                        totalTimerExpired++
+                    } else if (result.wasDismissed) {
+                        totalDismissed++
+                    } else {
+                        totalAnswered++
+                    }
+                    updateSessionStats()
                     removeOverlayIfShowing()
                 }
 
@@ -336,7 +384,12 @@ class OverlayForegroundService : Service() {
         sessionActive = false
         removeOverlayIfShowing()
         pollingJob?.cancel()
-        stopForeground(true)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+        } else {
+            @Suppress("DEPRECATION")
+            stopForeground(true)
+        }
         stopSelf()
     }
 }

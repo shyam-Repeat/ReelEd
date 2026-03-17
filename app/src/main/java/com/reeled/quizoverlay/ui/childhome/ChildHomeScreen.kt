@@ -17,16 +17,28 @@ import com.reeled.quizoverlay.ui.pin.PinGateDialog
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
+import androidx.compose.ui.graphics.Color
+import com.reeled.quizoverlay.prefs.AppPrefs
+import com.reeled.quizoverlay.prefs.TriggerPrefs
+import com.reeled.quizoverlay.util.PermissionChecker
+import androidx.compose.ui.platform.LocalContext
+
 @Composable
 fun ChildHomeScreen(
     pinPrefs: PinPrefs,
+    triggerPrefs: TriggerPrefs,
+    appPrefs: AppPrefs,
     onNavigateToDashboard: () -> Unit
 ) {
+    val context = LocalContext.current
     var showPinDialog by remember { mutableStateOf(false) }
     val pinHash by pinPrefs.pinHash.collectAsState(initial = null)
     val failedAttempts by pinPrefs.failedAttempts.collectAsState(initial = 0)
     val lockoutUntil by pinPrefs.lockoutUntil.collectAsState(initial = 0L)
     
+    val monitoredApps by appPrefs.monitoredApps.collectAsState(initial = emptySet())
+    val lastSkipReason by triggerPrefs.lastSkipReason.collectAsState(initial = "None")
+
     val scope = rememberCoroutineScope()
     val currentTime = System.currentTimeMillis()
     val isLocked = lockoutUntil > currentTime
@@ -63,16 +75,32 @@ fun ChildHomeScreen(
         }
 
         // Parent Link
-        Text(
-            text = "Parent? Tap here",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-            textDecoration = TextDecoration.Underline,
+        Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 32.dp)
-                .clickable { showPinDialog = true }
-        )
+                .padding(bottom = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Dev Info (Visible in MVP for debugging)
+            val hasOverlay = PermissionChecker.hasOverlayPermission(context)
+            val hasUsage = PermissionChecker.hasUsageStatsPermission(context)
+            val isBatteryIgnoring = PermissionChecker.isIgnoringBatteryOptimizations(context)
+            
+            Text(
+                text = "Dev: O=$hasOverlay, U=$hasUsage, B=$isBatteryIgnoring | Apps: ${monitoredApps.size} | Skip: $lastSkipReason",
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.Gray.copy(alpha = 0.5f),
+                fontSize = 10.sp
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Parent? Tap here",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                textDecoration = TextDecoration.Underline,
+                modifier = Modifier.clickable { showPinDialog = true }
+            )
+        }
     }
 
     if (showPinDialog) {

@@ -8,11 +8,14 @@ import androidx.lifecycle.viewModelScope
 import com.reeled.quizoverlay.prefs.AppPrefs
 import com.reeled.quizoverlay.prefs.PinPrefs
 import com.reeled.quizoverlay.util.PinHasher
+import com.reeled.quizoverlay.data.repository.QuizRepository
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class OnboardingViewModel(application: Application) : AndroidViewModel(application) {
     private val appPrefs = AppPrefs(application)
     private val pinPrefs = PinPrefs(application)
+    private val repository = QuizRepository(application)
 
     fun onConsentAccepted() {
         viewModelScope.launch {
@@ -30,6 +33,8 @@ class OnboardingViewModel(application: Application) : AndroidViewModel(applicati
 
     fun onOnboardingCompleted() {
         viewModelScope.launch {
+            val name = appPrefs.nickname.first()
+            repository.registerTester(name)
             appPrefs.setOnboardingComplete(true)
         }
     }

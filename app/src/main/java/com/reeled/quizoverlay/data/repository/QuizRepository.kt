@@ -7,12 +7,14 @@ import com.reeled.quizoverlay.data.local.entity.QuizAttemptEntity
 import com.reeled.quizoverlay.data.local.entity.QuizQuestionEntity
 import com.reeled.quizoverlay.data.local.entity.toDomain
 import com.reeled.quizoverlay.data.remote.SupabaseClient
+import com.reeled.quizoverlay.data.remote.dto.TesterDto
 import com.reeled.quizoverlay.data.remote.dto.toDto
 import com.reeled.quizoverlay.data.remote.dto.toEntity
 import com.reeled.quizoverlay.prefs.AppPrefs
+import com.reeled.quizoverlay.util.PermissionChecker
 import java.util.UUID
 
-class QuizRepository(context: Context) {
+class QuizRepository(internal val context: Context) {
     private val database = AppDatabase.getDatabase(context)
     private val questionDao = database.quizQuestionDao()
     private val attemptDao = database.quizAttemptDao()
@@ -20,8 +22,22 @@ class QuizRepository(context: Context) {
     private val appPrefs = AppPrefs(context)
     private val api = SupabaseClient.api
 
+    // Tester
+    suspend fun registerTester(nickname: String?) {
+        val testerId = appPrefs.getTesterId()
+        val dto = TesterDto(
+            testerId = testerId,
+            nickname = nickname,
+            appVersion = "1.0.0", // TODO: Get from BuildConfig
+            overlayPermissionGranted = PermissionChecker.hasOverlayPermission(context),
+            usageAccessGranted = PermissionChecker.hasUsageStatsPermission(context),
+            batteryOptDisabled = PermissionChecker.isIgnoringBatteryOptimizations(context)
+        )
+        api?.postTester(dto)
+    }
+
     // Questions
-    suspend fun getActiveQuestionCount(): Int = questionDao.getActiveCount()
+...
 
     suspend fun fetchActiveQuestionsFromRemote(limit: Int): List<QuizQuestionEntity> {
         val remoteApi = api ?: return emptyList()

@@ -2,6 +2,7 @@ package com.reeled.quizoverlay.data.remote.dto
 
 import com.google.gson.annotations.SerializedName
 import com.reeled.quizoverlay.data.local.entity.EventLogEntity
+import com.reeled.quizoverlay.util.TimeUtils
 
 import com.reeled.quizoverlay.util.TimeUtils
 

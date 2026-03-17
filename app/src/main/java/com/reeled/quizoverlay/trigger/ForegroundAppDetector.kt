@@ -37,6 +37,7 @@ class ForegroundAppDetector(private val context: Context) {
         val event = UsageEvents.Event()
         while (events.hasNextEvent()) {
             events.getNextEvent(event)
+            // Check all events and find the very latest one
             if (event.timeStamp >= latestTime) {
                 latestTime = event.timeStamp
                 latestPackage = event.packageName
@@ -44,8 +45,7 @@ class ForegroundAppDetector(private val context: Context) {
             }
         }
 
-        // If the latest event for the package was RESUMED, it's still in foreground.
-        // If it was PAUSED or STOPPED, then the app is no longer in foreground.
+        // Only return the package if it's currently in RESUMED state (foreground)
         return if (latestType == UsageEvents.Event.ACTIVITY_RESUMED) {
             latestPackage
         } else {

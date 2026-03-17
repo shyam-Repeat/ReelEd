@@ -13,6 +13,7 @@ import com.reeled.quizoverlay.data.remote.dto.toDto
 import com.reeled.quizoverlay.data.remote.dto.toEntity
 import com.reeled.quizoverlay.prefs.AppPrefs
 import com.reeled.quizoverlay.util.PermissionChecker
+import java.time.Instant
 import java.util.UUID
 
 class QuizRepository(internal val context: Context) {
@@ -38,52 +39,8 @@ class QuizRepository(internal val context: Context) {
         api?.postTester(dto)
     }
 
-    // Sessions
-    suspend fun startSession(sessionId: String) {
-        val session = OverlaySessionEntity(
-            id = sessionId,
-            testerId = appPrefs.getTesterId(),
-            startedAt = System.currentTimeMillis()
-        )
-        sessionDao.insert(session)
-    }
-
-    suspend fun updateSessionStats(
-        sessionId: String,
-        shown: Int,
-        answered: Int,
-        dismissed: Int,
-        expired: Int
-    ) {
-        sessionDao.getById(sessionId)?.let { session ->
-            session.totalQuizzesShown = shown
-            session.totalAnswered = answered
-            session.totalDismissed = dismissed
-            session.totalTimerExpired = expired
-            sessionDao.update(session)
-        }
-    }
-
-    suspend fun endSession(sessionId: String) {
-        sessionDao.getById(sessionId)?.let { session ->
-            session.endedAt = System.currentTimeMillis()
-            sessionDao.update(session)
-        }
-    }
-
-    suspend fun getUnsyncedSessions(): List<OverlaySessionEntity> = sessionDao.getUnsynced()
-
-    suspend fun batchUploadSessions(sessions: List<OverlaySessionEntity>) {
-        val remoteApi = api ?: return
-        remoteApi.postSessions(sessions.map { it.toDto() })
-    }
-
-    suspend fun markSessionsSynced(ids: List<String>) {
-        sessionDao.markSynced(ids)
-    }
-
     // Questions
-    suspend fun getActiveQuestionCount(): Int = questionDao.getActiveCount()
+...
 
     suspend fun fetchActiveQuestionsFromRemote(limit: Int): List<QuizQuestionEntity> {
         val remoteApi = api ?: return emptyList()
@@ -147,6 +104,8 @@ class QuizRepository(internal val context: Context) {
     }
 
     suspend fun getUnsyncedEvents(): List<EventLogEntity> = eventLogDao.getUnsynced()
+
+    suspend fun getRecentEventLogs(limit: Int): List<EventLogEntity> = eventLogDao.getRecent(limit)
 
     suspend fun batchUploadEvents(events: List<EventLogEntity>) {
         val remoteApi = api ?: return

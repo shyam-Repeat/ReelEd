@@ -25,6 +25,8 @@ import com.reeled.quizoverlay.service.OverlayForegroundService
 import com.reeled.quizoverlay.ui.childhome.ChildHomeScreen
 import com.reeled.quizoverlay.ui.dashboard.DashboardViewModel
 import com.reeled.quizoverlay.ui.dashboard.ParentDashboardScreen
+import com.reeled.quizoverlay.ui.devmode.DevModeScreen
+import com.reeled.quizoverlay.ui.devmode.DevModeViewModel
 import com.reeled.quizoverlay.ui.onboarding.AppSelectionScreen
 import com.reeled.quizoverlay.ui.onboarding.BatteryOptScreen
 import com.reeled.quizoverlay.ui.onboarding.ConsentScreen
@@ -53,6 +55,7 @@ sealed class Screen(val route: String) {
     object Success : Screen("success")
     object ChildHome : Screen("child_home")
     object ParentDashboard : Screen("parent_dashboard")
+    object DevMode : Screen("dev_mode")
 }
 
 @Composable
@@ -71,6 +74,9 @@ fun AppNavGraph(
     )
     val dashboardViewModel: DashboardViewModel = viewModel(
         factory = DashboardViewModel.provideFactory(application)
+    )
+    val devModeViewModel: DevModeViewModel = viewModel(
+        factory = DevModeViewModel.provideFactory(application)
     )
 
     fun launchIntent(intent: Intent) {
@@ -241,6 +247,10 @@ fun AppNavGraph(
 
         composable(Screen.ParentDashboard.route) {
             ParentDashboardScreen(viewModel = dashboardViewModel)
+        }
+
+        composable(Screen.DevMode.route) {
+            DevModeScreen(viewModel = devModeViewModel)
         }
     }
 }

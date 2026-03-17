@@ -241,7 +241,8 @@ fun AppNavGraph(
                 pinPrefs = pinPrefs,
                 triggerPrefs = triggerPrefs,
                 appPrefs = appPrefs,
-                onNavigateToDashboard = { navController.navigate(Screen.ParentDashboard.route) }
+                onNavigateToDashboard = { navController.navigate(Screen.ParentDashboard.route) },
+                onNavigateToDevMode = { navController.navigate(Screen.DevMode.route) }
             )
         }
 

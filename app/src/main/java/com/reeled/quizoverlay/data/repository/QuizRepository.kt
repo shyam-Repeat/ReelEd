@@ -13,7 +13,6 @@ import com.reeled.quizoverlay.data.remote.dto.toDto
 import com.reeled.quizoverlay.data.remote.dto.toEntity
 import com.reeled.quizoverlay.prefs.AppPrefs
 import com.reeled.quizoverlay.util.PermissionChecker
-import java.time.Instant
 import java.util.UUID
 
 class QuizRepository(internal val context: Context) {
@@ -40,7 +39,7 @@ class QuizRepository(internal val context: Context) {
     }
 
     // Questions
-...
+    suspend fun getActiveQuestionCount(): Int = questionDao.getActiveCount()
 
     suspend fun fetchActiveQuestionsFromRemote(limit: Int): List<QuizQuestionEntity> {
         val remoteApi = api ?: return emptyList()
@@ -104,8 +103,6 @@ class QuizRepository(internal val context: Context) {
     }
 
     suspend fun getUnsyncedEvents(): List<EventLogEntity> = eventLogDao.getUnsynced()
-
-    suspend fun getRecentEventLogs(limit: Int): List<EventLogEntity> = eventLogDao.getRecent(limit)
 
     suspend fun batchUploadEvents(events: List<EventLogEntity>) {
         val remoteApi = api ?: return

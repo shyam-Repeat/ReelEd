@@ -1,4 +1,5 @@
 package com.reeled.quizoverlay.data.remote
+
 import com.reeled.quizoverlay.data.remote.dto.EventLogDto
 import com.reeled.quizoverlay.data.remote.dto.QuizAttemptDto
 import com.reeled.quizoverlay.data.remote.dto.QuizQuestionDto
@@ -24,7 +25,6 @@ interface SupabaseApi {
     )
 
     @POST("rest/v1/quiz_attempts")
-...
     suspend fun postAttempts(
         @Body attempts: List<QuizAttemptDto>,
         @Header("Prefer") prefer: String = "return=representation"

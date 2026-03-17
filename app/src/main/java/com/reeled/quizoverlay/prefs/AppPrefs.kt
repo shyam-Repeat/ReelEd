@@ -21,6 +21,12 @@ class AppPrefs(private val context: Context) {
         private val PIN_SET = booleanPreferencesKey("pin_set")
         private val CONSENT_GIVEN = booleanPreferencesKey("consent_given")
         private val MONITORED_APPS = stringSetPreferencesKey("monitored_apps")
+        private val NICKNAME = stringPreferencesKey("nickname")
+    }
+
+    val nickname: Flow<String?> = context.appDataStore.data.map { it[NICKNAME] }
+    suspend fun setNickname(name: String) {
+        context.appDataStore.edit { it[NICKNAME] = name }
     }
 
     suspend fun getTesterId(): String {

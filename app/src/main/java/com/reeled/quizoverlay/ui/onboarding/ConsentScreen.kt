@@ -20,14 +20,18 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.reeled.quizoverlay.ui.theme.Primary
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.ImeAction
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConsentScreen(
-    onAccepted: () -> Unit,
+    onAccepted: (String) -> Unit,
     onBack: () -> Unit
 ) {
     var isChecked by remember { mutableStateOf(false) }
+    var username by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
@@ -101,7 +105,32 @@ fun ConsentScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Username field
+            OutlinedTextField(
+                value = username,
+                onValueChange = { username = it },
+                label = { Text("Display Name / Nickname") },
+                placeholder = { Text("Enter a name (e.g., Parent)") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        if (isChecked && username.isNotBlank()) {
+                            onAccepted(username)
+                        }
+                    }
+                ),
+                colors = TextFieldDefaults.outlinedTextFieldColors(
+                    focusedBorderColor = Primary,
+                    focusedLabelColor = Primary
+                )
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
 
             // Checkbox Area
             Surface(
@@ -159,15 +188,15 @@ fun ConsentScreen(
         ) {
             Column(modifier = Modifier.padding(24.dp)) {
                 Button(
-                    onClick = onAccepted,
-                    enabled = isChecked,
+                    onClick = { onAccepted(username) },
+                    enabled = isChecked && username.isNotBlank(),
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
                     shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Primary)
                 ) {
-                    Text("Continue", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Text("Next", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 }
                 Spacer(modifier = Modifier.height(12.dp))
                 TextButton(

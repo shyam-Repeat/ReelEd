@@ -100,8 +100,8 @@ fun AppNavGraph(
 
         composable(Screen.Consent.route) {
             ConsentScreen(
-                onAccepted = {
-                    onboardingViewModel.onConsentAccepted()
+                onAccepted = { nickname ->
+                    onboardingViewModel.onConsentAccepted(nickname)
                     navController.navigate(Screen.PinSetup.route)
                 },
                 onBack = { navController.popBackStack() }

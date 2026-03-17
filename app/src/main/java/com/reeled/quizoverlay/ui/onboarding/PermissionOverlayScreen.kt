@@ -48,6 +48,12 @@ fun PermissionOverlayScreen(
         }
     }
 
+    LaunchedEffect(isGranted) {
+        if (isGranted) {
+            onNext()
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()

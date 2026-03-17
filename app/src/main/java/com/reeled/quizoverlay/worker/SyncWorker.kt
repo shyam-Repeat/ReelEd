@@ -89,14 +89,14 @@ class SyncWorker(
         try {
             val unsyncedAttempts = repository.getUnsyncedAttempts()
             val unsyncedEvents = repository.getUnsyncedEvents()
+            val unsyncedSessions = repository.getUnsyncedSessions()
 
             // Nothing to sync — exit early, counts as success
-            if (unsyncedAttempts.isEmpty() && unsyncedEvents.isEmpty()) {
+            if (unsyncedAttempts.isEmpty() && unsyncedEvents.isEmpty() && unsyncedSessions.isEmpty()) {
                 return@withContext Result.success()
             }
 
             // ── Batch upsert to Supabase ──────────────────────────────────────
-            // toDto() extension functions live on the entity classes (layout doc)
             if (unsyncedAttempts.isNotEmpty()) {
                 repository.batchUploadAttempts(unsyncedAttempts)
             }
@@ -105,15 +105,21 @@ class SyncWorker(
                 repository.batchUploadEvents(unsyncedEvents)
             }
 
+            if (unsyncedSessions.isNotEmpty()) {
+                repository.batchUploadSessions(unsyncedSessions)
+            }
+
             // ── Mark rows as synced in Room ───────────────────────────────────
-            // Only mark synced AFTER confirmed upload — never before.
-            // If the process dies mid-upload, rows stay unsynced and retry next run.
             if (unsyncedAttempts.isNotEmpty()) {
                 repository.markAttemptsSynced(unsyncedAttempts.map { it.id })
             }
 
             if (unsyncedEvents.isNotEmpty()) {
                 repository.markEventsSynced(unsyncedEvents.map { it.id })
+            }
+
+            if (unsyncedSessions.isNotEmpty()) {
+                repository.markSessionsSynced(unsyncedSessions.map { it.id })
             }
 
             Result.success()

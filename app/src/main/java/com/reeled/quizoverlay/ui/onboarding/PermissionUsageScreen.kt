@@ -49,6 +49,12 @@ fun PermissionUsageScreen(
         }
     }
 
+    LaunchedEffect(isGranted) {
+        if (isGranted) {
+            onNext()
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()

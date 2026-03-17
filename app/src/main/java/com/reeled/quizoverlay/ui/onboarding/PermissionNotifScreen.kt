@@ -49,6 +49,12 @@ fun PermissionNotifScreen(
         }
     }
 
+    LaunchedEffect(isGranted) {
+        if (isGranted) {
+            onNext()
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -224,12 +230,14 @@ fun PermissionNotifScreen(
                 }
                 Button(
                     onClick = onNext,
-                    enabled = isGranted,
                     modifier = Modifier.weight(1f).height(48.dp),
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Primary)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (isGranted) Primary else MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = if (isGranted) Color.White else MaterialTheme.colorScheme.onSurface
+                    )
                 ) {
-                    Text("Next", fontWeight = FontWeight.Bold)
+                    Text(if (isGranted) "Next" else "Skip", fontWeight = FontWeight.Bold)
                 }
             }
         }

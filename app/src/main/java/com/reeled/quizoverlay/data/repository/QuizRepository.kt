@@ -1,7 +1,6 @@
 package com.reeled.quizoverlay.data.repository
 
 import android.content.Context
-import android.os.Build
 import com.reeled.quizoverlay.data.local.AppDatabase
 import com.reeled.quizoverlay.data.local.entity.EventLogEntity
 import com.reeled.quizoverlay.data.local.entity.OverlaySessionEntity
@@ -14,6 +13,7 @@ import com.reeled.quizoverlay.data.remote.dto.toDto
 import com.reeled.quizoverlay.data.remote.dto.toEntity
 import com.reeled.quizoverlay.prefs.AppPrefs
 import com.reeled.quizoverlay.util.PermissionChecker
+import java.time.Instant
 import java.util.UUID
 
 class QuizRepository(private val context: Context) {
@@ -29,15 +29,13 @@ class QuizRepository(private val context: Context) {
     suspend fun registerTester(nickname: String) {
         val testerId = appPrefs.getTesterId()
         val dto = TesterDto(
-            id = testerId,
+            testerId = testerId,
             nickname = nickname,
-            hasOverlayPerm = PermissionChecker.hasOverlayPermission(context),
-            hasUsageStatsPerm = PermissionChecker.hasUsageStatsPermission(context),
-            hasNotificationPerm = PermissionChecker.hasNotificationPermission(context),
-            isBatteryOptimized = !PermissionChecker.isIgnoringBatteryOptimizations(context),
             appVersion = "1.0.0", // TODO: Get from BuildConfig
-            deviceInfo = "${Build.MANUFACTURER} ${Build.MODEL} (API ${Build.VERSION.SDK_INT})",
-            createdAt = System.currentTimeMillis()
+            overlayPermissionGranted = PermissionChecker.hasOverlayPermission(context),
+            usageAccessGranted = PermissionChecker.hasUsageStatsPermission(context),
+            batteryOptDisabled = PermissionChecker.isIgnoringBatteryOptimizations(context),
+            createdAt = Instant.now().toString(),
         )
         api?.postTester(dto)
     }
@@ -151,6 +149,8 @@ class QuizRepository(private val context: Context) {
     }
 
     suspend fun getUnsyncedEvents(): List<EventLogEntity> = eventLogDao.getUnsynced()
+
+    suspend fun getRecentEventLogs(limit: Int): List<EventLogEntity> = eventLogDao.getRecent(limit)
 
     suspend fun batchUploadEvents(events: List<EventLogEntity>) {
         val remoteApi = api ?: return

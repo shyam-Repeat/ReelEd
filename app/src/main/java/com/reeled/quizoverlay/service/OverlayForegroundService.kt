@@ -102,6 +102,11 @@ class OverlayForegroundService : Service() {
         currentSessionId = sessionId
         serviceScope.launch(Dispatchers.IO) {
             repository.startSession(sessionId)
+            try {
+                repository.logEvent("overlay_started", "{\"session_id\":\"$sessionId\"}")
+            } catch (_: Exception) {
+                // Keep service startup resilient.
+            }
         }
     }
 
@@ -139,6 +144,11 @@ class OverlayForegroundService : Service() {
         pollingJob?.cancel()
         currentSessionId?.let { sessionId ->
             serviceScope.launch(Dispatchers.IO) {
+                try {
+                    repository.logEvent("overlay_stopped", "{\"session_id\":\"$sessionId\"}")
+                } catch (_: Exception) {
+                    // no-op
+                }
                 repository.endSession(sessionId)
                 serviceScope.cancel()
             }
@@ -212,7 +222,17 @@ class OverlayForegroundService : Service() {
 
         windowManager.addView(composeView, params)
         overlayView = composeView
-        serviceScope.launch(Dispatchers.IO) { triggerPrefs.setOverlayActive(true) }
+        serviceScope.launch(Dispatchers.IO) {
+            triggerPrefs.setOverlayActive(true)
+            try {
+                repository.logEvent(
+                    eventType = "quiz_shown",
+                    payloadJson = "{\"question_id\":\"${question.id}\",\"source_app\":\"$sourceApp\"}",
+                )
+            } catch (_: Exception) {
+                // no-op
+            }
+        }
         syncAudioState()
     }
 
@@ -238,6 +258,15 @@ class OverlayForegroundService : Service() {
                     responseTimeMs = result.responseTimeMs,
                     sourceApp = result.sourceApp,
                     dismissed = result.wasDismissed
+                )
+                val eventType = when {
+                    result.wasTimerExpired -> "quiz_timer_expired"
+                    result.wasDismissed -> "quiz_dismissed"
+                    else -> "quiz_answered"
+                }
+                repository.logEvent(
+                    eventType = eventType,
+                    payloadJson = "{\"question_id\":\"${result.questionId}\",\"correct\":${result.isCorrect},\"response_ms\":${result.responseTimeMs},\"source_app\":\"${result.sourceApp}\"}",
                 )
                 triggerPrefs.recordQuizShown(
                     questionId = result.questionId,

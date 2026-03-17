@@ -16,4 +16,7 @@ interface EventLogDao {
 
     @Query("UPDATE event_logs SET synced = 1 WHERE id IN (:ids)")
     suspend fun markSynced(ids: List<String>)
+
+    @Query("SELECT * FROM event_logs ORDER BY createdAt DESC LIMIT :limit")
+    suspend fun getRecent(limit: Int): List<EventLogEntity>
 }

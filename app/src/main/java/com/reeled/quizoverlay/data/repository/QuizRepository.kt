@@ -1,7 +1,6 @@
 package com.reeled.quizoverlay.data.repository
 
 import android.content.Context
-import android.os.Build
 import com.reeled.quizoverlay.data.local.AppDatabase
 import com.reeled.quizoverlay.data.local.entity.EventLogEntity
 import com.reeled.quizoverlay.data.local.entity.OverlaySessionEntity
@@ -14,6 +13,7 @@ import com.reeled.quizoverlay.data.remote.dto.toDto
 import com.reeled.quizoverlay.data.remote.dto.toEntity
 import com.reeled.quizoverlay.prefs.AppPrefs
 import com.reeled.quizoverlay.util.PermissionChecker
+import java.time.Instant
 import java.util.UUID
 
 class QuizRepository(internal val context: Context) {
@@ -104,6 +104,8 @@ class QuizRepository(internal val context: Context) {
     }
 
     suspend fun getUnsyncedEvents(): List<EventLogEntity> = eventLogDao.getUnsynced()
+
+    suspend fun getRecentEventLogs(limit: Int): List<EventLogEntity> = eventLogDao.getRecent(limit)
 
     suspend fun batchUploadEvents(events: List<EventLogEntity>) {
         val remoteApi = api ?: return

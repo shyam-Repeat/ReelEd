@@ -80,6 +80,7 @@ class OverlayForegroundService : Service() {
     private var pollingJob: Job? = null
     private var sessionActive: Boolean = false
     private var audioMutedForSession: Boolean = false
+    private var lastReportedSkipReason: String? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -176,16 +177,32 @@ class OverlayForegroundService : Service() {
                     val monitoredApps = appPrefs.monitoredApps.first()
                     val decision = triggerEngine.checkAndFire(monitoredApps)
 
-                    if (decision is TriggerDecision.Fire) {
-                        withContext(Dispatchers.Main) {
-                            if (overlayView == null) {
-                                totalQuizzesShown++
-                                updateSessionStats()
-                                showOverlay(decision.question, decision.sourceApp)
+                    when (decision) {
+                        is TriggerDecision.Fire -> {
+                            lastReportedSkipReason = null
+                            withContext(Dispatchers.Main) {
+                                if (overlayView == null) {
+                                    totalQuizzesShown++
+                                    updateSessionStats()
+                                    showOverlay(decision.question, decision.sourceApp)
+                                }
+                            }
+                        }
+                        is TriggerDecision.Skip -> {
+                            if (decision.reason != lastReportedSkipReason) {
+                                lastReportedSkipReason = decision.reason
+                                logEventSafely(
+                                    eventType = "trigger_skip",
+                                    payloadJson = "{\"reason\":\"${jsonSafe(decision.reason)}\"}"
+                                )
                             }
                         }
                     }
-                } catch (_: Exception) {
+                } catch (exception: Exception) {
+                    logEventSafely(
+                        eventType = "overlay_poll_error",
+                        payloadJson = "{\"message\":\"${jsonSafe(exception.message.orEmpty())}\"}"
+                    )
                     // Keep service alive and continue polling.
                 }
                 delay(TriggerConfig.POLLING_INTERVAL_MS)
@@ -226,18 +243,22 @@ class OverlayForegroundService : Service() {
             }
         }
 
-        windowManager.addView(composeView, params)
+        try {
+            windowManager.addView(composeView, params)
+        } catch (exception: Exception) {
+            logEventSafely(
+                eventType = "overlay_add_failed",
+                payloadJson = "{\"question_id\":\"${question.id}\",\"source_app\":\"${jsonSafe(sourceApp)}\",\"message\":\"${jsonSafe(exception.message.orEmpty())}\"}"
+            )
+            return
+        }
         overlayView = composeView
         serviceScope.launch(Dispatchers.IO) {
             triggerPrefs.setOverlayActive(true)
-            try {
-                repository.logEvent(
-                    eventType = "quiz_shown",
-                    payloadJson = "{\"question_id\":\"${question.id}\",\"source_app\":\"$sourceApp\"}",
-                )
-            } catch (_: Exception) {
-                // no-op
-            }
+            logEventSafely(
+                eventType = "quiz_shown",
+                payloadJson = "{\"question_id\":\"${question.id}\",\"source_app\":\"${jsonSafe(sourceApp)}\"}",
+            )
         }
         syncAudioState()
     }
@@ -270,9 +291,9 @@ class OverlayForegroundService : Service() {
                     result.wasDismissed -> "quiz_dismissed"
                     else -> "quiz_answered"
                 }
-                repository.logEvent(
+                logEventSafely(
                     eventType = eventType,
-                    payloadJson = "{\"question_id\":\"${result.questionId}\",\"correct\":${result.isCorrect},\"response_ms\":${result.responseTimeMs},\"source_app\":\"${result.sourceApp}\"}",
+                    payloadJson = "{\"question_id\":\"${result.questionId}\",\"correct\":${result.isCorrect},\"response_ms\":${result.responseTimeMs},\"source_app\":\"${jsonSafe(result.sourceApp)}\"}",
                 )
                 triggerPrefs.recordQuizShown(
                     questionId = result.questionId,
@@ -280,8 +301,11 @@ class OverlayForegroundService : Service() {
                     wasDismissed = result.wasDismissed
                 )
 
-            } catch (_: Exception) {
-                // no-op to keep service resilient
+            } catch (exception: Exception) {
+                logEventSafely(
+                    eventType = "quiz_result_error",
+                    payloadJson = "{\"message\":\"${jsonSafe(exception.message.orEmpty())}\",\"question_id\":\"${result.questionId}\"}"
+                )
             }
         }
     }
@@ -421,4 +445,17 @@ class OverlayForegroundService : Service() {
         }
         stopSelf()
     }
+
+    private fun logEventSafely(eventType: String, payloadJson: String) {
+        serviceScope.launch(Dispatchers.IO) {
+            try {
+                repository.logEvent(eventType = eventType, payloadJson = payloadJson)
+            } catch (_: Exception) {
+                // no-op
+            }
+        }
+    }
+    private fun jsonSafe(value: String): String =
+        value.replace("\\", "\\\\").replace("\"", "\\\"")
+
 }

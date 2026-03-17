@@ -39,7 +39,11 @@ class OnboardingViewModel(application: Application) : AndroidViewModel(applicati
     fun onOnboardingCompleted() {
         viewModelScope.launch {
             val name = appPrefs.nickname.first()
-            repository.registerTester(name)
+            try {
+                repository.registerTester(name)
+            } catch (_: Exception) {
+                // Continue onboarding even if tester sync temporarily fails.
+            }
             appPrefs.setOnboardingComplete(true)
         }
     }

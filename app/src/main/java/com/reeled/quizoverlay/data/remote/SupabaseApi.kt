@@ -22,6 +22,7 @@ interface SupabaseApi {
     @POST("rest/v1/testers")
     suspend fun postTester(
         @Body tester: TesterDto,
+        @Query("on_conflict") onConflict: String = "tester_id",
         @Header("Prefer") prefer: String = "return=representation,resolution=merge-duplicates"
     )
 

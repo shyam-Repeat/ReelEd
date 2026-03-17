@@ -9,7 +9,6 @@ import com.reeled.quizoverlay.data.repository.QuizRepository
 import com.reeled.quizoverlay.prefs.AppPrefs
 import com.reeled.quizoverlay.prefs.PinPrefs
 import com.reeled.quizoverlay.util.PinHasher
-import com.reeled.quizoverlay.data.repository.QuizRepository
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 

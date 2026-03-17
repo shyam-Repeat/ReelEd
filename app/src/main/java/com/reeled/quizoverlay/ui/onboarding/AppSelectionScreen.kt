@@ -31,6 +31,7 @@ fun AppSelectionScreen(
     val appOptions = listOf(
         AppOption("YouTube", "com.google.android.youtube", "Video"),
         AppOption("Instagram", "com.instagram.android", "Social Media"),
+        AppOption("Instagram Lite", "com.instagram.lite", "Social Media"),
         AppOption("X", "com.twitter.android", "Social Media"),
         AppOption("Facebook", "com.facebook.katana", "Social Media")
     )

@@ -9,6 +9,7 @@ class ForegroundAppDetector(private val context: Context) {
     companion object {
         val TARGET_PACKAGES = setOf(
             "com.instagram.android",
+            "com.instagram.lite",
             "com.zhiliaoapp.musically",         // TikTok
             "com.ss.android.ugc.trill",         // TikTok alternate package
             "com.google.android.youtube",
@@ -18,7 +19,7 @@ class ForegroundAppDetector(private val context: Context) {
             "com.pinterest",
         )
 
-        private const val QUERY_WINDOW_MS = 60 * 60 * 1000L // 1 hour
+        private const val QUERY_WINDOW_MS = 2 * 60 * 1000L // 2 minutes
     }
 
     private val usageStatsManager by lazy {
@@ -30,27 +31,23 @@ class ForegroundAppDetector(private val context: Context) {
         val events = usageStatsManager.queryEvents(now - QUERY_WINDOW_MS, now)
             ?: return null
 
-        var latestPackage: String? = null
-        var latestTime = 0L
-        var latestType = -1
+        var latestForegroundPackage: String? = null
+        var latestForegroundTime = 0L
 
         val event = UsageEvents.Event()
         while (events.hasNextEvent()) {
             events.getNextEvent(event)
-            // Check all events and find the very latest one
-            if (event.timeStamp >= latestTime) {
-                latestTime = event.timeStamp
-                latestPackage = event.packageName
-                latestType = event.eventType
+            if (event.eventType == UsageEvents.Event.ACTIVITY_RESUMED ||
+                event.eventType == UsageEvents.Event.MOVE_TO_FOREGROUND
+            ) {
+                if (event.timeStamp >= latestForegroundTime) {
+                    latestForegroundTime = event.timeStamp
+                    latestForegroundPackage = event.packageName
+                }
             }
         }
 
-        // Only return the package if it's currently in RESUMED state (foreground)
-        return if (latestType == UsageEvents.Event.ACTIVITY_RESUMED) {
-            latestPackage
-        } else {
-            null
-        }
+        return latestForegroundPackage
     }
 
     fun isTargetAppInForeground(monitoredApps: Set<String> = emptySet()): Boolean {

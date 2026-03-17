@@ -13,53 +13,100 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.reeled.quizoverlay.R
 import com.reeled.quizoverlay.prefs.PinPrefs
-import com.reeled.quizoverlay.ui.pin.PinGateDialog
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
+
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import com.reeled.quizoverlay.ui.overlay.components.OptionButton
+import androidx.compose.ui.graphics.Color
 
 @Composable
 fun ChildHomeScreen(
     pinPrefs: PinPrefs,
     onNavigateToDashboard: () -> Unit
 ) {
-    var showPinDialog by remember { mutableStateOf(false) }
-    val pinHash by pinPrefs.pinHash.collectAsState(initial = null)
-    val failedAttempts by pinPrefs.failedAttempts.collectAsState(initial = 0)
-    val lockoutUntil by pinPrefs.lockoutUntil.collectAsState(initial = 0L)
-    
-    val scope = rememberCoroutineScope()
-    val currentTime = System.currentTimeMillis()
-    val isLocked = lockoutUntil > currentTime
-    val lockoutTimeRemaining = if (isLocked) lockoutUntil - currentTime else 0L
+    val pagerState = rememberPagerState(pageCount = { 2 })
 
     Box(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxSize()
+        ) { page ->
+            when (page) {
+                0 -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_brain),
+                            contentDescription = null,
+                            modifier = Modifier.size(120.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.height(32.dp))
+                        Text(
+                            text = "Learning mode is ON!",
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Quizzes will pop up while you scroll. Keep learning to earn your scroll time!",
+                            style = MaterialTheme.typography.bodyLarge,
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                1 -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = "Settings & Options",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(bottom = 32.dp)
+                        )
+                        
+                        OptionButton(
+                            label = "Configure Learning",
+                            enabled = true,
+                            backgroundColor = MaterialTheme.colorScheme.secondaryContainer,
+                            onClick = { /* Action for option */ }
+                        )
+                    }
+                }
+            }
+        }
+
+        // Pager Indicator
+        Row(
+            Modifier
+                .height(50.dp)
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 80.dp),
+            horizontalArrangement = Arrangement.Center
         ) {
-            Icon(
-                painter = painterResource(id = R.drawable.ic_brain),
-                contentDescription = null,
-                modifier = Modifier.size(120.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
-            Spacer(modifier = Modifier.height(32.dp))
-            Text(
-                text = "Learning mode is ON!",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "Quizzes will pop up while you scroll. Keep learning to earn your scroll time!",
-                style = MaterialTheme.typography.bodyLarge,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            repeat(pagerState.pageCount) { iteration ->
+                val color = if (pagerState.currentPage == iteration) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f)
+                Box(
+                    modifier = Modifier
+                        .padding(2.dp)
+                        .clip(CircleShape)
+                        .background(color)
+                        .size(8.dp)
+                )
+            }
         }
 
         // Parent Link
@@ -71,32 +118,7 @@ fun ChildHomeScreen(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 32.dp)
-                .clickable { showPinDialog = true }
-        )
-    }
-
-    if (showPinDialog) {
-        PinGateDialog(
-            storedPinHash = pinHash ?: "",
-            isLocked = isLocked,
-            lockoutTimeRemaining = lockoutTimeRemaining,
-            onPinCorrect = {
-                scope.launch {
-                    pinPrefs.resetFailedAttempts()
-                    showPinDialog = false
-                    onNavigateToDashboard()
-                }
-            },
-            onPinIncorrect = {
-                scope.launch {
-                    pinPrefs.incrementFailedAttempts()
-                    val attempts = pinPrefs.failedAttempts.first()
-                    if (attempts >= 3) {
-                        pinPrefs.setLockout(System.currentTimeMillis() + 60_000)
-                    }
-                }
-            },
-            onDismiss = { showPinDialog = false }
+                .clickable { onNavigateToDashboard() }
         )
     }
 }

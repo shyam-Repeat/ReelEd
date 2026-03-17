@@ -336,7 +336,12 @@ class OverlayForegroundService : Service() {
         sessionActive = false
         removeOverlayIfShowing()
         pollingJob?.cancel()
-        stopForeground(true)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+        } else {
+            @Suppress("DEPRECATION")
+            stopForeground(true)
+        }
         stopSelf()
     }
 }

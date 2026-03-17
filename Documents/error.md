@@ -1,17 +1,18 @@
-Task :app:compileDebugKotlin FAILED
-e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/onboarding/BatteryOptScreen.kt:40:9 This material API is experimental and is likely to change or to be removed in the future.
-e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/onboarding/ConsentScreen.kt:37:9 This material API is experimental and is likely to change or to be removed in the future.
-e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/onboarding/PermissionOverlayScreen.kt:35:9 This material API is experimental and is likely to change or to be removed in the future.
-e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/DragDropMatchCard.kt:53:9 The API of this layout is experimental and is likely to change in the future.
-e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/FillBlankCard.kt:58:9 The API of this layout is experimental and is likely to change in the future.
-FAILURE: Build failed with an exception.
-* What went wrong:
-Execution failed for task ':app:compileDebugKotlin'.
-> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
-   > Compilation error. See log for more details
-* Try:
-> Run with --info or --debug option to get more log output.
-> Run with --scan to get full insights.
-> Get more help at https://help.gradle.org.
-* Exception is:
-org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':app:compileDebugKotlin'.
+w: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/service/OverlayForegroundService.kt:339:9 'stopForeground(Boolean): Unit' is deprecated. Deprecated in Java
+w: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/trigger/ForegroundAppDetector.kt:39:54 'MOVE_TO_FOREGROUND: Int' is deprecated. Deprecated in Java
+w: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/childhome/ChildHomeScreen.kt:27:9 Variable 'failedAttempts' is never used
+w: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/onboarding/AppSelectionScreen.kt:75:13 'LinearProgressIndicator(Float, Modifier = ..., Color = ..., Color = ..., StrokeCap = ...): Unit' is deprecated. Use the overload that takes `progress` as a lambda
+w: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/onboarding/BatteryOptScreen.kt:82:13 'LinearProgressIndicator(Float, Modifier = ..., Color = ..., Color = ..., StrokeCap = ...): Unit' is deprecated. Use the overload that takes `progress` as a lambda
+w: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/onboarding/ConsentScreen.kt:58:13 'LinearProgressIndicator(Float, Modifier = ..., Color = ..., Color = ..., StrokeCap = ...): Unit' is deprecated. Use the overload that takes `progress` as a lambda
+w: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/onboarding/PermissionOverlayScreen.kt:77:13 'LinearProgressIndicator(Float, Modifier = ..., Color = ..., Color = ..., StrokeCap = ...): Unit' is deprecated. Use the overload that takes `progress` as a lambda
+w: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/onboarding/PermissionUsageScreen.kt:81:40 'ArrowBack: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ArrowBack
+w: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/onboarding/PinSetupScreen.kt:94:36 'ArrowBack: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ArrowBack
+w: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/onboarding/PinSetupScreen.kt:117:13 'LinearProgressIndicator(Float, Modifier = ..., Color = ..., Color = ..., StrokeCap = ...): Unit' is deprecated. Use the overload that takes `progress` as a lambda
+w: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/onboarding/PinSetupScreen.kt:212:41 'Backspace: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Outlined.Backspace
+w: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/onboarding/WelcomeScreen.kt:102:40 'ArrowForward: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ArrowForward
+w: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/DragDropMatchCard.kt:38:5 Parameter 'onDismissed' is never used
+w: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/FillBlankCard.kt:38:5 Parameter 'onDismissed' is never used
+w: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/TapChoiceCard.kt:39:5 Parameter 'onDismissed' is never used
+w: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/TapTapMatchCard.kt:32:5 Parameter 'onDismissed' is never used
+w: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/pin/PinActivity.kt:31:21 Variable 'failedAttempts' is never used
+w: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/util/PermissionChecker.kt:22:20 'checkOpNoThrow(String, Int, String): Int' is deprecated. Deprecated in Java

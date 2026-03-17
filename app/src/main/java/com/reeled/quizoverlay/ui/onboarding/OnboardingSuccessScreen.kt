@@ -22,9 +22,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.reeled.quizoverlay.ui.theme.Primary
 
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+
 @Composable
 fun OnboardingSuccessScreen(
-    onEnterChildMode: () -> Unit
+    onEnterChildMode: () -> Unit,
+    onGoToDashboard: () -> Unit
 ) {
     val infiniteTransition = rememberInfiniteTransition()
     val bounce by infiniteTransition.animateFloat(
@@ -33,13 +37,15 @@ fun OnboardingSuccessScreen(
         animationSpec = infiniteRepeatable(
             animation = tween(1500, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
-        )
+        ),
+        label = "bounce"
     )
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .verticalScroll(rememberScrollState())
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -109,16 +115,34 @@ fun OnboardingSuccessScreen(
 
         Spacer(modifier = Modifier.weight(1f))
 
-        // Sticky Footer
-        Button(
-            onClick = onEnterChildMode,
-            modifier = Modifier.fillMaxWidth().height(64.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Primary)
+        // Actions
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Icon(Icons.Outlined.RocketLaunch, contentDescription = null)
-            Spacer(modifier = Modifier.width(12.dp))
-            Text("Enter Child Mode", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Button(
+                onClick = onEnterChildMode,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(64.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Primary)
+            ) {
+                Icon(Icons.Outlined.RocketLaunch, contentDescription = null)
+                Spacer(modifier = Modifier.width(12.dp))
+                Text("Enter Child Mode", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            }
+
+            OutlinedButton(
+                onClick = onGoToDashboard,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+                border = androidx.compose.foundation.BorderStroke(2.dp, Primary)
+            ) {
+                Text("Go to Parent Dashboard", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Primary)
+            }
         }
     }
 }

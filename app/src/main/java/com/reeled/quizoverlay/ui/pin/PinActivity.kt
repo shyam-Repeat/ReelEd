@@ -28,7 +28,6 @@ class PinActivity : ComponentActivity() {
             ReelEdTheme {
                 var step by remember { mutableStateOf(PinStep.ENTRY) }
                 val pinHash by pinPrefs.pinHash.collectAsState(initial = null)
-                val failedAttempts by pinPrefs.failedAttempts.collectAsState(initial = 0)
                 val lockoutUntil by pinPrefs.lockoutUntil.collectAsState(initial = 0L)
                 
                 val currentTime = System.currentTimeMillis()

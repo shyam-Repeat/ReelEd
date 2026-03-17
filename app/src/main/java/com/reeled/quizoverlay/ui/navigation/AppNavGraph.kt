@@ -84,8 +84,12 @@ fun AppNavGraph(
     ) {
         composable(Screen.Loading.route) {
             LoadingScreen(onLoadingComplete = {
-                navController.navigate(Screen.Welcome.route) {
-                    popUpTo(Screen.Loading.route) { inclusive = true }
+                scope.launch {
+                    val isComplete = appPrefs.onboardingComplete.first()
+                    val destination = if (isComplete) Screen.ChildHome.route else Screen.Welcome.route
+                    navController.navigate(destination) {
+                        popUpTo(Screen.Loading.route) { inclusive = true }
+                    }
                 }
             })
         }
@@ -210,6 +214,13 @@ fun AppNavGraph(
                         OverlayForegroundService.startIntent(context)
                     )
                     navController.navigate(Screen.ChildHome.route) {
+                        popUpTo(Screen.Welcome.route) { inclusive = true }
+                    }
+                },
+                onGoToDashboard = {
+                    scope.launch { appPrefs.setOnboardingComplete(true) }
+                    onboardingViewModel.onOnboardingCompleted()
+                    navController.navigate(Screen.ParentDashboard.route) {
                         popUpTo(Screen.Welcome.route) { inclusive = true }
                     }
                 }

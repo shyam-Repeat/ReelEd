@@ -34,8 +34,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 fun DragDropMatchCard(
     config: QuizCardConfig,
     sourceApp: String,
-    onResult: (QuizAttemptResult) -> Unit,
-    onDismissed: () -> Unit
+    onResult: (QuizAttemptResult) -> Unit
 ) {
     val payload = config.payload as QuizPayload.DragDropPayload
     val startTime = remember { System.currentTimeMillis() }

@@ -5,7 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -99,7 +99,7 @@ fun WelcomeScreen(
                 ) {
                     Text("Start Setup", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Icon(Icons.Default.ArrowForward, contentDescription = null)
+                    Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
                 }
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(

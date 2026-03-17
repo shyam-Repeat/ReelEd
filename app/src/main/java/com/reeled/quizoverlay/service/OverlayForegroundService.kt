@@ -62,6 +62,7 @@ class OverlayForegroundService : Service() {
     }
 
     private lateinit var triggerEngine: TriggerEngine
+    private lateinit var foregroundAppDetector: ForegroundAppDetector
     private lateinit var repository: QuizRepository
     private lateinit var triggerPrefs: TriggerPrefs
     private lateinit var appPrefs: AppPrefs
@@ -92,7 +93,7 @@ class OverlayForegroundService : Service() {
         appPrefs = AppPrefs(this)
         repository = QuizRepository(this)
 
-        val foregroundAppDetector = ForegroundAppDetector(this)
+        foregroundAppDetector = ForegroundAppDetector(this)
         val videoPlaybackDetector = VideoPlaybackDetector(this, foregroundAppDetector)
         triggerEngine = TriggerEngine(
             repository,
@@ -174,17 +175,30 @@ class OverlayForegroundService : Service() {
         pollingJob = serviceScope.launch {
             while (isActive) {
                 try {
+                    reconcileOverlayState()
                     val monitoredApps = appPrefs.monitoredApps.first()
                     val decision = triggerEngine.checkAndFire(monitoredApps)
 
                     when (decision) {
                         is TriggerDecision.Fire -> {
-                            lastReportedSkipReason = null
-                            withContext(Dispatchers.Main) {
-                                if (overlayView == null) {
-                                    totalQuizzesShown++
-                                    updateSessionStats()
-                                    showOverlay(decision.question, decision.sourceApp)
+                            val latestForeground = triggerEngineForegroundPackage()
+                            if (latestForeground != decision.sourceApp) {
+                                val reason = "fire_aborted_not_foreground"
+                                if (reason != lastReportedSkipReason) {
+                                    lastReportedSkipReason = reason
+                                    logEventSafely(
+                                        eventType = "trigger_skip",
+                                        payloadJson = "{\"reason\":\"${jsonSafe(reason)}\",\"expected\":\"${jsonSafe(decision.sourceApp)}\",\"actual\":\"${jsonSafe(latestForeground.orEmpty())}\"}"
+                                    )
+                                }
+                            } else {
+                                lastReportedSkipReason = null
+                                withContext(Dispatchers.Main) {
+                                    if (overlayView == null) {
+                                        totalQuizzesShown++
+                                        updateSessionStats()
+                                        showOverlay(decision.question, decision.sourceApp)
+                                    }
                                 }
                             }
                         }
@@ -207,6 +221,31 @@ class OverlayForegroundService : Service() {
                 }
                 delay(TriggerConfig.POLLING_INTERVAL_MS)
             }
+        }
+    }
+
+    private suspend fun reconcileOverlayState() {
+        val attached = overlayView?.isAttachedToWindow == true
+        if (!attached) {
+            if (overlayView != null) {
+                overlayView = null
+            }
+            val state = triggerPrefs.getTriggerState()
+            if (state.overlayActive) {
+                triggerPrefs.setOverlayActive(false)
+                logEventSafely(
+                    eventType = "overlay_state_recovered",
+                    payloadJson = "{\"reason\":\"stale_overlay_flag\"}"
+                )
+            }
+        }
+    }
+
+    private fun triggerEngineForegroundPackage(): String? {
+        return try {
+            foregroundAppDetector.getCurrentForegroundPackage()
+        } catch (_: Exception) {
+            null
         }
     }
 

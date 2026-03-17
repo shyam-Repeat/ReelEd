@@ -4,6 +4,8 @@ import com.google.gson.annotations.SerializedName
 import com.reeled.quizoverlay.data.local.entity.EventLogEntity
 import com.reeled.quizoverlay.util.TimeUtils
 
+import com.reeled.quizoverlay.util.TimeUtils
+
 data class EventLogDto(
     @SerializedName("id") val id: String,
     @SerializedName("tester_id") val testerId: String,

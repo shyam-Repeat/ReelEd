@@ -30,6 +30,15 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.reeled.quizoverlay.R
 import com.reeled.quizoverlay.prefs.PinPrefs
+import com.reeled.quizoverlay.prefs.AppPrefs
+import com.reeled.quizoverlay.prefs.TriggerPrefs
+import com.reeled.quizoverlay.util.PermissionChecker
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import com.reeled.quizoverlay.ui.overlay.components.OptionButton
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.sp
 
 import androidx.compose.ui.graphics.Color
 import com.reeled.quizoverlay.prefs.AppPrefs
@@ -45,6 +54,9 @@ fun ChildHomeScreen(
     onNavigateToDashboard: () -> Unit
 ) {
     val context = LocalContext.current
+    val pagerState = rememberPagerState(pageCount = { 2 })
+    val monitoredApps by appPrefs.monitoredApps.collectAsState(initial = emptySet())
+    val lastSkipReason by triggerPrefs.lastSkipReason.collectAsState(initial = "None")
     var showPinDialog by remember { mutableStateOf(false) }
     val pinHash by pinPrefs.pinHash.collectAsState(initial = null)
     val failedAttempts by pinPrefs.failedAttempts.collectAsState(initial = 0)
@@ -159,7 +171,7 @@ fun ChildHomeScreen(
                 .height(50.dp)
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 80.dp),
+                .padding(bottom = 120.dp),
             horizontalArrangement = Arrangement.Center
         ) {
             repeat(pagerState.pageCount) { iteration ->
@@ -178,6 +190,7 @@ fun ChildHomeScreen(
             }
         }
 
+        // Parent Link & Dev Info
         // Parent Link
         Column(
             modifier = Modifier
@@ -202,6 +215,9 @@ fun ChildHomeScreen(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                 textDecoration = TextDecoration.Underline,
+                modifier = Modifier.clickable { onNavigateToDashboard() }
+            )
+        }
                 modifier = Modifier.clickable { showPinDialog = true }
             )
         }

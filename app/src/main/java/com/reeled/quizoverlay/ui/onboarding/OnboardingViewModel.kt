@@ -22,11 +22,10 @@ class OnboardingViewModel(application: Application) : AndroidViewModel(applicati
         viewModelScope.launch {
             appPrefs.setNickname(nickname)
             appPrefs.setConsentGiven(true)
+            // Initial registration, permissions might be false here
             try {
                 repository.registerTester(nickname)
-            } catch (e: Exception) {
-                // Silently fail or log, don't block onboarding
-            }
+            } catch (_: Exception) {}
         }
     }
 

@@ -46,6 +46,24 @@ fun DevModeScreen(
             }
         }
 
+        item {
+            Text(
+                text = "Entries: ${uiState.logs.size}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+
+        if (uiState.logs.isEmpty()) {
+            item {
+                Text(
+                    text = "No logs yet. Use the app for a minute, then tap Refresh Logs.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+
         items(uiState.logs) { log ->
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(

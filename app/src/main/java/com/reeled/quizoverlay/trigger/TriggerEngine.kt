@@ -4,6 +4,7 @@ import android.util.Log
 import com.reeled.quizoverlay.data.repository.QuizRepository
 import com.reeled.quizoverlay.model.QuizQuestion
 import com.reeled.quizoverlay.prefs.TriggerPrefs
+import com.reeled.quizoverlay.util.PermissionChecker
 
 class TriggerEngine(
     private val repository: QuizRepository,
@@ -35,37 +36,37 @@ class TriggerEngine(
         
         if (foregroundPackage == null || !allTargets.contains(foregroundPackage)) {
             prefs.clearActiveSession()
-            return skip("target_app_not_foreground")
+            return skip("target_app_not_foreground", foregroundPackage)
         }
 
         prefs.updateSessionIfNeeded(foregroundPackage)
 
         if (state.quizzesShownToday >= TriggerConfig.MAX_DAILY) {
-            return skip("daily_cap_reached")
+            return skip("daily_cap_reached", foregroundPackage)
         }
 
         val effectiveCooldown = computeEffectiveCooldown(state)
         if (now - state.lastQuizShownTime < effectiveCooldown) {
-            return skip("cooldown_active")
+            return skip("cooldown_active", foregroundPackage)
         }
 
         if (now - state.sessionStartTime < TriggerConfig.WARMUP_MS) {
-            return skip("warmup_not_done")
+            return skip("warmup_not_done", foregroundPackage)
         }
 
         if (now - state.lastQuizShownTime < TriggerConfig.INTERVAL_MS) {
-            return skip("interval_not_elapsed")
+            return skip("interval_not_elapsed", foregroundPackage)
         }
 
         val interruptScore = videoPlaybackDetector.getInterruptScore(monitoredApps)
         val remainingQuota = TriggerConfig.MAX_DAILY - state.quizzesShownToday
         if (interruptScore.isPoor && remainingQuota > 1) {
-            return skip("poor_interrupt_moment")
+            return skip("poor_interrupt_moment", foregroundPackage)
         }
 
         val allQuestions = repository.getAllActiveQuestions()
         if (allQuestions.isEmpty()) {
-            return skip("no_questions_cached")
+            return skip("no_questions_cached", foregroundPackage)
         }
 
         val attemptedTodayIds = repository.getAttemptedQuestionIdsToday().toSet()
@@ -80,8 +81,11 @@ class TriggerEngine(
         return TriggerDecision.Fire(question, foregroundPackage)
     }
 
-    private fun skip(reason: String): TriggerDecision {
-        Log.d(TAG, "SKIP: $reason")
+    private suspend fun skip(reason: String, foregroundPackage: String? = null): TriggerDecision {
+        val overlayPerm = PermissionChecker.hasOverlayPermission(repository.context)
+        val usagePerm = PermissionChecker.hasUsageStatsPermission(repository.context)
+        Log.d(TAG, "SKIP: $reason | app: $foregroundPackage | perm: O=$overlayPerm, U=$usagePerm")
+        prefs.setLastSkipReason(reason)
         return TriggerDecision.Skip(reason)
     }
 

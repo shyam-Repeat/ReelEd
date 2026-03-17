@@ -230,8 +230,11 @@ fun AppNavGraph(
 
         composable(Screen.ChildHome.route) {
             val pinPrefs = remember { PinPrefs(context) }
+            val triggerPrefs = remember { com.reeled.quizoverlay.prefs.TriggerPrefs(context) }
             ChildHomeScreen(
                 pinPrefs = pinPrefs,
+                triggerPrefs = triggerPrefs,
+                appPrefs = appPrefs,
                 onNavigateToDashboard = { navController.navigate(Screen.ParentDashboard.route) }
             )
         }

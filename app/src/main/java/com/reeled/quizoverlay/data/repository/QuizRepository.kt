@@ -1,7 +1,6 @@
 package com.reeled.quizoverlay.data.repository
 
 import android.content.Context
-import android.os.Build
 import com.reeled.quizoverlay.data.local.AppDatabase
 import com.reeled.quizoverlay.data.local.entity.EventLogEntity
 import com.reeled.quizoverlay.data.local.entity.OverlaySessionEntity
@@ -16,7 +15,7 @@ import com.reeled.quizoverlay.prefs.AppPrefs
 import com.reeled.quizoverlay.util.PermissionChecker
 import java.util.UUID
 
-class QuizRepository(private val context: Context) {
+class QuizRepository(internal val context: Context) {
     private val database = AppDatabase.getDatabase(context)
     private val questionDao = database.quizQuestionDao()
     private val attemptDao = database.quizAttemptDao()
@@ -26,18 +25,15 @@ class QuizRepository(private val context: Context) {
     private val api = SupabaseClient.api
 
     // Tester
-    suspend fun registerTester(nickname: String) {
+    suspend fun registerTester(nickname: String?) {
         val testerId = appPrefs.getTesterId()
         val dto = TesterDto(
-            id = testerId,
+            testerId = testerId,
             nickname = nickname,
-            hasOverlayPerm = PermissionChecker.hasOverlayPermission(context),
-            hasUsageStatsPerm = PermissionChecker.hasUsageStatsPermission(context),
-            hasNotificationPerm = PermissionChecker.hasNotificationPermission(context),
-            isBatteryOptimized = !PermissionChecker.isIgnoringBatteryOptimizations(context),
             appVersion = "1.0.0", // TODO: Get from BuildConfig
-            deviceInfo = "${Build.MANUFACTURER} ${Build.MODEL} (API ${Build.VERSION.SDK_INT})",
-            createdAt = System.currentTimeMillis()
+            overlayPermissionGranted = PermissionChecker.hasOverlayPermission(context),
+            usageAccessGranted = PermissionChecker.hasUsageStatsPermission(context),
+            batteryOptDisabled = PermissionChecker.isIgnoringBatteryOptimizations(context)
         )
         api?.postTester(dto)
     }

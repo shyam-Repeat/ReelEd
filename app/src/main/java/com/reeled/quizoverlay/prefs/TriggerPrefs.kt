@@ -23,6 +23,7 @@ class TriggerPrefs(private val context: Context) {
         private val LAST_WAS_CORRECT = booleanPreferencesKey("last_was_correct")
         private val LAST_SHOWN_QUESTION_ID = stringPreferencesKey("last_shown_question_id")
         private val LAST_FOREGROUND_APP = stringPreferencesKey("last_foreground_app")
+        private val LAST_SKIP_REASON = stringPreferencesKey("last_skip_reason")
     }
 
     suspend fun getTriggerState(): TriggerState {
@@ -39,6 +40,12 @@ class TriggerPrefs(private val context: Context) {
             lastShownQuestionId = prefs[LAST_SHOWN_QUESTION_ID]
         )
     }
+
+    suspend fun setLastSkipReason(reason: String) {
+        context.triggerDataStore.edit { it[LAST_SKIP_REASON] = reason }
+    }
+
+    val lastSkipReason: Flow<String?> = context.triggerDataStore.data.map { it[LAST_SKIP_REASON] }
 
     suspend fun setOverlayActive(active: Boolean) {
         context.triggerDataStore.edit { it[OVERLAY_ACTIVE] = active }

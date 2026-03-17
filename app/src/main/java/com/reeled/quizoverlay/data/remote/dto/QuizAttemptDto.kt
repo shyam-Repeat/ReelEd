@@ -2,6 +2,7 @@ package com.reeled.quizoverlay.data.remote.dto
 
 import com.google.gson.annotations.SerializedName
 import com.reeled.quizoverlay.data.local.entity.QuizAttemptEntity
+import com.reeled.quizoverlay.util.TimeUtils
 
 data class QuizAttemptDto(
     @SerializedName("id") val id: String,
@@ -18,14 +19,12 @@ data class QuizAttemptDto(
 )
 
 fun QuizAttemptEntity.toDto(): QuizAttemptDto {
-    // Note: In a real app, use a proper ISO 8601 formatter.
-    // For now, using a placeholder string or simplified format.
     return QuizAttemptDto(
         id = id,
         testerId = testerId,
         questionId = questionId,
-        shownAt = shownAt.toString(), // Needs proper formatting
-        answeredAt = answeredAt?.toString(), // Needs proper formatting
+        shownAt = TimeUtils.toIsoString(shownAt),
+        answeredAt = answeredAt?.let { TimeUtils.toIsoString(it) },
         selectedOptionId = selectedOptionId,
         isCorrect = isCorrect,
         wasDismissed = dismissed,

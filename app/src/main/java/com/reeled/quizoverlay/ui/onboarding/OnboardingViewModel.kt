@@ -9,6 +9,7 @@ import com.reeled.quizoverlay.data.repository.QuizRepository
 import com.reeled.quizoverlay.prefs.AppPrefs
 import com.reeled.quizoverlay.prefs.PinPrefs
 import com.reeled.quizoverlay.util.PinHasher
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class OnboardingViewModel(application: Application) : AndroidViewModel(application) {
@@ -20,11 +21,10 @@ class OnboardingViewModel(application: Application) : AndroidViewModel(applicati
         viewModelScope.launch {
             appPrefs.setNickname(nickname)
             appPrefs.setConsentGiven(true)
+            // Initial registration, permissions might be false here
             try {
                 repository.registerTester(nickname)
-            } catch (e: Exception) {
-                // Silently fail or log, don't block onboarding
-            }
+            } catch (_: Exception) {}
         }
     }
 
@@ -38,6 +38,11 @@ class OnboardingViewModel(application: Application) : AndroidViewModel(applicati
 
     fun onOnboardingCompleted() {
         viewModelScope.launch {
+            // Final registration with all permissions updated
+            try {
+                val name = appPrefs.nickname.first()
+                repository.registerTester(name)
+            } catch (_: Exception) {}
             appPrefs.setOnboardingComplete(true)
         }
     }

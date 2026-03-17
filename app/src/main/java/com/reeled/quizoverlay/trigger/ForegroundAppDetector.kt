@@ -36,7 +36,7 @@ class ForegroundAppDetector(private val context: Context) {
         val event = UsageEvents.Event()
         while (events.hasNextEvent()) {
             events.getNextEvent(event)
-            if (event.eventType == UsageEvents.Event.MOVE_TO_FOREGROUND) {
+            if (event.eventType == UsageEvents.Event.ACTIVITY_RESUMED) {
                 if (event.timeStamp > latestTime) {
                     latestTime = event.timeStamp
                     latestPackage = event.packageName

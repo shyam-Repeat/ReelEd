@@ -23,9 +23,9 @@ fun QuizCardRouter(
     }
 
     when (effectiveConfig.cardType) {
-        QuizCardType.TAP_CHOICE -> TapChoiceCard(effectiveConfig, sourceApp, onResult, onDismissed)
-        QuizCardType.TAP_TAP_MATCH -> TapTapMatchCard(effectiveConfig, sourceApp, onResult, onDismissed)
-        QuizCardType.DRAG_DROP_MATCH -> DragDropMatchCard(effectiveConfig, sourceApp, onResult, onDismissed)
-        QuizCardType.FILL_BLANK -> FillBlankCard(effectiveConfig, sourceApp, onResult, onDismissed)
+        QuizCardType.TAP_CHOICE -> TapChoiceCard(effectiveConfig, sourceApp, onResult)
+        QuizCardType.TAP_TAP_MATCH -> TapTapMatchCard(effectiveConfig, sourceApp, onResult)
+        QuizCardType.DRAG_DROP_MATCH -> DragDropMatchCard(effectiveConfig, sourceApp, onResult)
+        QuizCardType.FILL_BLANK -> FillBlankCard(effectiveConfig, sourceApp, onResult)
     }
 }

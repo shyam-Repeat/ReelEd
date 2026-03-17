@@ -56,7 +56,7 @@ fun ConsentScreen(
             }
             Spacer(modifier = Modifier.height(8.dp))
             LinearProgressIndicator(
-                progress = 0.25f,
+                progress = { 0.25f },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(4.dp),

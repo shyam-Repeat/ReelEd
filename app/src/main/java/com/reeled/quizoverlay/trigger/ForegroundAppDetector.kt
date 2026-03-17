@@ -18,7 +18,7 @@ class ForegroundAppDetector(private val context: Context) {
             "com.pinterest",
         )
 
-        private const val QUERY_WINDOW_MS = 5_000L
+        private const val QUERY_WINDOW_MS = 60 * 60 * 1000L // 1 hour
     }
 
     private val usageStatsManager by lazy {
@@ -32,21 +32,30 @@ class ForegroundAppDetector(private val context: Context) {
 
         var latestPackage: String? = null
         var latestTime = 0L
+        var latestType = -1
 
         val event = UsageEvents.Event()
         while (events.hasNextEvent()) {
             events.getNextEvent(event)
-            if (event.eventType == UsageEvents.Event.ACTIVITY_RESUMED) {
-                if (event.timeStamp > latestTime) {
-                    latestTime = event.timeStamp
-                    latestPackage = event.packageName
-                }
+            if (event.timeStamp >= latestTime) {
+                latestTime = event.timeStamp
+                latestPackage = event.packageName
+                latestType = event.eventType
             }
         }
-        return latestPackage
+
+        // If the latest event for the package was RESUMED, it's still in foreground.
+        // If it was PAUSED or STOPPED, then the app is no longer in foreground.
+        return if (latestType == UsageEvents.Event.ACTIVITY_RESUMED) {
+            latestPackage
+        } else {
+            null
+        }
     }
 
-    fun isTargetAppInForeground(): Boolean {
-        return getCurrentForegroundPackage() in TARGET_PACKAGES
+    fun isTargetAppInForeground(monitoredApps: Set<String> = emptySet()): Boolean {
+        val current = getCurrentForegroundPackage() ?: return false
+        val targets = if (monitoredApps.isNotEmpty()) monitoredApps else TARGET_PACKAGES
+        return current in targets
     }
 }

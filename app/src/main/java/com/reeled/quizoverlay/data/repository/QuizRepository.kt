@@ -152,6 +152,8 @@ class QuizRepository(private val context: Context) {
 
     suspend fun getUnsyncedEvents(): List<EventLogEntity> = eventLogDao.getUnsynced()
 
+    suspend fun getRecentEventLogs(limit: Int): List<EventLogEntity> = eventLogDao.getRecent(limit)
+
     suspend fun batchUploadEvents(events: List<EventLogEntity>) {
         val remoteApi = api ?: return
         remoteApi.postEvents(events.map { it.toDto() })

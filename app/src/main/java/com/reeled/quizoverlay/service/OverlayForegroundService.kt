@@ -186,8 +186,8 @@ class OverlayForegroundService : Service() {
                     } else {
                         handleNormalPolling()
                     }
-                } catch (_: CancellationException) {
-                    throw
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
                 } catch (exception: Exception) {
                     logEventSafely(
                         eventType = "overlay_poll_error",

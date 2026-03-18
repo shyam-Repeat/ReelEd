@@ -41,6 +41,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
@@ -157,15 +158,17 @@ class OverlayForegroundService : Service() {
         pollingJob?.cancel()
         currentSessionId?.let { sessionId ->
             serviceScope.launch(Dispatchers.IO) {
-                try {
-                    repository.logEvent("overlay_stopped", "{\"session_id\":\"$sessionId\"}")
-                } catch (_: Exception) {
-                    // no-op
+                withContext(NonCancellable) {
+                    try {
+                        repository.logEvent("overlay_stopped", "{\"session_id\":\"$sessionId\"}")
+                    } catch (_: Exception) {
+                        // no-op
+                    }
+                    repository.endSession(sessionId)
                 }
-                repository.endSession(sessionId)
-                serviceScope.cancel()
             }
-        } ?: serviceScope.cancel()
+        }
+        serviceScope.cancel()
 
         removeOverlayIfShowing()
         super.onDestroy()

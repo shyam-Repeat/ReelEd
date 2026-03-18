@@ -90,17 +90,31 @@ class TriggerEngine(
         val overlayPerm = PermissionChecker.hasOverlayPermission(repository.context)
         val usagePerm = PermissionChecker.hasUsageStatsPermission(repository.context)
         Log.d(TAG, "SKIP: $reason | app: $foregroundPackage | perm: O=$overlayPerm, U=$usagePerm")
+        
+        // Enhance local event log for debugging in Dev Mode
+        val payload = "{\"reason\":\"${jsonSafe(reason)}\",\"app\":\"${jsonSafe(foregroundPackage.orEmpty())}\",\"perm_overlay\":$overlayPerm,\"perm_usage\":$usagePerm}"
         prefs.setLastSkipReason(reason)
+        
+        try {
+            repository.logEvent("trigger_skip_debug", payload)
+        } catch (_: Exception) {}
+        
         return TriggerDecision.Skip(reason)
     }
+
+    private fun jsonSafe(value: String): String =
+        value.replace("\\", "\\\\").replace("\"", "\\\"")
 
     private fun computeEffectiveCooldown(state: TriggerState): Long {
         var cooldown = TriggerConfig.COOLDOWN_MS
         if (state.lastWasDismissed) {
+            // 1m 30s base + 3m penalty = 4m 30s total wait
             cooldown += TriggerConfig.DISMISS_PENALTY_MS
         } else if (state.lastWasCorrect) {
-            cooldown -= TriggerConfig.STREAK_REDUCTION_MS
+            // 1m 30s base + 30s extra = 2m total wait
+            cooldown += TriggerConfig.CORRECT_ADDITIONAL_MS
         }
+        // Base Wrong answer (neither dismissed nor correct) = 1m 30s
         return cooldown.coerceAtLeast(TriggerConfig.MIN_COOLDOWN_MS)
     }
 

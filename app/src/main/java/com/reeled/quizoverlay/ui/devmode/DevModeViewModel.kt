@@ -70,7 +70,7 @@ class DevModeViewModel(application: Application) : AndroidViewModel(application)
                 )
             }
 
-            _uiState.value = DevModeUiState(
+            _uiState.value = _uiState.value.copy(
                 logs = (eventLogs + attempts).sortedByDescending { it.timestamp }
             )
         }

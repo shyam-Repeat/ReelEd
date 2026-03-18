@@ -10,7 +10,9 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.reeled.quizoverlay.data.repository.QuizRepository
+import com.reeled.quizoverlay.prefs.AppPrefs
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
 
@@ -80,6 +82,7 @@ class SyncWorker(
     // Worker constructors can only receive Context + WorkerParameters, so we
     // build the repository here for MVP. With Hilt: use HiltWorker annotation.
     private val repository = QuizRepository(applicationContext)
+    private val appPrefs = AppPrefs(applicationContext)
 
     // ─────────────────────────────────────────────────────────────────────────
     // Work
@@ -95,6 +98,10 @@ class SyncWorker(
             if (unsyncedAttempts.isEmpty() && unsyncedEvents.isEmpty() && unsyncedSessions.isEmpty()) {
                 return@withContext Result.success()
             }
+
+            // Ensure tester is registered before syncing anything to prevent 409 FK violations
+            val nickname = appPrefs.nickname.first()
+            repository.registerTester(nickname)
 
             // ── Batch upsert to Supabase ──────────────────────────────────────
             if (unsyncedAttempts.isNotEmpty()) {

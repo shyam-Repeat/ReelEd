@@ -30,27 +30,33 @@ class ForegroundAppDetector(private val context: Context) {
     fun getCurrentForegroundPackage(): String? {
         val now = System.currentTimeMillis()
         
-        // Look back 24 hours on first run to prime the cache,
-        // otherwise overlap by a small amount to catch recent events.
+        // On first run, look back up to 2 hours to prime the current state.
+        // On subsequent runs, just overlap slightly with the last query.
         val queryStart = if (lastQueryTime == 0L) {
-            now - (24 * 60 * 60 * 1000L) 
+            now - (2 * 60 * 60 * 1000L) 
         } else {
-            lastQueryTime - 1000L
+            lastQueryTime - 2000L
         }
 
         val events = usageStatsManager.queryEvents(queryStart, now)
-        var latestForegroundTime = 0L
 
         if (events != null) {
             val event = UsageEvents.Event()
             while (events.hasNextEvent()) {
                 events.getNextEvent(event)
-                if (event.eventType == UsageEvents.Event.ACTIVITY_RESUMED ||
-                    event.eventType == 1 // Fallback for ACTIVITY_RESUMED on older APIs
-                ) {
-                    if (event.timeStamp >= latestForegroundTime) {
-                        latestForegroundTime = event.timeStamp
+                
+                when (event.eventType) {
+                    UsageEvents.Event.ACTIVITY_RESUMED, 
+                    UsageEvents.Event.MOVE_TO_FOREGROUND -> {
                         lastKnownForegroundPackage = event.packageName
+                    }
+                    UsageEvents.Event.ACTIVITY_PAUSED, 
+                    UsageEvents.Event.MOVE_TO_BACKGROUND -> {
+                        // If the current foreground app is being paused/backgrounded, clear the cache.
+                        // (Usually followed immediately by another app's RESUMED event which will overwrite this null)
+                        if (lastKnownForegroundPackage == event.packageName) {
+                            lastKnownForegroundPackage = null
+                        }
                     }
                 }
             }

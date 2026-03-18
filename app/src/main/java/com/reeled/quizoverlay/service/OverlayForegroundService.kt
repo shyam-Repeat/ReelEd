@@ -38,6 +38,7 @@ import com.reeled.quizoverlay.ui.pin.PinActivity
 import com.reeled.quizoverlay.ui.theme.ReelEdTheme
 import com.reeled.quizoverlay.util.AudioMuter
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -185,6 +186,8 @@ class OverlayForegroundService : Service() {
                     } else {
                         handleNormalPolling()
                     }
+                } catch (_: CancellationException) {
+                    throw
                 } catch (exception: Exception) {
                     logEventSafely(
                         eventType = "overlay_poll_error",
@@ -371,6 +374,7 @@ class OverlayForegroundService : Service() {
         currentViewLifecycleOwner = viewLifecycleOwner
         overlayView = composeView
         serviceScope.launch(Dispatchers.IO) {
+            triggerPrefs.markQuizShown(question.id)
             triggerPrefs.setOverlayActive(true)
             logEventSafely(
                 eventType = "quiz_shown",
@@ -412,8 +416,7 @@ class OverlayForegroundService : Service() {
                     eventType = eventType,
                     payloadJson = "{\"question_id\":\"${result.questionId}\",\"correct\":${result.isCorrect},\"response_ms\":${result.responseTimeMs},\"source_app\":\"${jsonSafe(result.sourceApp)}\"}",
                 )
-                triggerPrefs.recordQuizShown(
-                    questionId = result.questionId,
+                triggerPrefs.recordQuizOutcome(
                     wasCorrect = result.isCorrect,
                     wasDismissed = result.wasDismissed
                 )

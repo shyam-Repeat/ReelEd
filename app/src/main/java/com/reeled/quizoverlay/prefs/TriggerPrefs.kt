@@ -69,11 +69,16 @@ class TriggerPrefs(private val context: Context) {
         }
     }
 
-    suspend fun recordQuizShown(questionId: String, wasCorrect: Boolean, wasDismissed: Boolean) {
+    suspend fun markQuizShown(questionId: String) {
         context.triggerDataStore.edit {
             it[LAST_SHOWN_QUESTION_ID] = questionId
             it[LAST_QUIZ_SHOWN_TIME] = System.currentTimeMillis()
             it[QUIZZES_SHOWN_TODAY] = (it[QUIZZES_SHOWN_TODAY] ?: 0) + 1
+        }
+    }
+
+    suspend fun recordQuizOutcome(wasCorrect: Boolean, wasDismissed: Boolean) {
+        context.triggerDataStore.edit {
             it[LAST_WAS_CORRECT] = wasCorrect
             it[LAST_WAS_DISMISSED] = wasDismissed
         }

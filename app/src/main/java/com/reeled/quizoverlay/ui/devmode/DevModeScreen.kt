@@ -18,6 +18,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material3.Switch
+import androidx.compose.ui.Alignment
+
 @Composable
 fun DevModeScreen(
     viewModel: DevModeViewModel,
@@ -32,9 +36,40 @@ fun DevModeScreen(
     ) {
         item {
             Text(
-                text = "Dev Mode Logs",
+                text = "Dev Mode & Test Tools",
                 style = MaterialTheme.typography.headlineSmall,
             )
+        }
+
+        item {
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Test Mode",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Text(
+                                text = "Shows quiz every 30s, ignores trigger logic",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Switch(
+                            checked = uiState.isTestModeEnabled,
+                            onCheckedChange = { viewModel.toggleTestMode() }
+                        )
+                    }
+                }
+            }
         }
 
         item {

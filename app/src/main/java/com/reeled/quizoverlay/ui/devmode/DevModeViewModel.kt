@@ -22,16 +22,29 @@ data class DevLogItem(
 
 data class DevModeUiState(
     val logs: List<DevLogItem> = emptyList(),
+    val isTestModeEnabled: Boolean = false,
 )
 
 class DevModeViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = QuizRepository(application)
+    private val appPrefs = com.reeled.quizoverlay.prefs.AppPrefs(application)
 
     private val _uiState = MutableStateFlow(DevModeUiState())
     val uiState: StateFlow<DevModeUiState> = _uiState.asStateFlow()
 
     init {
         refreshLogs()
+        viewModelScope.launch {
+            appPrefs.isTestMode.collect { enabled ->
+                _uiState.value = _uiState.value.copy(isTestModeEnabled = enabled)
+            }
+        }
+    }
+
+    fun toggleTestMode() {
+        viewModelScope.launch {
+            appPrefs.setTestMode(!_uiState.value.isTestModeEnabled)
+        }
     }
 
     fun refreshLogs() {

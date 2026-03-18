@@ -22,11 +22,17 @@ class AppPrefs(private val context: Context) {
         private val CONSENT_GIVEN = booleanPreferencesKey("consent_given")
         private val MONITORED_APPS = stringSetPreferencesKey("monitored_apps")
         private val NICKNAME = stringPreferencesKey("nickname")
+        private val IS_TEST_MODE = booleanPreferencesKey("is_test_mode")
     }
 
     val nickname: Flow<String?> = context.appDataStore.data.map { it[NICKNAME] }
     suspend fun setNickname(name: String) {
         context.appDataStore.edit { it[NICKNAME] = name }
+    }
+
+    val isTestMode: Flow<Boolean> = context.appDataStore.data.map { it[IS_TEST_MODE] ?: false }
+    suspend fun setTestMode(enabled: Boolean) {
+        context.appDataStore.edit { it[IS_TEST_MODE] = enabled }
     }
 
     suspend fun getTesterId(): String {

@@ -89,6 +89,7 @@ class OverlayForegroundService : Service() {
     private var sessionActive: Boolean = false
     private var audioMutedForSession: Boolean = false
     private var lastReportedSkipReason: String? = null
+    private var lastTestModeQuizTime: Long = 0
 
     override fun onCreate() {
         super.onCreate()
@@ -177,50 +178,104 @@ class OverlayForegroundService : Service() {
             while (isActive) {
                 try {
                     reconcileOverlayState()
-                    val monitoredApps = appPrefs.monitoredApps.first()
-                    val decision = triggerEngine.checkAndFire(monitoredApps)
-
-                    when (decision) {
-                        is TriggerDecision.Fire -> {
-                            val latestForeground = triggerEngineForegroundPackage()
-                            if (latestForeground != decision.sourceApp) {
-                                val reason = "fire_aborted_not_foreground"
-                                if (reason != lastReportedSkipReason) {
-                                    lastReportedSkipReason = reason
-                                    logEventSafely(
-                                        eventType = "trigger_skip",
-                                        payloadJson = "{\"reason\":\"${jsonSafe(reason)}\",\"expected\":\"${jsonSafe(decision.sourceApp)}\",\"actual\":\"${jsonSafe(latestForeground.orEmpty())}\"}"
-                                    )
-                                }
-                            } else {
-                                lastReportedSkipReason = null
-                                withContext(Dispatchers.Main) {
-                                    if (overlayView == null) {
-                                        totalQuizzesShown++
-                                        updateSessionStats()
-                                        showOverlay(decision.question, decision.sourceApp)
-                                    }
-                                }
-                            }
-                        }
-                        is TriggerDecision.Skip -> {
-                            if (decision.reason != lastReportedSkipReason) {
-                                lastReportedSkipReason = decision.reason
-                                logEventSafely(
-                                    eventType = "trigger_skip",
-                                    payloadJson = "{\"reason\":\"${jsonSafe(decision.reason)}\"}"
-                                )
-                            }
-                        }
+                    val isTestMode = appPrefs.isTestMode.first()
+                    
+                    if (isTestMode) {
+                        handleTestModePolling()
+                    } else {
+                        handleNormalPolling()
                     }
                 } catch (exception: Exception) {
                     logEventSafely(
                         eventType = "overlay_poll_error",
                         payloadJson = "{\"message\":\"${jsonSafe(exception.message.orEmpty())}\"}"
                     )
-                    // Keep service alive and continue polling.
                 }
                 delay(TriggerConfig.POLLING_INTERVAL_MS)
+            }
+        }
+    }
+
+    private suspend fun handleTestModePolling() {
+        if (overlayView != null) return
+
+        val now = System.currentTimeMillis()
+        if (now - lastTestModeQuizTime < 30 * 1000L) {
+            val remaining = (30 * 1000L - (now - lastTestModeQuizTime)) / 1000
+            val reason = "test_mode_cooldown (${remaining}s)"
+            if (reason != lastReportedSkipReason) {
+                lastReportedSkipReason = reason
+                logEventSafely(
+                    eventType = "trigger_skip",
+                    payloadJson = "{\"reason\":\"${jsonSafe(reason)}\"}"
+                )
+            }
+            return
+        }
+
+        val allQuestions = repository.getAllActiveQuestions()
+        if (allQuestions.isEmpty()) {
+            val reason = "test_mode_no_questions"
+            if (reason != lastReportedSkipReason) {
+                lastReportedSkipReason = reason
+                logEventSafely(
+                    eventType = "trigger_skip",
+                    payloadJson = "{\"reason\":\"${jsonSafe(reason)}\"}"
+                )
+            }
+            return
+        }
+
+        val question = allQuestions.random()
+        val sourceApp = triggerEngineForegroundPackage() ?: "test.mode.app"
+        
+        lastReportedSkipReason = null
+        lastTestModeQuizTime = now
+        
+        withContext(Dispatchers.Main) {
+            if (overlayView == null) {
+                totalQuizzesShown++
+                updateSessionStats()
+                showOverlay(question, sourceApp)
+            }
+        }
+    }
+
+    private suspend fun handleNormalPolling() {
+        val monitoredApps = appPrefs.monitoredApps.first()
+        val decision = triggerEngine.checkAndFire(monitoredApps)
+
+        when (decision) {
+            is TriggerDecision.Fire -> {
+                val latestForeground = triggerEngineForegroundPackage()
+                if (latestForeground != decision.sourceApp) {
+                    val reason = "fire_aborted_not_foreground"
+                    if (reason != lastReportedSkipReason) {
+                        lastReportedSkipReason = reason
+                        logEventSafely(
+                            eventType = "trigger_skip",
+                            payloadJson = "{\"reason\":\"${jsonSafe(reason)}\",\"expected\":\"${jsonSafe(decision.sourceApp)}\",\"actual\":\"${jsonSafe(latestForeground.orEmpty())}\"}"
+                        )
+                    }
+                } else {
+                    lastReportedSkipReason = null
+                    withContext(Dispatchers.Main) {
+                        if (overlayView == null) {
+                            totalQuizzesShown++
+                            updateSessionStats()
+                            showOverlay(decision.question, decision.sourceApp)
+                        }
+                    }
+                }
+            }
+            is TriggerDecision.Skip -> {
+                if (decision.reason != lastReportedSkipReason) {
+                    lastReportedSkipReason = decision.reason
+                    logEventSafely(
+                        eventType = "trigger_skip",
+                        payloadJson = "{\"reason\":\"${jsonSafe(decision.reason)}\"}"
+                    )
+                }
             }
         }
     }

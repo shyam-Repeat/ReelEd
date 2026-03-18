@@ -6,6 +6,7 @@ import com.reeled.quizoverlay.model.payload.DragChip
 import com.reeled.quizoverlay.model.payload.DropSlot
 import com.reeled.quizoverlay.model.payload.MatchPair
 import com.reeled.quizoverlay.model.payload.WordChip
+import org.json.JSONArray
 import org.json.JSONObject
 
 data class QuizCardConfig(
@@ -95,22 +96,35 @@ data class QuizCardConfig(
                 }
 
                 QuizCardType.DRAG_DROP_MATCH -> {
-                    val chips = root.getJSONArray("chips")
-                    val slots = root.getJSONArray("slots")
+                    val draggables = root.optJSONArray("draggables") ?: JSONArray()
+                    val targets = root.optJSONArray("targets") ?: JSONArray()
+                    val correctPairs = root.optJSONArray("correct_pairs") ?: JSONArray()
+                    val correctPairMap = buildMap {
+                        repeat(correctPairs.length()) { index ->
+                            val item = correctPairs.getJSONObject(index)
+                            val targetId = item.optString("target_id", item.optString("slot_id"))
+                            val draggableId = item.optString("draggable_id", item.optString("chip_id"))
+                            if (targetId.isNotBlank() && draggableId.isNotBlank()) {
+                                put(targetId, draggableId)
+                            }
+                        }
+                    }
+
                     QuizPayload.DragDropPayload(
-                        chips = List(chips.length()) { index ->
-                            val item = chips.getJSONObject(index)
+                        chips = List(draggables.length()) { index ->
+                            val item = draggables.getJSONObject(index)
                             DragChip(
-                                chipId = item.getString("chip_id"),
+                                chipId = item.optString("chip_id", item.optString("draggable_id", item.optString("id"))),
                                 label = item.getString("label")
                             )
                         },
-                        slots = List(slots.length()) { index ->
-                            val item = slots.getJSONObject(index)
+                        slots = List(targets.length()) { index ->
+                            val item = targets.getJSONObject(index)
+                            val slotId = item.optString("slot_id", item.optString("target_id", item.optString("id")))
                             DropSlot(
-                                slotId = item.getString("slot_id"),
-                                slotLabel = item.getString("slot_label"),
-                                correctChipId = item.getString("correct_chip_id")
+                                slotId = slotId,
+                                slotLabel = item.optString("slot_label", item.optString("label")),
+                                correctChipId = correctPairMap[slotId].orEmpty()
                             )
                         }
                     )

@@ -18,36 +18,46 @@ class ForegroundAppDetector(private val context: Context) {
             "com.twitter.android",
             "com.pinterest",
         )
-
-        private const val QUERY_WINDOW_MS = 2 * 60 * 1000L // 2 minutes
     }
 
     private val usageStatsManager by lazy {
         context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
     }
 
+    private var lastKnownForegroundPackage: String? = null
+    private var lastQueryTime: Long = 0L
+
     fun getCurrentForegroundPackage(): String? {
         val now = System.currentTimeMillis()
-        val events = usageStatsManager.queryEvents(now - QUERY_WINDOW_MS, now)
-            ?: return null
+        
+        // Look back 24 hours on first run to prime the cache,
+        // otherwise overlap by a small amount to catch recent events.
+        val queryStart = if (lastQueryTime == 0L) {
+            now - (24 * 60 * 60 * 1000L) 
+        } else {
+            lastQueryTime - 1000L
+        }
 
-        var latestForegroundPackage: String? = null
+        val events = usageStatsManager.queryEvents(queryStart, now)
         var latestForegroundTime = 0L
 
-        val event = UsageEvents.Event()
-        while (events.hasNextEvent()) {
-            events.getNextEvent(event)
-            if (event.eventType == UsageEvents.Event.ACTIVITY_RESUMED ||
-                event.eventType == UsageEvents.Event.MOVE_TO_FOREGROUND
-            ) {
-                if (event.timeStamp >= latestForegroundTime) {
-                    latestForegroundTime = event.timeStamp
-                    latestForegroundPackage = event.packageName
+        if (events != null) {
+            val event = UsageEvents.Event()
+            while (events.hasNextEvent()) {
+                events.getNextEvent(event)
+                if (event.eventType == UsageEvents.Event.ACTIVITY_RESUMED ||
+                    event.eventType == 1 // Fallback for ACTIVITY_RESUMED on older APIs
+                ) {
+                    if (event.timeStamp >= latestForegroundTime) {
+                        latestForegroundTime = event.timeStamp
+                        lastKnownForegroundPackage = event.packageName
+                    }
                 }
             }
         }
 
-        return latestForegroundPackage
+        lastQueryTime = now
+        return lastKnownForegroundPackage
     }
 
     fun isTargetAppInForeground(monitoredApps: Set<String> = emptySet()): Boolean {

@@ -68,7 +68,6 @@ class OverlayForegroundService : Service() {
     private lateinit var appPrefs: AppPrefs
     private lateinit var audioMuter: AudioMuter
     private lateinit var windowManager: WindowManager
-    private lateinit var lifecycleOwner: OverlayLifecycleOwner
 
     private var currentSessionId: String? = null
     private var totalQuizzesShown = 0
@@ -77,6 +76,7 @@ class OverlayForegroundService : Service() {
     private var totalTimerExpired = 0
 
     private var overlayView: ComposeView? = null
+    private var currentViewLifecycleOwner: OverlayLifecycleOwner? = null
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var pollingJob: Job? = null
     private var sessionActive: Boolean = false
@@ -86,7 +86,6 @@ class OverlayForegroundService : Service() {
     override fun onCreate() {
         super.onCreate()
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
-        lifecycleOwner = OverlayLifecycleOwner().also { it.onCreate() }
 
         audioMuter = AudioMuter(this)
         triggerPrefs = TriggerPrefs(this)
@@ -137,8 +136,6 @@ class OverlayForegroundService : Service() {
 
         sessionActive = true
         startForeground(NOTIF_ID, buildNotification(paused = false))
-        lifecycleOwner.onStart()
-        lifecycleOwner.onResume()
         syncAudioState()
 
         startPollingLoop()
@@ -162,9 +159,6 @@ class OverlayForegroundService : Service() {
         } ?: serviceScope.cancel()
 
         removeOverlayIfShowing()
-        lifecycleOwner.onPause()
-        lifecycleOwner.onStop()
-        lifecycleOwner.onDestroy()
         super.onDestroy()
     }
 
@@ -229,6 +223,12 @@ class OverlayForegroundService : Service() {
         if (!attached) {
             if (overlayView != null) {
                 overlayView = null
+                currentViewLifecycleOwner?.let { owner ->
+                    owner.onPause()
+                    owner.onStop()
+                    owner.onDestroy()
+                    currentViewLifecycleOwner = null
+                }
             }
             val state = triggerPrefs.getTriggerState()
             if (state.overlayActive) {
@@ -267,9 +267,11 @@ class OverlayForegroundService : Service() {
 
         val params = buildWindowParams(strictMode = question.strictMode)
 
+        val viewLifecycleOwner = OverlayLifecycleOwner().also { it.onCreate() }
+
         val composeView = ComposeView(this).apply {
-            setViewTreeLifecycleOwner(lifecycleOwner)
-            setViewTreeSavedStateRegistryOwner(lifecycleOwner)
+            setViewTreeLifecycleOwner(viewLifecycleOwner)
+            setViewTreeSavedStateRegistryOwner(viewLifecycleOwner)
 
             setContent {
                 val config = QuizCardConfig.from(question)
@@ -291,6 +293,11 @@ class OverlayForegroundService : Service() {
             )
             return
         }
+        
+        viewLifecycleOwner.onStart()
+        viewLifecycleOwner.onResume()
+
+        currentViewLifecycleOwner = viewLifecycleOwner
         overlayView = composeView
         serviceScope.launch(Dispatchers.IO) {
             triggerPrefs.setOverlayActive(true)
@@ -371,6 +378,12 @@ class OverlayForegroundService : Service() {
             }
             overlayView = null
         }
+        currentViewLifecycleOwner?.let { owner ->
+            owner.onPause()
+            owner.onStop()
+            owner.onDestroy()
+            currentViewLifecycleOwner = null
+        }
         serviceScope.launch(Dispatchers.IO) { triggerPrefs.setOverlayActive(false) }
         syncAudioState()
     }
@@ -397,7 +410,9 @@ class OverlayForegroundService : Service() {
             WindowManager.LayoutParams.TYPE_PHONE
         }
 
-        val baseFlags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+        val baseFlags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+                WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
+
         val flags = if (strictMode) {
             baseFlags
         } else {

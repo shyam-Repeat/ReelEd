@@ -14,14 +14,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.reeled.quizoverlay.prefs.AppPrefs
 import com.reeled.quizoverlay.prefs.PinPrefs
-import com.reeled.quizoverlay.service.OverlayForegroundService
 import com.reeled.quizoverlay.ui.childhome.ChildHomeScreen
 import com.reeled.quizoverlay.ui.dashboard.DashboardViewModel
 import com.reeled.quizoverlay.ui.dashboard.ParentDashboardScreen
@@ -214,18 +212,12 @@ fun AppNavGraph(
         composable(Screen.Success.route) {
             OnboardingSuccessScreen(
                 onEnterChildMode = {
-                    scope.launch { appPrefs.setOnboardingComplete(true) }
                     onboardingViewModel.onOnboardingCompleted()
-                    ContextCompat.startForegroundService(
-                        context,
-                        OverlayForegroundService.startIntent(context)
-                    )
                     navController.navigate(Screen.ChildHome.route) {
                         popUpTo(Screen.Welcome.route) { inclusive = true }
                     }
                 },
                 onGoToDashboard = {
-                    scope.launch { appPrefs.setOnboardingComplete(true) }
                     onboardingViewModel.onOnboardingCompleted()
                     navController.navigate(Screen.ParentDashboard.route) {
                         popUpTo(Screen.Welcome.route) { inclusive = true }
@@ -237,6 +229,7 @@ fun AppNavGraph(
         composable(Screen.ChildHome.route) {
             val pinPrefs = remember { PinPrefs(context) }
             val triggerPrefs = remember { com.reeled.quizoverlay.prefs.TriggerPrefs(context) }
+
             ChildHomeScreen(
                 pinPrefs = pinPrefs,
                 triggerPrefs = triggerPrefs,

@@ -3,10 +3,7 @@ package com.reeled.quizoverlay.service
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.os.Build
-import androidx.core.content.ContextCompat
 import com.reeled.quizoverlay.prefs.AppPrefs
-import com.reeled.quizoverlay.prefs.TriggerPrefs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -27,8 +24,8 @@ import kotlinx.coroutines.launch
 //      when it detects the service has stopped unexpectedly
 //
 // Guard:
-//   Only restarts if the overlay is enabled in AppPrefs.
-//   Does nothing if the parent has disabled the overlay — respects parent control.
+//   Only restarts if onboarding has completed.
+//   Monitoring should remain active independent of the current UI route.
 //
 // AndroidManifest declaration required:
 //   <receiver
@@ -81,25 +78,14 @@ class ServiceRestartReceiver : BroadcastReceiver() {
         receiverScope.launch {
             try {
                 val appPrefs = AppPrefs(context)
-                val triggerPrefs = TriggerPrefs(context)
-                val overlayEnabled = triggerPrefs.getTriggerState().overlayActive
                 val onboardingComplete = appPrefs.onboardingComplete.first()
 
-                // Only restart if:
-                //   - Onboarding is done (permissions granted, PIN set)
-                //   - Parent has not disabled the overlay
-                if (overlayEnabled && onboardingComplete) {
-                    startService(context)
+                if (onboardingComplete) {
+                    OverlayServiceCoordinator.startAfterOnboarding(context)
                 }
             } finally {
                 pendingResult.finish()
             }
         }
-    }
-
-    private fun startService(context: Context) {
-        val serviceIntent = OverlayForegroundService.startIntent(context)
-        // startForegroundService required for API 26+ foreground services
-        ContextCompat.startForegroundService(context, serviceIntent)
     }
 }

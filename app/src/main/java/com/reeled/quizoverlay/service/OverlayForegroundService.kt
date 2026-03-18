@@ -12,6 +12,12 @@ import android.os.Build
 import android.os.IBinder
 import android.view.Gravity
 import android.view.WindowManager
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.setViewTreeLifecycleOwner
@@ -29,6 +35,7 @@ import com.reeled.quizoverlay.trigger.TriggerEngine
 import com.reeled.quizoverlay.trigger.VideoPlaybackDetector
 import com.reeled.quizoverlay.ui.overlay.QuizCardRouter
 import com.reeled.quizoverlay.ui.pin.PinActivity
+import com.reeled.quizoverlay.ui.theme.ReelEdTheme
 import com.reeled.quizoverlay.util.AudioMuter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -274,13 +281,22 @@ class OverlayForegroundService : Service() {
             setViewTreeSavedStateRegistryOwner(viewLifecycleOwner)
 
             setContent {
-                val config = QuizCardConfig.from(question)
-                QuizCardRouter(
-                    config = config,
-                    sourceApp = sourceApp,
-                    onResult = { result -> onQuizResult(result) },
-                    onDismissed = { onQuizDismissed(question, sourceApp) }
-                )
+                ReelEdTheme {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background.copy(alpha = 0.98f)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            val config = QuizCardConfig.from(question)
+                            QuizCardRouter(
+                                config = config,
+                                sourceApp = sourceApp,
+                                onResult = { result -> onQuizResult(result) },
+                                onDismissed = { onQuizDismissed(question, sourceApp) }
+                            )
+                        }
+                    }
+                }
             }
         }
 

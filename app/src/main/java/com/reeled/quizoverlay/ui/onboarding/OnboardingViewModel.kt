@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.reeled.quizoverlay.data.repository.QuizRepository
 import com.reeled.quizoverlay.prefs.AppPrefs
 import com.reeled.quizoverlay.prefs.PinPrefs
+import com.reeled.quizoverlay.service.OverlayServiceCoordinator
 import com.reeled.quizoverlay.util.PinHasher
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -45,6 +46,7 @@ class OnboardingViewModel(application: Application) : AndroidViewModel(applicati
                 // Continue onboarding even if tester sync temporarily fails.
             }
             appPrefs.setOnboardingComplete(true)
+            OverlayServiceCoordinator.startAfterOnboarding(getApplication())
         }
     }
 

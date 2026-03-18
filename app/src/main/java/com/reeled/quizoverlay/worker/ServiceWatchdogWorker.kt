@@ -2,8 +2,6 @@ package com.reeled.quizoverlay.worker
 
 import android.app.ActivityManager
 import android.content.Context
-import android.content.Intent
-import androidx.core.content.ContextCompat
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
@@ -11,6 +9,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.reeled.quizoverlay.prefs.AppPrefs
 import com.reeled.quizoverlay.service.OverlayForegroundService
+import com.reeled.quizoverlay.service.OverlayServiceCoordinator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -47,8 +46,7 @@ class ServiceWatchdogWorker(
             if (!isEnabled) return@withContext Result.success()
 
             if (!isServiceRunning(OverlayForegroundService::class.java)) {
-                val intent = Intent(applicationContext, OverlayForegroundService::class.java)
-                ContextCompat.startForegroundService(applicationContext, intent)
+                OverlayServiceCoordinator.startAfterOnboarding(applicationContext)
             }
 
             Result.success()

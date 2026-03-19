@@ -58,8 +58,9 @@ fun TapTapMatchCard(
 
     fun onRightTap(rightId: String) {
         val leftId = selectedLeft ?: return
-        val pair = payload.pairs.find { it.leftId == leftId } ?: return
-        if (pair.rightId == rightId) {
+        val isCorrect = payload.pairs.any { it.leftId == leftId && it.rightId == rightId }
+        
+        if (isCorrect) {
             val updated = matchedPairs + (leftId to rightId)
             matchedPairs = updated
             selectedLeft = null

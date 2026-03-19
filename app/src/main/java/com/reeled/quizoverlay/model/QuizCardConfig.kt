@@ -79,34 +79,75 @@ data class QuizCardConfig(
                 }
 
                 QuizCardType.TAP_TAP_MATCH -> {
-                    val pairs = root.getJSONArray("pairs")
-                    val right = root.getJSONArray("right_order_shuffled")
+                    val leftItems = root.getJSONArray("left_items")
+                    val rightItems = root.getJSONArray("right_items")
+                    val correctPairs = root.getJSONArray("correct_pairs")
+
+                    // Build a lookup map for right items: id -> label
+                    val rightLabelMap = buildMap {
+                        repeat(rightItems.length()) { i ->
+                            val item = rightItems.getJSONObject(i)
+                            put(item.getString("id"), item.getString("label"))
+                        }
+                    }
+
+                    // Build a lookup map for left items: id -> label
+                    val leftLabelMap = buildMap {
+                        repeat(leftItems.length()) { i ->
+                            val item = leftItems.getJSONObject(i)
+                            put(item.getString("id"), item.getString("label"))
+                        }
+                    }
+
+                    // Build pairs from correct_pairs [["L1","R3"], ...]
+                    val pairs = List(correctPairs.length()) { index ->
+                        val pair = correctPairs.getJSONArray(index)
+                        val leftId = pair.getString(0)
+                        val rightId = pair.getString(1)
+                        MatchPair(
+                            leftId = leftId,
+                            leftLabel = leftLabelMap[leftId] ?: "",
+                            rightId = rightId,
+                            rightLabel = rightLabelMap[rightId] ?: ""
+                        )
+                    }
+
+                    // Shuffled right order from right_items as-is
+                    val rightOrderShuffled = List(rightItems.length()) { i ->
+                        rightItems.getJSONObject(i).getString("id")
+                    }
+
                     QuizPayload.TapTapMatchPayload(
-                        pairs = List(pairs.length()) { index ->
-                            val item = pairs.getJSONObject(index)
-                            MatchPair(
-                                leftId = item.getString("left_id"),
-                                leftLabel = item.getString("left_label"),
-                                rightId = item.getString("right_id"),
-                                rightLabel = item.getString("right_label")
-                            )
-                        },
-                        rightOrderShuffled = List(right.length()) { index -> right.getString(index) }
+                        pairs = pairs,
+                        rightOrderShuffled = rightOrderShuffled
                     )
-                }
+            }
 
                 QuizCardType.DRAG_DROP_MATCH -> {
                     val draggables = root.optJSONArray("draggables") ?: JSONArray()
                     val targets = root.optJSONArray("targets") ?: JSONArray()
                     val correctPairs = root.optJSONArray("correct_pairs") ?: JSONArray()
-                    val correctPairMap = buildMap {
-                        repeat(correctPairs.length()) { index ->
-                            val item = correctPairs.getJSONObject(index)
-                            val targetId = item.optString("target_id", item.optString("slot_id"))
-                            val draggableId = item.optString("draggable_id", item.optString("chip_id"))
-                            if (targetId.isNotBlank() && draggableId.isNotBlank()) {
-                                put(targetId, draggableId)
+                    val correctPairMap = mutableMapOf<String, MutableList<String>>()
+
+                    repeat(correctPairs.length()) { index ->
+                        when (val item = correctPairs.get(index)) {
+                            // Format 1: {"draggable_id": "D1", "target_id": "T1"}
+                            is JSONObject -> {
+                                val targetId = item.optString("target_id", item.optString("slot_id"))
+                                val draggableId = item.optString("draggable_id", item.optString("chip_id"))
+                                if (targetId.isNotBlank() && draggableId.isNotBlank()) {
+                                    correctPairMap.getOrPut(targetId) { mutableListOf() }.add(draggableId)
+                                }
                             }
+                            // Format 2: ["D1", "T1"]  →  index 0 = draggable_id, index 1 = target_id
+                            is JSONArray -> {
+                                val draggableId = item.optString(0)
+                                val targetId = item.optString(1)
+                                if (targetId.isNotBlank() && draggableId.isNotBlank()) {
+                                    correctPairMap.getOrPut(targetId) { mutableListOf() }.add(draggableId)
+                                }
+                            }
+                            else -> { /* skip unknown formats */ }
                         }
                     }
 
@@ -124,7 +165,7 @@ data class QuizCardConfig(
                             DropSlot(
                                 slotId = slotId,
                                 slotLabel = item.optString("slot_label", item.optString("label")),
-                                correctChipId = correctPairMap[slotId].orEmpty()
+                                correctChipIds = correctPairMap[slotId].orEmpty()
                             )
                         }
                     )

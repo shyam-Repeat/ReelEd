@@ -112,7 +112,7 @@ data class ChoiceOption(val id: String, val label: String, val isCorrect: Boolea
 data class MatchPair(val leftId: String, val leftLabel: String,
                      val rightId: String, val rightLabel: String)
 data class DragChip(val chipId: String, val label: String)
-data class DropSlot(val slotId: String, val slotLabel: String, val correctChipId: String)
+data class DropSlot(val slotId: String, val slotLabel: String, val correctChipIds: List<String>)
 data class WordChip(val chipId: String, val label: String, val isCorrect: Boolean)
 
 // ── Display + Rules ───────────────────────────────────────────────
@@ -705,11 +705,11 @@ fun DragDropMatchCard(
     //     chipsInPool  = chipsInPool + chipId
     // }
 
-    // Submit: all slots filled → compare to correct_chip_id
+    // Submit: all slots filled → compare to correct_chip_ids
     val allFilled = slotContents.values.all { it != null }
     // Show Submit button only when allFilled == true
     // On submit:
-    //   val isCorrect = payload.slots.all { slotContents[it.slotId] == it.correctChipId }
+    //   val isCorrect = payload.slots.all { slotContents[it.slotId] in it.correctChipIds }
     //   flash green/red on each slot for 1500ms → onResult(...)
 
     // Floating drag ghost: Box offset by dragOffset, shown only when dragChipId != null
@@ -727,10 +727,10 @@ Payload JSON:
     { "chip_id": "C4", "label": "9" }
   ],
   "slots": [
-    { "slot_id": "S1", "slot_label": "Smallest", "correct_chip_id": "C1" },
-    { "slot_id": "S2", "slot_label": "2nd",       "correct_chip_id": "C2" },
-    { "slot_id": "S3", "slot_label": "3rd",       "correct_chip_id": "C3" },
-    { "slot_id": "S4", "slot_label": "Largest",   "correct_chip_id": "C4" }
+    { "slot_id": "S1", "slot_label": "Smallest", "correct_chip_ids": ["C1"] },
+    { "slot_id": "S2", "slot_label": "2nd",       "correct_chip_ids": ["C2"] },
+    { "slot_id": "S3", "slot_label": "3rd",       "correct_chip_ids": ["C3"] },
+    { "slot_id": "S4", "slot_label": "Largest",   "correct_chip_ids": ["C4"] }
   ]
 }
 ```

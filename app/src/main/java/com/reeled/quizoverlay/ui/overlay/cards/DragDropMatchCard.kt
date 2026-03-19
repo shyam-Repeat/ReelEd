@@ -62,7 +62,7 @@ fun DragDropMatchCard(
 
         payload.slots.forEach { slot ->
             val placedChip = chipById[slotContents[slot.slotId]]
-            val isCorrect = placedChip?.chipId == slot.correctChipId
+            val isCorrect = placedChip?.chipId in slot.correctChipIds
             val fill = if (!evaluated) Color.White else if (isCorrect) Color(0xFFD7F5E1) else Color(0xFFFFD8D8)
             Surface(
                 color = fill,
@@ -96,7 +96,7 @@ fun DragDropMatchCard(
                         QuizAttemptResult(
                             questionId = config.id,
                             selectedOptionId = "SUBMIT",
-                            isCorrect = payload.slots.all { slotContents[it.slotId] == it.correctChipId },
+                            isCorrect = payload.slots.all { slotContents[it.slotId] in it.correctChipIds },
                             wasDismissed = false,
                             wasTimerExpired = false,
                             responseTimeMs = System.currentTimeMillis() - startTime,

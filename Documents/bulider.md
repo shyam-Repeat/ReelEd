@@ -1,100 +1,66 @@
-layout
-import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Home, Settings, Send } from "lucide-react";
-import { Button } from "./ui/button";
-
-interface LayoutProps {
-  children: React.ReactNode;
-}
-
-export default function Layout({ children }: LayoutProps) {
-  const location = useLocation();
-  const [feedbackSent, setFeedbackSent] = useState(false);
-
-  const isActive = (path: string) => location.pathname === path;
-
-  const handleSendFeedback = () => {
-    setFeedbackSent(true);
-    setTimeout(() => setFeedbackSent(false), 2000);
-  };
-
+export function MonkeyIllustration() {
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50">
-      {/* Top Header */}
-      <div className="bg-white border-b border-slate-200 px-4 py-4 sm:px-6 flex items-center justify-between sticky top-0 z-10">
-        <div className="flex-1">
-          <h1 className="text-lg font-bold text-slate-900">Parent</h1>
-          <p className="text-xs text-slate-600">Welcome back</p>
-        </div>
+    <svg
+      width="180"
+      height="180"
+      viewBox="0 0 180 180"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className="mx-auto"
+    >
+      {/* Head */}
+      <circle cx="90" cy="90" r="60" fill="#D4A574" />
 
-        <Button
-          onClick={handleSendFeedback}
-          size="sm"
-          className={`gap-2 transition-all ${
-            feedbackSent
-              ? "bg-green-600 hover:bg-green-600"
-              : "bg-blue-600 hover:bg-blue-700"
-          }`}
-        >
-          <Send className="w-4 h-4" />
-          <span className="hidden sm:inline">
-            {feedbackSent ? "Sent!" : "Feedback"}
-          </span>
-        </Button>
-      </div>
+      {/* Ears */}
+      <circle cx="50" cy="50" r="18" fill="#D4A574" />
+      <circle cx="130" cy="50" r="18" fill="#D4A574" />
+      <circle cx="50" cy="50" r="12" fill="#C9926B" />
+      <circle cx="130" cy="50" r="12" fill="#C9926B" />
 
-      {/* Main Content Area */}
-      <div className="flex-1 overflow-auto pb-20">
-        {children}
-      </div>
+      {/* Face shape - lighter area */}
+      <ellipse cx="90" cy="100" rx="48" ry="52" fill="#E8C9AA" />
 
-      {/* Bottom Tab Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex items-center justify-around sm:justify-center sm:gap-8 px-4 py-3 z-50">
-        <Link
-          to="/"
-          className={`flex flex-col items-center gap-1 px-4 py-2 transition-all ${
-            isActive("/")
-              ? "text-blue-600"
-              : "text-slate-600 hover:text-slate-900"
-          }`}
-        >
-          <Home className="w-6 h-6" />
-          <span className="text-xs font-medium">Dashboard</span>
-        </Link>
+      {/* Eyes white */}
+      <circle cx="70" cy="80" r="12" fill="white" />
+      <circle cx="110" cy="80" r="12" fill="white" />
 
-        <div className="w-px h-8 bg-slate-200" />
+      {/* Pupils */}
+      <circle cx="72" cy="82" r="7" fill="#000000" />
+      <circle cx="112" cy="82" r="7" fill="#000000" />
 
-        <Link
-          to="/controls"
-          className={`flex flex-col items-center gap-1 px-4 py-2 transition-all ${
-            isActive("/controls")
-              ? "text-blue-600"
-              : "text-slate-600 hover:text-slate-900"
-          }`}
-        >
-          <Settings className="w-6 h-6" />
-          <span className="text-xs font-medium">Controls</span>
-        </Link>
+      {/* Eye shine */}
+      <circle cx="74" cy="79" r="3" fill="white" />
+      <circle cx="114" cy="79" r="3" fill="white" />
 
-        <div className="w-px h-8 bg-slate-200" />
+      {/* Nose */}
+      <ellipse cx="90" cy="105" rx="8" ry="10" fill="#B8956A" />
 
-        <Link
-          to="/settings"
-          className={`flex flex-col items-center gap-1 px-4 py-2 transition-all ${
-            isActive("/settings")
-              ? "text-blue-600"
-              : "text-slate-600 hover:text-slate-900"
-          }`}
-        >
-          <Settings className="w-6 h-6" />
-          <span className="text-xs font-medium">Settings</span>
-        </Link>
-      </div>
-    </div>
+      {/* Mouth - smile */}
+      <path
+        d="M 90 110 Q 85 120 75 118"
+        stroke="#B8956A"
+        strokeWidth="2.5"
+        fill="none"
+        strokeLinecap="round"
+      />
+      <path
+        d="M 90 110 Q 95 120 105 118"
+        stroke="#B8956A"
+        strokeWidth="2.5"
+        fill="none"
+        strokeLinecap="round"
+      />
+
+      {/* Cheeks blush */}
+      <circle cx="55" cy="100" r="10" fill="#F0A080" opacity="0.6" />
+      <circle cx="125" cy="100" r="10" fill="#F0A080" opacity="0.6" />
+
+      {/* Mouth inner area */}
+      <ellipse cx="90" cy="112" rx="10" ry="6" fill="#F5D5B8" />
+    </svg>
   );
 }
-tailwind config
+TAILWIND CONFIG
 import type { Config } from "tailwindcss";
 
 export default {

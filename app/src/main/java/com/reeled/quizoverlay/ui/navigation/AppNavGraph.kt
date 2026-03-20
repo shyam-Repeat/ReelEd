@@ -20,7 +20,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.reeled.quizoverlay.prefs.AppPrefs
 import com.reeled.quizoverlay.prefs.PinPrefs
-import com.reeled.quizoverlay.ui.childhome.ChildHomeScreen
 import com.reeled.quizoverlay.ui.dashboard.DashboardViewModel
 import com.reeled.quizoverlay.ui.dashboard.ParentDashboardScreen
 import com.reeled.quizoverlay.ui.devmode.DevModeScreen
@@ -51,7 +50,6 @@ sealed class Screen(val route: String) {
     object PermissionNotif : Screen("permission_notif")
     object BatteryOpt : Screen("battery_opt")
     object Success : Screen("success")
-    object ChildHome : Screen("child_home")
     object ParentDashboard : Screen("parent_dashboard")
     object DevMode : Screen("dev_mode")
 }
@@ -91,7 +89,7 @@ fun AppNavGraph(
             LoadingScreen(onLoadingComplete = {
                 scope.launch {
                     val isComplete = appPrefs.onboardingComplete.first()
-                    val destination = if (isComplete) Screen.ChildHome.route else Screen.Welcome.route
+                    val destination = if (isComplete) Screen.ParentDashboard.route else Screen.Welcome.route
                     navController.navigate(destination) {
                         popUpTo(Screen.Loading.route) { inclusive = true }
                     }
@@ -213,7 +211,7 @@ fun AppNavGraph(
             OnboardingSuccessScreen(
                 onEnterChildMode = {
                     onboardingViewModel.onOnboardingCompleted()
-                    navController.navigate(Screen.ChildHome.route) {
+                    navController.navigate(Screen.ParentDashboard.route) {
                         popUpTo(Screen.Welcome.route) { inclusive = true }
                     }
                 },
@@ -223,19 +221,6 @@ fun AppNavGraph(
                         popUpTo(Screen.Welcome.route) { inclusive = true }
                     }
                 }
-            )
-        }
-
-        composable(Screen.ChildHome.route) {
-            val pinPrefs = remember { PinPrefs(context) }
-            val triggerPrefs = remember { com.reeled.quizoverlay.prefs.TriggerPrefs(context) }
-
-            ChildHomeScreen(
-                pinPrefs = pinPrefs,
-                triggerPrefs = triggerPrefs,
-                appPrefs = appPrefs,
-                onNavigateToDashboard = { navController.navigate(Screen.ParentDashboard.route) },
-                onNavigateToDevMode = { navController.navigate(Screen.DevMode.route) }
             )
         }
 

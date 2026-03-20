@@ -3,25 +3,36 @@ package com.reeled.quizoverlay.ui.dashboard
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.reeled.quizoverlay.ui.pin.PinActivity
 
 import androidx.compose.runtime.remember
@@ -29,12 +40,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.reeled.quizoverlay.prefs.PinPrefs
-import com.reeled.quizoverlay.prefs.AppPrefs
 import com.reeled.quizoverlay.ui.pin.PinGateDialog
 import com.reeled.quizoverlay.service.OverlayForegroundService
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ParentDashboardScreen(
     viewModel: DashboardViewModel,
@@ -44,7 +55,6 @@ fun ParentDashboardScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val pinPrefs = remember { PinPrefs(context) }
-    val appPrefs = remember { AppPrefs(context) }
 
     var showPinDialog by remember { mutableStateOf(false) }
     val pinHash by pinPrefs.pinHash.collectAsState(initial = null)
@@ -77,20 +87,41 @@ fun ParentDashboardScreen(
         }
     }
 
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        contentPadding = PaddingValues(16.dp),
-    ) {
-        item { TodaySummaryCard(summary = uiState.todaySummary) }
-        item { WeekBarCard(weekData = uiState.weekData) }
-        item { SubjectBreakdownCard(subjects = uiState.todayBySubject) }
-        item { RecentAttemptsCard(attempts = uiState.recentAttempts.take(5)) }
-        item {
-            ActionButtons(
-                onDisable = viewModel::showPinPrompt,
-                onFeedback = viewModel::openFeedback,
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { 
+                    Text(
+                        "Parent Dashboard", 
+                        fontWeight = FontWeight.ExtraBold,
+                        style = MaterialTheme.typography.headlineSmall
+                    ) 
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFFF7F9FD)
+                )
             )
+        },
+        containerColor = Color(0xFFF7F9FD)
+    ) { padding ->
+        LazyColumn(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(padding),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
+            contentPadding = PaddingValues(20.dp),
+        ) {
+            item { TodaySummaryCard(summary = uiState.todaySummary) }
+            item { WeekBarCard(weekData = uiState.weekData) }
+            item { SubjectBreakdownCard(subjects = uiState.todayBySubject) }
+            item { RecentAttemptsCard(attempts = uiState.recentAttempts.take(5)) }
+            item {
+                ActionButtons(
+                    onDisable = viewModel::showPinPrompt,
+                    onFeedback = viewModel::openFeedback,
+                )
+            }
+            item { Spacer(modifier = Modifier.height(20.dp)) }
         }
     }
 
@@ -105,7 +136,6 @@ fun ParentDashboardScreen(
                 scope.launch {
                     pinPrefs.resetFailedAttempts()
                     showPinDialog = false
-                    // Logic to disable overlay
                     context.stopService(Intent(context, OverlayForegroundService::class.java))
                     Toast.makeText(context, "Overlay Disabled", Toast.LENGTH_SHORT).show()
                 }
@@ -132,24 +162,31 @@ private fun ActionButtons(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 4.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+            .padding(top = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Button(
             onClick = onDisable,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            shape = RoundedCornerShape(16.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
+                containerColor = com.reeled.quizoverlay.ui.theme.Primary,
             ),
         ) {
-            Text("DISABLE OVERLAY ▶")
+            Text("DISABLE OVERLAY", fontWeight = FontWeight.Bold, fontSize = 16.sp)
         }
 
         OutlinedButton(
             onClick = onFeedback,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            shape = RoundedCornerShape(16.dp),
+            border = BorderStroke(1.dp, com.reeled.quizoverlay.ui.theme.Primary.copy(alpha = 0.5f))
         ) {
-            Text("SEND FEEDBACK")
+            Text("SEND FEEDBACK", color = com.reeled.quizoverlay.ui.theme.Primary, fontWeight = FontWeight.SemiBold)
         }
     }
 }

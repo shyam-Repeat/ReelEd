@@ -161,8 +161,8 @@ private fun DrawScope.drawFrontCarWithPanda(waveRotation: Float, pandaBob: Float
         
         val tonguePath = Path().apply {
             moveTo(60f, 78f)
-            quadraticTo(57f, 81f, 60f, 82f)
-            quadraticTo(63f, 81f, 60f, 78f)
+            quadraticBezierTo(57f, 81f, 60f, 82f)
+            quadraticBezierTo(63f, 81f, 60f, 78f)
             close()
         }
         drawPath(path = tonguePath, color = pinkMouth)

@@ -66,7 +66,7 @@ fun PandaTrainAnimation(modifier: Modifier = Modifier) {
     LaunchedEffect(Unit) {
         entryAnim.animateTo(
             targetValue = 0f,
-            animationSpec = tween(1400, easing = CubicBezierEasing(0.34f, 1.56f, 0.64f, 1.0f))
+            animationSpec = tween(3000, easing = CubicBezierEasing(0.34f, 1.56f, 0.64f, 1.0f))
         )
     }
 

@@ -225,7 +225,10 @@ fun AppNavGraph(
         }
 
         composable(Screen.ParentDashboard.route) {
-            ParentDashboardScreen(viewModel = dashboardViewModel)
+            ParentDashboardScreen(
+                dashboardViewModel = dashboardViewModel,
+                devModeViewModel = devModeViewModel
+            )
         }
 
         composable(Screen.DevMode.route) {

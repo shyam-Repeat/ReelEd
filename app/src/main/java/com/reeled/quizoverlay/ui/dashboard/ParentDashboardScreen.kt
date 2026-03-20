@@ -4,69 +4,66 @@ import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.reeled.quizoverlay.ui.pin.PinActivity
-
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import com.reeled.quizoverlay.prefs.PinPrefs
-import com.reeled.quizoverlay.ui.pin.PinGateDialog
 import com.reeled.quizoverlay.service.OverlayForegroundService
+import com.reeled.quizoverlay.ui.devmode.DevLogItem
+import com.reeled.quizoverlay.ui.devmode.DevModeUiState
+import com.reeled.quizoverlay.ui.devmode.DevModeViewModel
+import com.reeled.quizoverlay.ui.pin.PinGateDialog
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+
+sealed class DashboardTab(val title: String, val icon: ImageVector) {
+    object Dashboard : DashboardTab("Dashboard", Icons.Default.Home)
+    object Controls : DashboardTab("Controls", Icons.Default.Build)
+    object Settings : DashboardTab("Settings", Icons.Default.Settings)
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ParentDashboardScreen(
-    viewModel: DashboardViewModel,
+    dashboardViewModel: DashboardViewModel,
+    devModeViewModel: DevModeViewModel,
     modifier: Modifier = Modifier,
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by dashboardViewModel.uiState.collectAsState()
+    val devUiState by devModeViewModel.uiState.collectAsState()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val pinPrefs = remember { PinPrefs(context) }
 
+    var selectedTab by remember { mutableStateOf<DashboardTab>(DashboardTab.Dashboard) }
+
     var showPinDialog by remember { mutableStateOf(false) }
     val pinHash by pinPrefs.pinHash.collectAsState(initial = null)
-    val failedAttempts by pinPrefs.failedAttempts.collectAsState(initial = 0)
     val lockoutUntil by pinPrefs.lockoutUntil.collectAsState(initial = 0L)
     
     val currentTime = System.currentTimeMillis()
     val isLocked = lockoutUntil > currentTime
     val lockoutTimeRemaining = if (isLocked) lockoutUntil - currentTime else 0L
 
-    LaunchedEffect(viewModel) {
-        viewModel.actions.collect { action ->
+    LaunchedEffect(Unit) {
+        dashboardViewModel.refreshDashboard()
+    }
+
+    LaunchedEffect(dashboardViewModel) {
+        dashboardViewModel.actions.collect { action ->
             when (action) {
                 DashboardAction.ShowPinPrompt -> {
                     showPinDialog = true
@@ -91,37 +88,68 @@ fun ParentDashboardScreen(
         topBar = {
             TopAppBar(
                 title = { 
-                    Text(
-                        "Parent Dashboard", 
-                        fontWeight = FontWeight.ExtraBold,
-                        style = MaterialTheme.typography.headlineSmall
-                    ) 
+                    Column {
+                        Text(
+                            "Parent", 
+                            fontWeight = FontWeight.ExtraBold,
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        Text(
+                            "Welcome back",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                },
+                actions = {
+                    Button(
+                        onClick = { dashboardViewModel.openFeedback() },
+                        modifier = Modifier.padding(end = 8.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary
+                        ),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+                    ) {
+                        Icon(Icons.Default.Send, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(Modifier.width(4.dp))
+                        Text("Feedback", fontSize = 12.sp)
+                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFFF7F9FD)
+                    containerColor = Color.White
                 )
             )
         },
+        bottomBar = {
+            NavigationBar(
+                containerColor = Color.White,
+                tonalElevation = 8.dp
+            ) {
+                val tabs = listOf(DashboardTab.Dashboard, DashboardTab.Controls, DashboardTab.Settings)
+                tabs.forEach { tab ->
+                    NavigationBarItem(
+                        icon = { Icon(tab.icon, contentDescription = tab.title) },
+                        label = { Text(tab.title) },
+                        selected = selectedTab == tab,
+                        onClick = { selectedTab = tab }
+                    )
+                }
+            }
+        },
         containerColor = Color(0xFFF7F9FD)
     ) { padding ->
-        LazyColumn(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(padding),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
-            contentPadding = PaddingValues(20.dp),
-        ) {
-            item { TodaySummaryCard(summary = uiState.todaySummary) }
-            item { WeekBarCard(weekData = uiState.weekData) }
-            item { SubjectBreakdownCard(subjects = uiState.todayBySubject) }
-            item { RecentAttemptsCard(attempts = uiState.recentAttempts.take(5)) }
-            item {
-                ActionButtons(
-                    onDisable = viewModel::showPinPrompt,
-                    onFeedback = viewModel::openFeedback,
+        Box(modifier = Modifier.padding(padding)) {
+            when (selectedTab) {
+                DashboardTab.Dashboard -> DashboardContent(uiState, modifier)
+                DashboardTab.Controls -> ControlsContent(
+                    onDisable = dashboardViewModel::showPinPrompt,
+                    onFeedback = dashboardViewModel::openFeedback
+                )
+                DashboardTab.Settings -> SettingsContent(
+                    uiState = devUiState,
+                    viewModel = devModeViewModel
                 )
             }
-            item { Spacer(modifier = Modifier.height(20.dp)) }
         }
     }
 
@@ -155,38 +183,201 @@ fun ParentDashboardScreen(
 }
 
 @Composable
-private fun ActionButtons(
+private fun DashboardContent(
+    uiState: DashboardUiState,
+    modifier: Modifier = Modifier
+) {
+    LazyColumn(
+        modifier = modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(20.dp),
+        contentPadding = PaddingValues(20.dp),
+    ) {
+        item { TodaySummaryCard(summary = uiState.todaySummary) }
+        item { WeekBarCard(weekData = uiState.weekData) }
+        item { SubjectBreakdownCard(subjects = uiState.todayBySubject) }
+        item { RecentAttemptsCard(attempts = uiState.recentAttempts.take(5)) }
+        item { Spacer(modifier = Modifier.height(20.dp)) }
+    }
+}
+
+@Composable
+private fun ControlsContent(
     onDisable: () -> Unit,
-    onFeedback: () -> Unit,
+    onFeedback: () -> Unit
 ) {
     Column(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+            .fillMaxSize()
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Button(
-            onClick = onDisable,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = com.reeled.quizoverlay.ui.theme.Primary,
-            ),
+        Text(
+            "Service Controls",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold
+        )
+        
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = Color.White)
         ) {
-            Text("DISABLE OVERLAY", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text("Overlay Management", style = MaterialTheme.typography.titleMedium)
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    "Temporarily stop the quiz overlay. You will need to re-enable it from the app settings or restart the app.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(
+                    onClick = onDisable,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = com.reeled.quizoverlay.ui.theme.Primary,
+                    ),
+                ) {
+                    Text("DISABLE OVERLAY", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                }
+            }
         }
 
-        OutlinedButton(
-            onClick = onFeedback,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            shape = RoundedCornerShape(16.dp),
-            border = BorderStroke(1.dp, com.reeled.quizoverlay.ui.theme.Primary.copy(alpha = 0.5f))
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = Color.White)
         ) {
-            Text("SEND FEEDBACK", color = com.reeled.quizoverlay.ui.theme.Primary, fontWeight = FontWeight.SemiBold)
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text("Support", style = MaterialTheme.typography.titleMedium)
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    "Found a bug or have a suggestion? We'd love to hear from you!",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                OutlinedButton(
+                    onClick = onFeedback,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    border = BorderStroke(1.dp, com.reeled.quizoverlay.ui.theme.Primary.copy(alpha = 0.5f))
+                ) {
+                    Text("SEND FEEDBACK", color = com.reeled.quizoverlay.ui.theme.Primary, fontWeight = FontWeight.SemiBold)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SettingsContent(
+    uiState: DevModeUiState,
+    viewModel: DevModeViewModel
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+        contentPadding = PaddingValues(16.dp),
+    ) {
+        item {
+            Text(
+                text = "System Settings",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Test Mode",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Text(
+                                text = "Shows quiz every 30s, ignores trigger logic",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Switch(
+                            checked = uiState.isTestModeEnabled,
+                            onCheckedChange = { viewModel.toggleTestMode() }
+                        )
+                    }
+                }
+            }
+        }
+
+        item {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Developer Logs",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+
+        item {
+            Button(
+                onClick = viewModel::refreshLogs,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text("Refresh Logs")
+            }
+        }
+
+        if (uiState.logs.isEmpty()) {
+            item {
+                Text(
+                    text = "No logs yet.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+
+        items(uiState.logs) { log ->
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.7f))
+            ) {
+                Column(
+                    modifier = Modifier.padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Text(
+                        text = viewModel.formatTime(log.timestamp),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                    Text(
+                        text = log.title,
+                        style = MaterialTheme.typography.titleSmall,
+                    )
+                    Text(
+                        text = log.details,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
         }
     }
 }

@@ -1,0 +1,48 @@
+OVERALL FLOATING WINDOW:
+- Width: 280dp
+- Height: 160dp
+- Corner radius: 20dp
+- Margin from LEFT edge: 20dp
+- Margin from BOTTOM edge: 120dp
+- Elevation: 8dp
+
+INNER LAYOUT:
+┌─────────────────────────────┐
+│     🚂 train                │
+│                         ╭──╮│
+├────────────────────────-│😊││
+│   "Find number 3!"      ╰──╯│
+└─────────────────────────────┘
+┌──────────────────────────────┐
+│        [TRAIN]          [😊] │ ← mascot sits HERE
+├──────────────────────────────┤  on the divider line
+│       [QUIZ CONTENT]         │   right side
+└──────────────────────────────┘
+
+TRAIN SECTION (top):
+- Width: full 280dp
+- Height: 80dp
+- Train image left/center aligned
+- Top corners rounded: 20dp
+
+QUIZ CONTENT AREA (bottom):
+- Width: full 280dp
+- Height: 80dp
+- Question text: 12sp gray
+- Number/letter: 24sp ExtraBold
+- Padding left: 12dp
+- Bottom corners rounded: 20dp
+
+MASCOT (floating overlap, right side):
+- Size: 64x64dp
+- Circle clip: 32dp radius
+- Position: RIGHT edge of window
+- Vertical: centered exactly ON the 
+  divider line between train and quiz
+- Offset X: -16dp from right edge 
+  (slightly inside window)
+- Offset Y: 80dp from top 
+  (exactly on the split line)
+- Z-index/elevation: ABOVE both sections
+- Use Modifier.offset in Compose
+

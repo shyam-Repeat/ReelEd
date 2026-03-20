@@ -56,7 +56,7 @@ fun WeekBarCard(
 
 @Composable
 private fun BarItem(day: DaySummary, modifier: Modifier = Modifier) {
-    val barHeight = (day.progress * 120.dp).coerceAtLeast(4.dp)
+    val barHeight = (120.dp * day.progress).coerceAtLeast(4.dp)
     
     Column(
         modifier = modifier,

@@ -95,9 +95,9 @@ class TriggerEngine(
         val payload = "{\"reason\":\"${jsonSafe(reason)}\",\"app\":\"${jsonSafe(foregroundPackage.orEmpty())}\",\"perm_overlay\":$overlayPerm,\"perm_usage\":$usagePerm}"
         prefs.setLastSkipReason(reason)
         
-        try {
-            repository.logEvent("trigger_skip_debug", payload)
-        } catch (_: Exception) {}
+        // try {
+        //     repository.logEvent("trigger_skip_debug", payload)
+        // } catch (_: Exception) {}
         
         return TriggerDecision.Skip(reason)
     }

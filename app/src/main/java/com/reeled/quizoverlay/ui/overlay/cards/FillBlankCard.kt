@@ -48,6 +48,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 
+import com.reeled.quizoverlay.ui.overlay.components.RiveMedia
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun FillBlankCard(
@@ -64,48 +66,54 @@ fun FillBlankCard(
     var evaluated by remember { mutableStateOf(false) }
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(20.dp)
+        modifier = Modifier.fillMaxSize()
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 Text(
                     text = config.display.questionText,
-                    style = MaterialTheme.typography.headlineMedium.copy(
-                        fontWeight = FontWeight.ExtraBold,
-                        color = Color.White,
-                        lineHeight = 32.sp
-                    )
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = Color(0xFF0D47A1),
+                    fontWeight = FontWeight.Black,
+                    textAlign = TextAlign.Center
                 )
                 Text(
                     text = config.display.instructionLabel,
-                    style = MaterialTheme.typography.bodyLarge.copy(
-                        color = Color.White.copy(alpha = 0.7f),
-                        fontWeight = FontWeight.Bold
-                    )
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color(0xFF1565C0),
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
                 )
             }
 
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+            // Rive Media (Hardcoded as requested)
+            RiveMedia(
+                modifier = Modifier.height(140.dp)
+            )
+
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
+                verticalArrangement = Arrangement.Center
             ) {
                 Text(
                     text = parts.firstOrNull().orEmpty(),
-                    style = MaterialTheme.typography.headlineSmall.copy(
+                    style = MaterialTheme.typography.headlineMedium.copy(
                         fontWeight = FontWeight.ExtraBold,
-                        color = Color.White
+                        color = Color(0xFF1A237E)
                     )
                 )
                 
                 val selected = payload.wordBank.find { it.chipId == blankFilledChipId }
                 
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(8.dp))
                 
                 LargeTactileBlank(
                     label = selected?.label ?: " ? ",
@@ -114,13 +122,13 @@ fun FillBlankCard(
                     onClick = { if (blankFilledChipId != null && !evaluated) blankFilledChipId = null }
                 )
                 
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(8.dp))
                 
                 Text(
                     text = parts.getOrNull(1).orEmpty(),
-                    style = MaterialTheme.typography.headlineSmall.copy(
+                    style = MaterialTheme.typography.headlineMedium.copy(
                         fontWeight = FontWeight.ExtraBold,
-                        color = Color.White
+                        color = Color(0xFF1A237E)
                     )
                 )
             }
@@ -128,9 +136,9 @@ fun FillBlankCard(
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
             ) {
-                val chipColors = listOf(Color.White, Color.Cyan, Color.Yellow, Color.Magenta)
+                val chipColors = listOf(Color(0xFFBBDEFB), Color(0xFFC8E6C9), Color(0xFFFFF9C4), Color(0xFFF8BBD0))
                 
                 payload.wordBank.forEachIndexed { index, chip ->
                     val used = blankFilledChipId == chip.chipId
@@ -139,8 +147,8 @@ fun FillBlankCard(
                     ChipItem(
                         label = chip.label, 
                         enabled = !used && !evaluated,
-                        backgroundColor = baseColor.copy(alpha = 0.2f),
-                        contentColor = Color.White
+                        backgroundColor = baseColor,
+                        contentColor = Color(0xFF0D47A1)
                     ) {
                         if (blankFilledChipId == null) blankFilledChipId = chip.chipId
                     }
@@ -173,34 +181,35 @@ fun FillBlankCard(
                             )
                         }
                     },
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 60.dp),
-                    shape = RoundedCornerShape(24.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = 0.2f)),
-                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
+                    modifier = Modifier.fillMaxWidth(0.8f).height(64.dp).align(Alignment.CenterHorizontally).shadow(8.dp, RoundedCornerShape(32.dp)),
+                    shape = RoundedCornerShape(32.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E88E5))
                 ) {
-                    Text("Check Answer", fontWeight = FontWeight.ExtraBold, fontSize = 18.sp, color = Color.White)
+                    Text("Check Answer", fontWeight = FontWeight.Black, fontSize = 20.sp, color = Color.White)
                 }
             }
 
             if (revealCorrectId != null || (evaluated && blankFilledChipId != null)) {
                 val selected = payload.wordBank.find { it.chipId == blankFilledChipId }
                 val isCorrect = selected?.isCorrect == true
-                val feedbackColor = if (isCorrect) Color.Green else Color.Red
+                val feedbackColor = if (isCorrect) Color(0xFF4CAF50) else Color(0xFFE53935)
                 val feedbackText = if (isCorrect) "Awesome! Correct!" else "Nice try! Correct: ${payload.wordBank.find { it.isCorrect }?.label}"
                 
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 12.dp)
-                        .background(feedbackColor.copy(alpha = 0.2f), RoundedCornerShape(16.dp))
-                        .padding(20.dp)
+                        .fillMaxWidth(0.9f)
+                        .align(Alignment.CenterHorizontally)
+                        .shadow(4.dp, RoundedCornerShape(16.dp))
+                        .background(feedbackColor, RoundedCornerShape(16.dp))
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = feedbackText,
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.ExtraBold,
-                            color = Color.White
-                        )
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        textAlign = TextAlign.Center
                     )
                 }
             }
@@ -208,7 +217,6 @@ fun FillBlankCard(
             if (!config.rules.strictMode) ParentCornerButton()
         }
     }
-}
 }
 
 @Composable
@@ -219,16 +227,21 @@ fun LargeTactileBlank(
     onClick: () -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
     
-    val bgColor = if (isFilled) Color.White.copy(alpha = 0.3f) else Color.White.copy(alpha = 0.1f)
+    val bgColor = if (isFilled) Color(0xFFE3F2FD) else Color(0xFFBBDEFB).copy(alpha = 0.5f)
 
     Box(
         modifier = Modifier
             .height(64.dp)
             .width(IntrinsicSize.Min)
+            .shadow(if (isFilled) 4.dp else 0.dp, RoundedCornerShape(16.dp))
             .clip(RoundedCornerShape(16.dp))
             .background(bgColor)
+            .border(
+                width = 2.dp,
+                color = Color(0xFF1E88E5),
+                shape = RoundedCornerShape(16.dp)
+            )
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
@@ -239,10 +252,10 @@ fun LargeTactileBlank(
     ) {
         Text(
             text = label,
-            modifier = Modifier.padding(horizontal = 32.dp),
+            modifier = Modifier.padding(horizontal = 24.dp),
             style = MaterialTheme.typography.headlineSmall.copy(
-                fontWeight = FontWeight.ExtraBold,
-                color = if (isFilled) Color.White else Color.White.copy(alpha = 0.4f)
+                fontWeight = FontWeight.Black,
+                color = if (isFilled) Color(0xFF0D47A1) else Color(0xFF0D47A1).copy(alpha = 0.3f)
             )
         )
     }

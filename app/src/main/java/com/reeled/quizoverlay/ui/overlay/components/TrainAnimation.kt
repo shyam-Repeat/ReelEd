@@ -31,41 +31,37 @@ fun TrainAnimation(modifier: Modifier = Modifier) {
     )
 
     // Entry animation (Slide in from left)
-    val entryAnim = remember { Animatable(-400f) }
+    val entryAnim = remember { Animatable(-600f) }
     LaunchedEffect(Unit) {
         entryAnim.animateTo(
             targetValue = 0f,
-            animationSpec = tween(8000, easing = CubicBezierEasing(0.34f, 1.56f, 0.64f, 1.0f))
+            animationSpec = tween(1500, easing = CubicBezierEasing(0.34f, 1.56f, 0.64f, 1.0f))
         )
     }
 
-    BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
-        val canvasWidth = maxWidth.value
-        val canvasHeight = maxHeight.value
+    Canvas(modifier = modifier.fillMaxSize()) {
+        val canvasWidth = size.width
+        val canvasHeight = size.height
         
-        // Aspect ratio calculation
-        val scaleX = canvasWidth / 400f
-        val scaleY = canvasHeight / 120f
-        val scale = minOf(scaleX, scaleY)
+        // Base design is 400x120. We want to scale it to fill most of the height.
+        // We'll leave some padding.
+        val targetHeight = canvasHeight * 0.8f
+        val scale = targetHeight / 120f
         
-        val xOffsetBase = (canvasWidth - (400f * scale)) / 2f
+        val scaledWidth = 400f * scale
+        val xOffsetBase = (canvasWidth - scaledWidth) / 2f
         val yOffsetBase = (canvasHeight - (120f * scale)) / 2f
         val bounceY = trainBounce * scale
         
-        Box(modifier = Modifier.fillMaxSize()) {
-            // 1. The Train Canvas
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                withTransform({
-                    translate(left = (entryAnim.value * scale) + xOffsetBase, top = yOffsetBase + bounceY)
-                    scale(scale, scale, Offset.Zero)
-                }) {
-                    drawTrack()
-                    drawBackCar()
-                    drawMiddleCar()
-                    drawFrontCarBody()
-                    drawEngine()
-                }
-            }
+        withTransform({
+            translate(left = (entryAnim.value * scale) + xOffsetBase, top = yOffsetBase + bounceY)
+            scale(scale, scale, Offset.Zero)
+        }) {
+            drawTrack()
+            drawBackCar()
+            drawMiddleCar()
+            drawFrontCarBody()
+            drawEngine()
         }
     }
 }

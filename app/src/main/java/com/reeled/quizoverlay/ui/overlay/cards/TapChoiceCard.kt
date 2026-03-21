@@ -1,29 +1,20 @@
 package com.reeled.quizoverlay.ui.overlay.cards
 
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -32,6 +23,8 @@ import com.reeled.quizoverlay.model.QuizCardConfig
 import com.reeled.quizoverlay.model.QuizPayload
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+
+import com.reeled.quizoverlay.ui.overlay.components.RiveMedia
 
 @Composable
 fun TapChoiceCard(
@@ -46,31 +39,44 @@ fun TapChoiceCard(
 
     Column(
         modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Compact Question
+        // Question Text
         Text(
             text = config.display.questionText,
-            style = MaterialTheme.typography.labelSmall,
-            color = Color.Gray,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
+            style = MaterialTheme.typography.titleLarge,
+            color = Color(0xFF0D47A1),
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(horizontal = 16.dp)
         )
-        
-        Spacer(modifier = Modifier.height(4.dp))
 
-        // Large Options (Horizontal for compactness)
+        // Rive Media (Hardcoded as requested)
+        RiveMedia(
+            modifier = Modifier.height(180.dp)
+        )
+
+        // Options (Restore take(2) logic)
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             payload.options.take(2).forEach { option ->
+                val bgColor = if (option.isCorrect) Color(0xFF4CAF50) else Color(0xFF2196F3)
+                
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .height(80.dp) // Larger tap area for kids
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(Color.White.copy(alpha = 0.1f)) // Very subtle for touch target awareness
+                        .height(120.dp)
+                        .shadow(elevation = 8.dp, shape = RoundedCornerShape(24.dp))
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(Color.White)
+                        .border(
+                            width = 4.dp,
+                            color = bgColor.copy(alpha = 0.3f),
+                            shape = RoundedCornerShape(24.dp)
+                        )
                         .clickable(enabled = !locked) {
                             locked = true
                             scope.launch {
@@ -92,9 +98,10 @@ fun TapChoiceCard(
                 ) {
                     Text(
                         text = option.label,
-                        fontWeight = FontWeight.ExtraBold,
+                        fontWeight = FontWeight.Black,
                         fontSize = 32.sp,
-                        color = Color.White // Pop against blurred bg
+                        color = Color(0xFF1A237E),
+                        textAlign = TextAlign.Center
                     )
                 }
             }

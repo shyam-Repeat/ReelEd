@@ -42,6 +42,11 @@ import com.reeled.quizoverlay.ui.theme.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+import com.reeled.quizoverlay.ui.overlay.components.RiveMedia
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.text.style.TextAlign
+
 @Composable
 fun TapTapMatchCard(
     config: QuizCardConfig,
@@ -96,47 +101,53 @@ fun TapTapMatchCard(
     val leftPairs = payload.pairs
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(20.dp)
+        modifier = Modifier.fillMaxSize()
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 Text(
                     text = config.display.questionText,
-                    style = MaterialTheme.typography.headlineMedium.copy(
-                        fontWeight = FontWeight.ExtraBold,
-                        color = Color.White,
-                        lineHeight = 32.sp
-                    )
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = Color(0xFF0D47A1),
+                    fontWeight = FontWeight.Black,
+                    textAlign = TextAlign.Center
                 )
                 Text(
                     text = config.display.instructionLabel,
-                    style = MaterialTheme.typography.bodyLarge.copy(
-                        color = Color.White.copy(alpha = 0.7f),
-                        fontWeight = FontWeight.Bold
-                    )
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color(0xFF1565C0),
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
                 )
             }
 
+            // Rive Media (Hardcoded as requested)
+            RiveMedia(
+                modifier = Modifier.height(140.dp)
+            )
+
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.fillMaxWidth()) {
-                Column(verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.weight(1f)) {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.weight(1f)) {
                     leftPairs.forEach { pair ->
                         val isMatched = matchedPairs.containsKey(pair.leftId)
                         val isWrong = wrongLeft == pair.leftId
                         val isSelected = selectedLeft == pair.leftId
                         
                         val baseColor = when {
-                            isMatched -> Color.Green.copy(alpha = 0.3f)
-                            isWrong -> Color.Red.copy(alpha = 0.3f)
-                            isSelected -> Color.Cyan.copy(alpha = 0.3f)
-                            else -> Color.White.copy(alpha = 0.1f)
+                            isMatched -> Color(0xFFC8E6C9)
+                            isWrong -> Color(0xFFFFCDD2)
+                            isSelected -> Color(0xFFBBDEFB)
+                            else -> Color(0xFFF5F5F5)
                         }
                         
-                        val contentColor = Color.White
+                        val contentColor = Color(0xFF0D47A1)
 
                         PuzzlePieceButton(
                             label = pair.leftLabel,
@@ -148,18 +159,18 @@ fun TapTapMatchCard(
                     }
                 }
 
-                Column(verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.weight(1f)) {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.weight(1f)) {
                     payload.rightOrderShuffled.forEach { rightId ->
                         val isMatched = matchedPairs.containsValue(rightId)
                         val isWrong = wrongRight == rightId
                         
                         val baseColor = when {
-                            isMatched -> Color.Green.copy(alpha = 0.3f)
-                            isWrong -> Color.Red.copy(alpha = 0.3f)
-                            else -> Color.White.copy(alpha = 0.1f)
+                            isMatched -> Color(0xFFC8E6C9)
+                            isWrong -> Color(0xFFFFCDD2)
+                            else -> Color(0xFFF5F5F5)
                         }
                         
-                        val contentColor = Color.White
+                        val contentColor = Color(0xFF0D47A1)
 
                         PuzzlePieceButton(
                             label = rightById[rightId].orEmpty(),
@@ -186,12 +197,12 @@ fun PuzzlePieceButton(
     onClick: () -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
     
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(60.dp)
+            .height(64.dp)
+            .shadow(if (enabled) 2.dp else 0.dp, RoundedCornerShape(16.dp))
             .clip(RoundedCornerShape(16.dp))
             .background(backgroundColor)
             .clickable(
@@ -206,10 +217,11 @@ fun PuzzlePieceButton(
             text = label,
             modifier = Modifier.padding(horizontal = 8.dp),
             style = MaterialTheme.typography.bodyLarge.copy(
-                fontWeight = FontWeight.ExtraBold,
+                fontWeight = FontWeight.Black,
                 color = contentColor
             ),
-            maxLines = 1
+            textAlign = TextAlign.Center,
+            maxLines = 2
         )
     }
 }

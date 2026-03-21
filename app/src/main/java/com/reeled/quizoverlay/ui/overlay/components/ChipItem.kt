@@ -18,23 +18,26 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.reeled.quizoverlay.ui.theme.QuizBlue
 
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+
 @Composable
 fun ChipItem(
     label: String, 
     enabled: Boolean = true, 
-    backgroundColor: Color = Color.White.copy(alpha = 0.2f),
-    contentColor: Color = Color.White,
+    backgroundColor: Color = Color(0xFFE3F2FD),
+    contentColor: Color = Color(0xFF0D47A1),
     onClick: () -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-
+    
     Box(
         modifier = Modifier
-            .height(52.dp)
+            .height(56.dp)
             .width(IntrinsicSize.Min)
-            .clip(RoundedCornerShape(24.dp))
-            .background(if (enabled) backgroundColor else Color.White.copy(alpha = 0.05f))
+            .shadow(if (enabled) 4.dp else 0.dp, RoundedCornerShape(28.dp))
+            .clip(RoundedCornerShape(28.dp))
+            .background(if (enabled) backgroundColor else Color(0xFFF5F5F5))
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
@@ -47,8 +50,8 @@ fun ChipItem(
             text = label,
             modifier = Modifier.padding(horizontal = 24.dp),
             style = MaterialTheme.typography.bodyLarge.copy(
-                fontWeight = FontWeight.ExtraBold,
-                color = if (enabled) contentColor else Color.White.copy(alpha = 0.3f)
+                fontWeight = FontWeight.Black,
+                color = if (enabled) contentColor else Color(0xFF9E9E9E)
             )
         )
     }

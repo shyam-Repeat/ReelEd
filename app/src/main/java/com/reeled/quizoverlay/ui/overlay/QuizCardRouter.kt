@@ -23,6 +23,7 @@ import com.reeled.quizoverlay.ui.overlay.cards.FillBlankCard
 import com.reeled.quizoverlay.ui.overlay.cards.TapChoiceCard
 import com.reeled.quizoverlay.ui.overlay.cards.TapTapMatchCard
 import com.reeled.quizoverlay.ui.overlay.components.ConfettiEffect
+import com.reeled.quizoverlay.ui.overlay.components.ModernQuizBackground
 import com.reeled.quizoverlay.ui.overlay.components.RightMascot
 import com.reeled.quizoverlay.ui.overlay.components.TrainAnimation
 import kotlinx.coroutines.delay
@@ -58,53 +59,64 @@ fun QuizCardRouter(
         }
     }
 
-    Box(
+    ModernQuizBackground(
         modifier = Modifier
             .fillMaxSize()
             .offset(x = shakeOffset.value.dp)
     ) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            // 1. Train Section (Top 25%)
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(0.25f)
-            ) {
-                TrainAnimation(modifier = Modifier.fillMaxSize())
-            }
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                // 1. Train Section (Top 25%)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(0.25f)
+                ) {
+                    TrainAnimation(modifier = Modifier.fillMaxSize())
+                }
 
-            // 2. Quiz Content Area (Bottom 75%)
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(0.75f)
-                    .padding(horizontal = 20.dp, vertical = 20.dp)
-            ) {
-                when (config.cardType) {
-                    QuizCardType.TAP_CHOICE -> TapChoiceCard(config, sourceApp, onResultIntercept)
-                    QuizCardType.TAP_TAP_MATCH -> TapTapMatchCard(config, sourceApp, onResultIntercept)
-                    QuizCardType.DRAG_DROP_MATCH -> DragDropMatchCard(config, sourceApp, onResultIntercept)
-                    QuizCardType.FILL_BLANK -> FillBlankCard(config, sourceApp, onResultIntercept)
+                // 2. Quiz Content Area (Bottom 75%)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(0.75f)
+                        .padding(bottom = 16.dp, start = 16.dp, end = 16.dp)
+                ) {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = Color.White,
+                        shape = RoundedCornerShape(32.dp),
+                        shadowElevation = 8.dp
+                    ) {
+                        Box(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+                            when (config.cardType) {
+                                QuizCardType.TAP_CHOICE -> TapChoiceCard(config, sourceApp, onResultIntercept)
+                                QuizCardType.TAP_TAP_MATCH -> TapTapMatchCard(config, sourceApp, onResultIntercept)
+                                QuizCardType.DRAG_DROP_MATCH -> DragDropMatchCard(config, sourceApp, onResultIntercept)
+                                QuizCardType.FILL_BLANK -> FillBlankCard(config, sourceApp, onResultIntercept)
+                            }
+                        }
+                    }
                 }
             }
-        }
 
-        // 3. Mascot (Floating on divider line)
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(0.25f)
-        ) {
+            // 3. Mascot (Floating on divider line)
             Box(
                 modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .offset(x = (-10).dp, y = 32.dp) // centered on the divider
-                    .zIndex(1f)
-                    .size(64.dp)
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.25f)
             ) {
-                RightMascot(
-                    modifier = Modifier.fillMaxSize()
-                )
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .offset(x = (-10).dp, y = 32.dp) // centered on the divider
+                        .zIndex(1f)
+                        .size(64.dp)
+                ) {
+                    RightMascot(
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
             }
         }
 

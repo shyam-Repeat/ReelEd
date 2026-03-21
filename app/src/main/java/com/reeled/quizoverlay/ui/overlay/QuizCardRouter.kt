@@ -2,19 +2,22 @@ package com.reeled.quizoverlay.ui.overlay
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.zIndex
 import com.reeled.quizoverlay.model.QuizAttemptResult
 import com.reeled.quizoverlay.model.QuizCardConfig
 import com.reeled.quizoverlay.model.QuizCardType
@@ -24,7 +27,6 @@ import com.reeled.quizoverlay.ui.overlay.cards.TapChoiceCard
 import com.reeled.quizoverlay.ui.overlay.cards.TapTapMatchCard
 import com.reeled.quizoverlay.ui.overlay.components.ConfettiEffect
 import com.reeled.quizoverlay.ui.overlay.components.ModernQuizBackground
-import com.reeled.quizoverlay.ui.overlay.components.RightMascot
 import com.reeled.quizoverlay.ui.overlay.components.TrainAnimation
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -40,7 +42,6 @@ fun QuizCardRouter(
     var showConfetti by remember { mutableStateOf(false) }
     val shakeOffset = remember { Animatable(0f) }
 
-    // Intercept results
     val onResultIntercept: (QuizAttemptResult) -> Unit = { result ->
         if (result.isCorrect) {
             showConfetti = true
@@ -64,31 +65,29 @@ fun QuizCardRouter(
             .fillMaxSize()
             .offset(x = shakeOffset.value.dp)
     ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                // 1. Train Section (Top 25%)
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(0.25f)
-                ) {
-                    TrainAnimation(modifier = Modifier.fillMaxSize())
-                }
-
-                // 2. Quiz Content Area (Bottom 75%)
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(0.75f)
-                        .padding(bottom = 16.dp, start = 16.dp, end = 16.dp)
-                ) {
-                    Surface(
-                        modifier = Modifier.fillMaxSize(),
-                        color = Color.White,
-                        shape = RoundedCornerShape(32.dp),
-                        shadowElevation = 8.dp
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = Color.White,
+            shadowElevation = 10.dp
+        ) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(0.22f)
+                            .padding(horizontal = 12.dp, vertical = 8.dp)
                     ) {
-                        Box(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+                        TrainAnimation(modifier = Modifier.fillMaxSize())
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(0.78f)
+                            .padding(start = 20.dp, end = 20.dp, bottom = 20.dp)
+                    ) {
+                        Box(modifier = Modifier.fillMaxSize()) {
                             when (config.cardType) {
                                 QuizCardType.TAP_CHOICE -> TapChoiceCard(config, sourceApp, onResultIntercept)
                                 QuizCardType.TAP_TAP_MATCH -> TapTapMatchCard(config, sourceApp, onResultIntercept)
@@ -98,35 +97,15 @@ fun QuizCardRouter(
                         }
                     }
                 }
-            }
 
-            // 3. Mascot (Floating on divider line)
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight(0.25f)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .offset(x = (-10).dp, y = 32.dp) // centered on the divider
-                        .zIndex(1f)
-                        .size(64.dp)
-                ) {
-                    RightMascot(
-                        modifier = Modifier.fillMaxSize()
+                if (showConfetti) {
+                    ConfettiEffect(
+                        modifier = Modifier.fillMaxSize(),
+                        trigger = showConfetti,
+                        onFinished = { showConfetti = false }
                     )
                 }
             }
-        }
-
-        // 4. Confetti overlay
-        if (showConfetti) {
-            ConfettiEffect(
-                modifier = Modifier.fillMaxSize(),
-                trigger = showConfetti,
-                onFinished = { showConfetti = false }
-            )
         }
     }
 }

@@ -2,8 +2,6 @@ package com.reeled.quizoverlay.ui.overlay.cards
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,16 +15,14 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.reeled.quizoverlay.model.QuizAttemptResult
 import com.reeled.quizoverlay.model.QuizCardConfig
 import com.reeled.quizoverlay.model.QuizPayload
+import com.reeled.quizoverlay.ui.overlay.components.RiveMedia
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-
-import com.reeled.quizoverlay.ui.overlay.components.RiveMedia
 
 @Composable
 fun TapChoiceCard(

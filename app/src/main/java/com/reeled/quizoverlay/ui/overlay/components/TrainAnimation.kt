@@ -9,16 +9,16 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 
 @Composable
-fun PandaTrainAnimation(modifier: Modifier = Modifier) {
-    val infiniteTransition = rememberInfiniteTransition(label = "PandaTrain")
+fun TrainAnimation(modifier: Modifier = Modifier) {
+    val infiniteTransition = rememberInfiniteTransition(label = "TrainAnimation")
 
-    // Train Bounce: translateY(0 to -12 to 0)
+    // Train Bounce
     val trainBounce by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 0f,
@@ -32,35 +32,6 @@ fun PandaTrainAnimation(modifier: Modifier = Modifier) {
         label = "TrainBounce"
     )
 
-    // Panda Wave: rotate(0 to -20 to 20 to 0)
-    val pandaWave by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 0f,
-        animationSpec = infiniteRepeatable(
-            animation = keyframes {
-                durationMillis = 2000
-                -20f at 500
-                20f at 1500
-                0f at 2000
-            }
-        ),
-        label = "PandaWave"
-    )
-
-    // Panda Idle Bob: translateY(0 to -8 to 0)
-    val pandaIdle by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 0f,
-        animationSpec = infiniteRepeatable(
-            animation = keyframes {
-                durationMillis = 3000
-                -8f at 1500 with LinearEasing
-                0f at 3000 with LinearEasing
-            }
-        ),
-        label = "PandaIdle"
-    )
-
     // Entry animation (Slide in from left)
     val entryAnim = remember { Animatable(-400f) }
     LaunchedEffect(Unit) {
@@ -70,30 +41,51 @@ fun PandaTrainAnimation(modifier: Modifier = Modifier) {
         )
     }
 
-    Box(modifier = modifier.fillMaxWidth()) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val canvasWidth = size.width
-            val canvasHeight = size.height
-            
-            // Aspect ratio of the original design is 400:120 (3.33)
-            // We scale based on width but ensure we don't exceed height
-            val scaleX = canvasWidth / 400f
-            val scaleY = canvasHeight / 120f
-            val scale = minOf(scaleX, scaleY)
-            
-            val xOffsetBase = (canvasWidth - (400f * scale)) / 2f
-            val yOffsetBase = (canvasHeight - (120f * scale)) / 2f
-            val bounceY = trainBounce * scale
-            
-            withTransform({
-                translate(left = (entryAnim.value * scale) + xOffsetBase, top = yOffsetBase + bounceY)
-                scale(scale, scale, Offset.Zero)
-            }) {
-                drawTrack()
-                drawBackCar()
-                drawMiddleCar()
-                drawFrontCarWithPanda(pandaWave, pandaIdle)
-                drawEngine()
+    BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
+        val canvasWidth = maxWidth.value
+        val canvasHeight = maxHeight.value
+        
+        // Aspect ratio calculation
+        val scaleX = canvasWidth / 400f
+        val scaleY = canvasHeight / 120f
+        val scale = minOf(scaleX, scaleY)
+        
+        val xOffsetBase = (canvasWidth - (400f * scale)) / 2f
+        val yOffsetBase = (canvasHeight - (120f * scale)) / 2f
+        val bounceY = trainBounce * scale
+        
+        // Final position of the monkey inside the front car
+        // Car is at 20, 40 with size 80, 65. Center is approx 60, 72
+        val monkeySize = 40.dp * scale
+        val monkeyX = ((entryAnim.value + 60f) * scale) + xOffsetBase - (monkeySize.value / 2f)
+        val monkeyY = ((40f + 32f) * scale) + yOffsetBase + bounceY - (monkeySize.value / 2f)
+
+        Box(modifier = Modifier.fillMaxSize()) {
+            // 1. The Monkey inside the car
+            Box(
+                modifier = Modifier
+                    .offset(x = monkeyX.dp, y = monkeyY.dp)
+                    .size(monkeySize)
+                    .zIndex(1f)
+            ) {
+                MonkeyMascot(
+                    emotion = MascotEmotion.HAPPY,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+
+            // 2. The Train Canvas
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                withTransform({
+                    translate(left = (entryAnim.value * scale) + xOffsetBase, top = yOffsetBase + bounceY)
+                    scale(scale, scale, Offset.Zero)
+                }) {
+                    drawTrack()
+                    drawBackCar()
+                    drawMiddleCar()
+                    drawFrontCarBody()
+                    drawEngine()
+                }
             }
         }
     }
@@ -115,76 +107,19 @@ private fun DrawScope.drawTrack() {
     }
 }
 
-private fun DrawScope.drawFrontCarWithPanda(waveRotation: Float, pandaBob: Float) {
+private fun DrawScope.drawFrontCarBody() {
     val redCar = Color(0xFFEF4444)
     val shineColor = Color(0xFFFCA5A5).copy(alpha = 0.6f)
     val windowColor = Color(0xFFFEF3F2)
-    
-    // Unified Mascot Colors
-    val pandaWhite = Color(0xFFF5F5F5)
-    val pandaDark = Color(0xFF1A1A1A)
-    val blushColor = Color(0xFFFFB3C1).copy(alpha = 0.7f)
-    val pinkMouth = Color(0xFFEC4899)
+    val couplingColor = Color(0xFF1F2937)
 
     // Car Body
     drawRoundRect(color = redCar, topLeft = Offset(20f, 40f), size = Size(80f, 65f), cornerRadius = CornerRadius(8f))
     drawRoundRect(color = shineColor, topLeft = Offset(25f, 45f), size = Size(70f, 12f), cornerRadius = CornerRadius(4f))
     drawRoundRect(color = windowColor, topLeft = Offset(30f, 55f), size = Size(60f, 35f), cornerRadius = CornerRadius(4f))
 
-    // Panda
-    withTransform({
-        translate(top = pandaBob)
-    }) {
-        // Head
-        drawCircle(color = pandaWhite, radius = 18f, center = Offset(60f, 65f))
-        
-        // Ears
-        drawCircle(color = pandaDark, radius = 8f, center = Offset(48f, 52f))
-        drawCircle(color = pandaDark, radius = 8f, center = Offset(72f, 52f))
-        
-        // Eyes
-        drawCircle(color = pandaDark, radius = 4.5f, center = Offset(53f, 63f))
-        drawCircle(color = pandaDark, radius = 4.5f, center = Offset(67f, 63f))
-        drawCircle(color = Color.White, radius = 1.5f, center = Offset(54.5f, 61.5f))
-        drawCircle(color = Color.White, radius = 1.5f, center = Offset(68.5f, 61.5f))
-        
-        // Blush
-        drawCircle(color = blushColor, radius = 3.5f, center = Offset(45f, 70f))
-        drawCircle(color = blushColor, radius = 3.5f, center = Offset(75f, 70f))
-        
-        // Mouth
-        val mouthPath = Path().apply {
-            moveTo(60f, 75f)
-            lineTo(58f, 78f)
-            lineTo(62f, 78f)
-            close()
-        }
-        drawPath(path = mouthPath, color = pandaDark)
-        
-        val tonguePath = Path().apply {
-            moveTo(60f, 78f)
-            quadraticBezierTo(57f, 81f, 60f, 82f)
-            quadraticBezierTo(63f, 81f, 60f, 78f)
-            close()
-        }
-        drawPath(path = tonguePath, color = pinkMouth)
-
-        // Waving Hand
-        withTransform({
-            rotate(degrees = waveRotation, pivot = Offset(60f, 75f))
-        }) {
-            drawCircle(color = pandaWhite, radius = 4f, center = Offset(72f, 78f))
-            drawLine(
-                color = pandaWhite,
-                start = Offset(72f, 78f),
-                end = Offset(78f, 68f),
-                strokeWidth = 3f
-            )
-        }
-    }
-
     // Coupling
-    drawLine(color = pandaDark, start = Offset(100f, 80f), end = Offset(125f, 80f), strokeWidth = 2f)
+    drawLine(color = couplingColor, start = Offset(100f, 80f), end = Offset(125f, 80f), strokeWidth = 2f)
 }
 
 private fun DrawScope.drawMiddleCar() {

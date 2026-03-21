@@ -1,28 +1,17 @@
 package com.reeled.quizoverlay.ui.overlay
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.reeled.quizoverlay.model.QuizAttemptResult
 import com.reeled.quizoverlay.model.QuizCardConfig
@@ -31,11 +20,11 @@ import com.reeled.quizoverlay.ui.overlay.cards.DragDropMatchCard
 import com.reeled.quizoverlay.ui.overlay.cards.FillBlankCard
 import com.reeled.quizoverlay.ui.overlay.cards.TapChoiceCard
 import com.reeled.quizoverlay.ui.overlay.cards.TapTapMatchCard
-import com.reeled.quizoverlay.ui.overlay.components.PandaTrainAnimation
-
-import androidx.compose.runtime.*
-import com.reeled.quizoverlay.ui.overlay.components.PandaEmotion
-import com.reeled.quizoverlay.ui.overlay.components.PandaMascot
+import com.reeled.quizoverlay.ui.overlay.components.MonkeyMascot
+import com.reeled.quizoverlay.ui.overlay.components.TrainAnimation
+import com.reeled.quizoverlay.ui.overlay.components.MascotEmotion
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun QuizCardRouter(
@@ -44,12 +33,12 @@ fun QuizCardRouter(
     onResult: (QuizAttemptResult) -> Unit,
     onDismissed: () -> Unit
 ) {
-    var mascotEmotion by remember { mutableStateOf(PandaEmotion.IDLE) }
+    var mascotEmotion by remember { mutableStateOf(MascotEmotion.IDLE) }
     val scope = rememberCoroutineScope()
 
     // Intercept results to show mascot emotion briefly
     val onResultIntercept: (QuizAttemptResult) -> Unit = { result ->
-        mascotEmotion = if (result.isCorrect) PandaEmotion.CORRECT else PandaEmotion.WRONG
+        mascotEmotion = if (result.isCorrect) MascotEmotion.CORRECT else MascotEmotion.WRONG
         scope.launch {
             delay(1500) // Give user time to see mascot reaction
             onResult(result)
@@ -70,11 +59,11 @@ fun QuizCardRouter(
                         .fillMaxWidth()
                         .height(80.dp)
                         .background(
-                            color = Color(0xFFF0F9FF), // Soft blue for train
+                            color = Color(0xFFF0F9FF), // Soft blue for train area
                             shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
                         )
                 ) {
-                    PandaTrainAnimation(modifier = Modifier.fillMaxSize())
+                    TrainAnimation(modifier = Modifier.fillMaxSize())
                 }
 
                 // 2. Quiz Content Area (Bottom 80dp)
@@ -82,7 +71,7 @@ fun QuizCardRouter(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(80.dp)
-                        .padding(start = 12.dp, end = 40.dp) // Leave space for mascot on right
+                        .padding(start = 12.dp, end = 40.dp) // Space for mascot
                 ) {
                     when (config.cardType) {
                         QuizCardType.TAP_CHOICE -> TapChoiceCard(config, sourceApp, onResultIntercept)
@@ -103,11 +92,11 @@ fun QuizCardRouter(
                     .shadow(elevation = 4.dp, shape = CircleShape)
                     .background(Color.White, CircleShape)
                     .size(64.dp)
+                    .clip(CircleShape) // GUARANTEE: No Rive background overlap
             ) {
-                PandaMascot(
+                MonkeyMascot(
                     emotion = mascotEmotion,
-                    modifier = Modifier.fillMaxSize(),
-                    size = 64f
+                    modifier = Modifier.fillMaxSize()
                 )
             }
         }

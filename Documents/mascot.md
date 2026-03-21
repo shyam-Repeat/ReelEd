@@ -28,7 +28,7 @@ import kotlin.math.sin
 // ─────────────────────────────────────────────
 // 1. EMOTION ENUM — all panda states
 // ─────────────────────────────────────────────
-enum class PandaEmotion {
+enum class MascotEmotion {
     IDLE,       // calm, slow blink
     HAPPY,      // big smile, rosy cheeks
     CHEER,      // jumping, star eyes
@@ -36,8 +36,9 @@ enum class PandaEmotion {
     THINKING,   // one eyebrow raised, side glance
     CORRECT,    // heart eyes, huge grin
     WRONG,      // sweat drop, worried brows
-    SLEEPING    // closed eyes, zzz
+    SLEEPING    // closed eyes
 }
+
 
 // ─────────────────────────────────────────────
 // 2. COLORS

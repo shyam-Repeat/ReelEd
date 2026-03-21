@@ -62,11 +62,11 @@ This checklist was re-audited against the current codebase and docs (`Documents/
 - [ ] **Implement Compact Floating Layout (new_layout)**
     - [ ] Update `OverlayForegroundService` window params and background blur.
     - [ ] Position 280dp x 160dp window with 20dp left / 120dp bottom margins.
-    - [ ] Integrate `PandaTrainAnimation` into the top 80dp section.
+    - [ ] Integrate `TrainAnimation` into the top 80dp section.
     - [ ] Create "Mini" versions of quiz cards to fit the 80dp content area.
     - [x] Implement compact `TapChoiceCard` mini-version.
     - [ ] Implement floating mascot on the divider line.
-        - [ ] Integrate `PandaMascot` with 8 emotional states as per `mascot.md`.
+        - [ ] Integrate `MonkeyMascot` with 8 emotional states as per `mascot.md`.
         - [ ] Connect mascot emotions to quiz result states (Correct, Wrong, Thinking).
 
 ---

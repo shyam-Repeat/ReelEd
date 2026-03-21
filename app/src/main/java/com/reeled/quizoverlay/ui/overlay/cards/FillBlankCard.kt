@@ -209,7 +209,6 @@ fun FillBlankCard(
         }
     }
 }
-}
 
 @Composable
 fun LargeTactileBlank(

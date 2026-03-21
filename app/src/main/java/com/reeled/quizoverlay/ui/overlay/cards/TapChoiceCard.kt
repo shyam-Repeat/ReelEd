@@ -23,6 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.reeled.quizoverlay.model.QuizAttemptResult
@@ -43,119 +44,65 @@ fun TapChoiceCard(
     onResult: (QuizAttemptResult) -> Unit
 ) {
     val payload = config.payload as QuizPayload.TapChoicePayload
-    val rules = config.rules
     val startTime = remember { System.currentTimeMillis() }
     val scope = rememberCoroutineScope()
-
-    var selectedId by remember { mutableStateOf<String?>(null) }
     var locked by remember { mutableStateOf(false) }
-    var revealed by remember { mutableStateOf(false) }
-    var timerProgress by remember { mutableFloatStateOf(1f) }
 
-    val optionColors = listOf(QuizBlue, QuizYellow, QuizPurple, QuizMint)
-
-    LaunchedEffect(rules.timerSeconds) {
-        if (rules.timerSeconds > 0) {
-            val total = rules.timerSeconds * 10
-            repeat(total) { tick ->
-                delay(100)
-                timerProgress = 1f - ((tick + 1) / total.toFloat())
-            }
-            if (!locked) {
-                locked = true
-                onResult(
-                    QuizAttemptResult(
-                        questionId = config.id,
-                        selectedOptionId = null,
-                        isCorrect = false,
-                        wasDismissed = false,
-                        wasTimerExpired = true,
-                        responseTimeMs = rules.timerSeconds * 1000L,
-                        sourceApp = sourceApp
-                    )
-                )
-            }
-        }
-    }
-
-    suspend fun resolve(option: ChoiceOption) {
-        if (locked) return
-        locked = true
-        selectedId = option.id
-        revealed = true
-        delay(if (option.isCorrect) 800 else 1500)
-        onResult(
-            QuizAttemptResult(
-                questionId = config.id,
-                selectedOptionId = option.id,
-                isCorrect = option.isCorrect,
-                wasDismissed = false,
-                wasTimerExpired = false,
-                responseTimeMs = System.currentTimeMillis() - startTime,
-                sourceApp = sourceApp
-            )
-        )
-    }
-
-    Surface(
-        modifier = Modifier.padding(12.dp),
-        shape = RoundedCornerShape(24.dp),
-        color = QuizBackground,
-        shadowElevation = 8.dp
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center
     ) {
-        Box {
-            Column(
-                modifier = Modifier.padding(24.dp),
-                verticalArrangement = Arrangement.spacedBy(20.dp)
-            ) {
-                if (rules.timerSeconds > 0) TimerBar(progress = timerProgress, modifier = Modifier.fillMaxWidth())
+        // Compact Question
+        Text(
+            text = config.display.questionText,
+            style = MaterialTheme.typography.labelSmall,
+            color = Color.Gray,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+        
+        Spacer(modifier = Modifier.height(4.dp))
 
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(
-                        text = config.display.questionText,
-                        style = MaterialTheme.typography.headlineMedium.copy(
-                            fontWeight = FontWeight.ExtraBold,
-                            color = QuizBlue,
-                            lineHeight = 32.sp
-                        )
-                    )
-                    Text(
-                        text = config.display.instructionLabel,
-                        style = MaterialTheme.typography.bodyLarge.copy(
-                            color = Color.Black.copy(alpha = 0.6f),
-                            fontWeight = FontWeight.Bold
-                        )
-                    )
-                }
-
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    contentPadding = PaddingValues(vertical = 8.dp)
-                ) {
-                    payload.options.forEachIndexed { index, option ->
-                        item(key = option.id) {
-                            val baseColor = optionColors.getOrElse(index % optionColors.size) { QuizBlue }
-                            val bg = when {
-                                revealed && option.isCorrect -> QuizMint
-                                revealed && selectedId == option.id && !option.isCorrect -> Color(0xFFFFB7CE)
-                                revealed -> baseColor.copy(alpha = 0.2f)
-                                else -> baseColor
+        // Large Options (Horizontal for compactness in 80dp)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            payload.options.take(2).forEach { option ->
+                Surface(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp)
+                        .clickable(enabled = !locked) {
+                            locked = true
+                            scope.launch {
+                                delay(500)
+                                onResult(
+                                    QuizAttemptResult(
+                                        questionId = config.id,
+                                        selectedOptionId = option.id,
+                                        isCorrect = option.isCorrect,
+                                        wasDismissed = false,
+                                        wasTimerExpired = false,
+                                        responseTimeMs = System.currentTimeMillis() - startTime,
+                                        sourceApp = sourceApp
+                                    )
+                                )
                             }
-                            
-                            OptionButton(
-                                label = option.label,
-                                enabled = !locked,
-                                backgroundColor = bg,
-                                onClick = { scope.launch { resolve(option) } }
-                            )
-                        }
+                        },
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color(0xFFF3F4F6),
+                    border = BorderStroke(1.dp, Color(0xFFE5E7EB))
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(
+                            text = option.label,
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 20.sp
+                        )
                     }
                 }
             }
-
-            if (!rules.strictMode) ParentCornerButton()
         }
     }
 }

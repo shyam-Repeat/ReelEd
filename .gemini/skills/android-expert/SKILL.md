@@ -36,6 +36,17 @@ Consume state in "Screen" composables and pass data down to stateless child comp
 ### 3. Type-Safe Navigation
 Define destinations as `@Serializable` objects or data classes and use `NavHost` with type-safe `composable<T>` calls.
 
+## 🚀 Workflow: Mascot & Interaction
+
+### 1. State-Driven Animations
+Mascots should react to application state (e.g., correct/wrong answers). Use an `enum class` to define emotional states and `animate*AsState` or `InfiniteTransition` for fluid movement.
+
+### 2. Composition with Canvas
+For high-performance custom mascots, use `Canvas` to draw vector shapes. This ensures crisp scaling across all screen densities.
+
+### 3. Rive Integration (Optional)
+When using Rive, ensure the `.riv` asset is in `res/raw` and use the Rive Compose runtime for state-machine driven animations.
+
 ## 🚀 Workflow: UI Verification
 
 ### 1. Device Calibration & Discovery

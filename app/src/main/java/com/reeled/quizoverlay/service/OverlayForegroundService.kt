@@ -343,11 +343,20 @@ class OverlayForegroundService : Service() {
 
             setContent {
                 ReelEdTheme {
-                    Surface(
-                        modifier = Modifier.fillMaxSize(),
-                        color = MaterialTheme.colorScheme.background.copy(alpha = 0.98f)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        // 1. Blurred Background (Modern UI)
+                        Surface(
+                            modifier = Modifier.fillMaxSize(),
+                            color = Color.Black.copy(alpha = 0.25f)
+                        ) {}
+
+                        // 2. The Compact Floating Window (280dp x 160dp)
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomStart)
+                                .padding(start = 20.dp, bottom = 120.dp)
+                                .size(width = 280.dp, height = 160.dp)
+                        ) {
                             val config = QuizCardConfig.from(question)
                             QuizCardRouter(
                                 config = config,

@@ -119,9 +119,11 @@ private fun DrawScope.drawFrontCarWithPanda(waveRotation: Float, pandaBob: Float
     val redCar = Color(0xFFEF4444)
     val shineColor = Color(0xFFFCA5A5).copy(alpha = 0.6f)
     val windowColor = Color(0xFFFEF3F2)
+    
+    // Unified Mascot Colors
     val pandaWhite = Color(0xFFF5F5F5)
-    val pandaDark = Color(0xFF1F2937)
-    val blushColor = Color(0xFFFCA5A5).copy(alpha = 0.7f)
+    val pandaDark = Color(0xFF1A1A1A)
+    val blushColor = Color(0xFFFFB3C1).copy(alpha = 0.7f)
     val pinkMouth = Color(0xFFEC4899)
 
     // Car Body

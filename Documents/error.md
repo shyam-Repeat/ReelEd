@@ -1,6 +1,13 @@
-Tap tap match data
-{"left_items":[{"id":"L1","label":"🦒"},{"id":"L2","label":"🦓"},{"id":"L3","label":"🦏"}],"right_items":[{"id":"R1","label":"🦓"},{"id":"R2","label":"🦏"},{"id":"R3","label":"🦒"}],"correct_pairs":[["L1","R3"],["L2","R1"],["L3","R2"]]}
+Task :app:checkDebugAarMetadata FAILED
 
-drag and drop data
-{"draggables":[{"id":"D1","label":"🐟"},{"id":"D2","label":"🦅"},{"id":"D3","label":"🐶"},{"id":"D4","label":"🐸"}],"targets":[{"id":"T1","label":"🌊 Water"},{"id":"T2","label":"☁️ Sky"},{"id":"T3","label":"🏠 Home"}],"correct_pairs":[["D1","T1"],["D2","T2"],["D3","T3"],["D4","T1"]]}
+FAILURE: Build failed with an exception.
 
+* What went wrong:
+Execution failed for task ':app:checkDebugAarMetadata'.
+> Could not resolve all files for configuration ':app:debugRuntimeClasspath'.
+   > Could not find app.rive:rive-android:8.4.3.
+     Searched in the following locations:
+       - https://dl.google.com/dl/android/maven2/app/rive/rive-android/8.4.3/rive-android-8.4.3.pom
+       - https://repo.maven.apache.org/maven2/app/rive/rive-android/8.4.3/rive-android-8.4.3.pom
+     Required by:
+         project :app

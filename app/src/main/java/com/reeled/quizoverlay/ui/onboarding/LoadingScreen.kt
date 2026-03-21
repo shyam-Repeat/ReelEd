@@ -86,17 +86,41 @@ fun LoadingScreen(
             verticalArrangement = Arrangement.Center,
             modifier = Modifier.padding(24.dp)
         ) {
-            // Monkey Mascot (Rive Animation)
+            // Mascot + Loading Bar Overlay
             Box(
                 modifier = Modifier
-                    .size(180.dp)
-                    .alpha(pulse),
+                    .size(220.dp),
                 contentAlignment = Alignment.Center
             ) {
-                MonkeyMascot(
-                    emotion = MascotEmotion.HAPPY,
-                    modifier = Modifier.fillMaxSize()
-                )
+                // Monkey Mascot (Rive Animation)
+                Box(
+                    modifier = Modifier
+                        .size(180.dp)
+                        .alpha(pulse),
+                    contentAlignment = Alignment.Center
+                ) {
+                    MonkeyMascot(
+                        emotion = MascotEmotion.HAPPY,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+
+                // Integrated Progress Bar (On top of mascot, at the bottom)
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 12.dp)
+                        .fillMaxWidth(0.8f)
+                        .height(6.dp)
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f), CircleShape)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(progress)
+                            .height(6.dp)
+                            .background(Primary, CircleShape)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -125,30 +149,10 @@ fun LoadingScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontWeight = FontWeight.ExtraBold
             )
-        }
-
-        // Bottom Progress Section
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 80.dp)
-                .fillMaxWidth(0.7f),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(8.dp)
-                    .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(progress)
-                        .height(8.dp)
-                        .background(Primary, CircleShape)
-                )
-            }
-            Spacer(modifier = Modifier.height(16.dp))
+            
+            Spacer(modifier = Modifier.height(32.dp))
+            
+            // Status Text
             Text(
                 text = "Initializing Learning Engine...",
                 style = MaterialTheme.typography.labelMedium,

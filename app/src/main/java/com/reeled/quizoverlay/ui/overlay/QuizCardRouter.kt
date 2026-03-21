@@ -20,9 +20,9 @@ import com.reeled.quizoverlay.ui.overlay.cards.DragDropMatchCard
 import com.reeled.quizoverlay.ui.overlay.cards.FillBlankCard
 import com.reeled.quizoverlay.ui.overlay.cards.TapChoiceCard
 import com.reeled.quizoverlay.ui.overlay.cards.TapTapMatchCard
-import com.reeled.quizoverlay.ui.overlay.components.MonkeyMascot
+import com.reeled.quizoverlay.ui.overlay.components.ConfettiEffect
+import com.reeled.quizoverlay.ui.overlay.components.RightMascot
 import com.reeled.quizoverlay.ui.overlay.components.TrainAnimation
-import com.reeled.quizoverlay.ui.overlay.components.MascotEmotion
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -33,20 +33,33 @@ fun QuizCardRouter(
     onResult: (QuizAttemptResult) -> Unit,
     onDismissed: () -> Unit
 ) {
-    var mascotEmotion by remember { mutableStateOf(MascotEmotion.IDLE) }
     val scope = rememberCoroutineScope()
+    var showConfetti by remember { mutableStateOf(false) }
+    val shakeOffset = remember { Animatable(0f) }
 
-    // Intercept results to show mascot emotion briefly
+    // Intercept results
     val onResultIntercept: (QuizAttemptResult) -> Unit = { result ->
-        mascotEmotion = if (result.isCorrect) MascotEmotion.CORRECT else MascotEmotion.WRONG
+        if (result.isCorrect) {
+            showConfetti = true
+        } else {
+            scope.launch {
+                repeat(4) {
+                    shakeOffset.animateTo(10f, tween(50))
+                    shakeOffset.animateTo(-10f, tween(50))
+                }
+                shakeOffset.animateTo(0f, tween(50))
+            }
+        }
         scope.launch {
-            delay(1500) // Give user time to see mascot reaction
+            delay(1500)
             onResult(result)
         }
     }
 
     Surface(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .offset(x = shakeOffset.value.dp),
         shape = RoundedCornerShape(20.dp),
         color = Color.White,
         shadowElevation = 8.dp
@@ -71,7 +84,7 @@ fun QuizCardRouter(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(80.dp)
-                        .padding(start = 12.dp, end = 40.dp) // Space for mascot
+                        .padding(start = 12.dp, end = 80.dp) // Space for mascot (width 64 + offset 16 = 80)
                 ) {
                     when (config.cardType) {
                         QuizCardType.TAP_CHOICE -> TapChoiceCard(config, sourceApp, onResultIntercept)
@@ -92,11 +105,19 @@ fun QuizCardRouter(
                     .shadow(elevation = 4.dp, shape = CircleShape)
                     .background(Color.White, CircleShape)
                     .size(64.dp)
-                    .clip(CircleShape) // GUARANTEE: No Rive background overlap
+                    .clip(CircleShape)
             ) {
-                MonkeyMascot(
-                    emotion = mascotEmotion,
+                RightMascot(
                     modifier = Modifier.fillMaxSize()
+                )
+            }
+
+            // 4. Confetti overlay
+            if (showConfetti) {
+                ConfettiEffect(
+                    modifier = Modifier.fillMaxSize(),
+                    trigger = showConfetti,
+                    onFinished = { showConfetti = false }
                 )
             }
         }

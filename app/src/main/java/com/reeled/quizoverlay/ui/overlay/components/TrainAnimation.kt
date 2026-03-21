@@ -11,8 +11,6 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.withTransform
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.zIndex
 
 @Composable
 fun TrainAnimation(modifier: Modifier = Modifier) {
@@ -54,27 +52,8 @@ fun TrainAnimation(modifier: Modifier = Modifier) {
         val yOffsetBase = (canvasHeight - (120f * scale)) / 2f
         val bounceY = trainBounce * scale
         
-        // Final position of the monkey inside the front car
-        // Car is at 20, 40 with size 80, 65. Center is approx 60, 72
-        val monkeySize = 40.dp * scale
-        val monkeyX = ((entryAnim.value + 60f) * scale) + xOffsetBase - (monkeySize.value / 2f)
-        val monkeyY = ((40f + 32f) * scale) + yOffsetBase + bounceY - (monkeySize.value / 2f)
-
         Box(modifier = Modifier.fillMaxSize()) {
-            // 1. The Monkey inside the car
-            Box(
-                modifier = Modifier
-                    .offset(x = monkeyX.dp, y = monkeyY.dp)
-                    .size(monkeySize)
-                    .zIndex(1f)
-            ) {
-                MonkeyMascot(
-                    emotion = MascotEmotion.HAPPY,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-
-            // 2. The Train Canvas
+            // 1. The Train Canvas
             Canvas(modifier = Modifier.fillMaxSize()) {
                 withTransform({
                     translate(left = (entryAnim.value * scale) + xOffsetBase, top = yOffsetBase + bounceY)

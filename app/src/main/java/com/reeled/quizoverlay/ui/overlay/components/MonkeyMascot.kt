@@ -16,7 +16,7 @@ fun MonkeyMascot(
     emotion: MascotEmotion,
     modifier: Modifier = Modifier
 ) {
-    val stateMachineName = "State Machine 1"
+    val stateMachineName = "Monkey state machine"
 
     AndroidView(
         modifier = modifier
@@ -33,8 +33,7 @@ fun MonkeyMascot(
                         autoplay = true
                     )
                 } catch (_: Exception) {
-                    // Some .riv replacements may not include the expected state machine.
-                    // Fall back to the default artboard animation instead of crashing.
+                    // Fall back to default artboard animation instead of crashing
                     setRiveResource(
                         resId = R.raw.swinging_monkey,
                         fit = Fit.COVER,
@@ -45,21 +44,17 @@ fun MonkeyMascot(
             }
         },
         update = { view ->
-            // Map MascotEmotion to Rive State Machine Inputs
-            val inputName = "emotion"
-            val inputValue = when (emotion) {
-                MascotEmotion.IDLE -> 0f
-                MascotEmotion.HAPPY -> 1f
-                MascotEmotion.CHEER -> 2f
-                MascotEmotion.SAD -> 3f
-                MascotEmotion.THINKING -> 4f
-                MascotEmotion.CORRECT -> 5f
-                MascotEmotion.WRONG -> 6f
-                MascotEmotion.SLEEPING -> 7f
+            // Map MascotEmotion to the new Rive State Machine Inputs (Bool)
+            // For now, we use hoverSwing and hoverChill based on the emotion.
+            val isSwinging = when (emotion) {
+                MascotEmotion.HAPPY, MascotEmotion.CHEER, MascotEmotion.CORRECT -> true
+                else -> false
             }
-            
+            val isChilling = !isSwinging
+
             try {
-                view.setNumberState(stateMachineName, inputName, inputValue)
+                view.setBooleanState(stateMachineName, "Btn_Swing_Hover", isSwinging)
+                view.setBooleanState(stateMachineName, "Btn_Chill_Hover", isChilling)
             } catch (e: Exception) {
                 // If the state machine doesn't exist or input is wrong, 
                 // it will just play the default animation.

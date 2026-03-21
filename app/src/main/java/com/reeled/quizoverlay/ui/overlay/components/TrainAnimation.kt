@@ -22,9 +22,9 @@ fun TrainAnimation(modifier: Modifier = Modifier) {
         targetValue = 0f,
         animationSpec = infiniteRepeatable(
             animation = keyframes {
-                durationMillis = 1400
-                -12f at 700 with FastOutSlowInEasing
-                0f at 1400 with FastOutSlowInEasing
+                durationMillis = 4000
+                -12f at 2000 with FastOutSlowInEasing
+                0f at 4000 with FastOutSlowInEasing
             }
         ),
         label = "TrainBounce"
@@ -35,7 +35,7 @@ fun TrainAnimation(modifier: Modifier = Modifier) {
     LaunchedEffect(Unit) {
         entryAnim.animateTo(
             targetValue = 0f,
-            animationSpec = tween(3000, easing = CubicBezierEasing(0.34f, 1.56f, 0.64f, 1.0f))
+            animationSpec = tween(8000, easing = CubicBezierEasing(0.34f, 1.56f, 0.64f, 1.0f))
         )
     }
 

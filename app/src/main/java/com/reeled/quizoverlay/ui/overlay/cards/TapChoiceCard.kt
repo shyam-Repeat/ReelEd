@@ -59,16 +59,18 @@ fun TapChoiceCard(
         
         Spacer(modifier = Modifier.height(4.dp))
 
-        // Large Options (Horizontal for compactness in 80dp)
+        // Large Options (Horizontal for compactness)
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             payload.options.take(2).forEach { option ->
-                Surface(
+                Box(
                     modifier = Modifier
                         .weight(1f)
-                        .height(48.dp)
+                        .height(80.dp) // Larger tap area for kids
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color.White.copy(alpha = 0.1f)) // Very subtle for touch target awareness
                         .clickable(enabled = !locked) {
                             locked = true
                             scope.launch {
@@ -86,17 +88,14 @@ fun TapChoiceCard(
                                 )
                             }
                         },
-                    shape = RoundedCornerShape(12.dp),
-                    color = Color(0xFFF3F4F6),
-                    border = BorderStroke(1.dp, Color(0xFFE5E7EB))
+                    contentAlignment = Alignment.Center
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text(
-                            text = option.label,
-                            fontWeight = FontWeight.ExtraBold,
-                            fontSize = 20.sp
-                        )
-                    }
+                    Text(
+                        text = option.label,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 32.sp,
+                        color = Color.White // Pop against blurred bg
+                    )
                 }
             }
         }

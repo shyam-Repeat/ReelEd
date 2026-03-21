@@ -22,56 +22,34 @@ import com.reeled.quizoverlay.ui.theme.QuizBlue
 fun ChipItem(
     label: String, 
     enabled: Boolean = true, 
-    backgroundColor: Color = QuizBlue,
-    contentColor: Color = Color.Black,
+    backgroundColor: Color = Color.White.copy(alpha = 0.2f),
+    contentColor: Color = Color.White,
     onClick: () -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
 
-    val shadowColor = Color(
-        (backgroundColor.red * 0.8f).coerceIn(0f, 1f),
-        (backgroundColor.green * 0.8f).coerceIn(0f, 1f),
-        (backgroundColor.blue * 0.8f).coerceIn(0f, 1f),
-        backgroundColor.alpha
-    )
-
     Box(
         modifier = Modifier
+            .height(52.dp)
+            .width(IntrinsicSize.Min)
+            .clip(RoundedCornerShape(24.dp))
+            .background(if (enabled) backgroundColor else Color.White.copy(alpha = 0.05f))
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
                 enabled = enabled,
                 onClick = onClick
-            )
-            .height(52.dp)
-            .width(IntrinsicSize.Min)
+            ),
+        contentAlignment = Alignment.Center
     ) {
-        // Shadow layer
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = 4.dp)
-                .background(if (enabled) shadowColor else Color(0xFFCDD3DF), RoundedCornerShape(24.dp))
-        )
-        
-        // Chip layer
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(bottom = if (isPressed) 0.dp else 4.dp)
-                .offset(y = if (isPressed) 4.dp else 0.dp)
-                .background(if (enabled) backgroundColor else Color(0xFFE0E3EA), RoundedCornerShape(24.dp)),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = label,
-                modifier = Modifier.padding(horizontal = 20.dp),
-                style = MaterialTheme.typography.bodyLarge.copy(
-                    fontWeight = FontWeight.ExtraBold,
-                    color = if (enabled) contentColor else Color.Gray
-                )
+        Text(
+            text = label,
+            modifier = Modifier.padding(horizontal = 24.dp),
+            style = MaterialTheme.typography.bodyLarge.copy(
+                fontWeight = FontWeight.ExtraBold,
+                color = if (enabled) contentColor else Color.White.copy(alpha = 0.3f)
             )
-        }
+        )
     }
 }

@@ -95,14 +95,13 @@ fun TapTapMatchCard(
     val rightById = payload.pairs.associateBy({ it.rightId }, { it.rightLabel })
     val leftPairs = payload.pairs
 
-    Surface(
-        modifier = Modifier.padding(12.dp),
-        shape = RoundedCornerShape(24.dp),
-        color = QuizBackground,
-        shadowElevation = 8.dp
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(20.dp)
     ) {
         Column(
-            modifier = Modifier.padding(24.dp),
+            modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -110,14 +109,14 @@ fun TapTapMatchCard(
                     text = config.display.questionText,
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontWeight = FontWeight.ExtraBold,
-                        color = QuizBlue,
+                        color = Color.White,
                         lineHeight = 32.sp
                     )
                 )
                 Text(
                     text = config.display.instructionLabel,
                     style = MaterialTheme.typography.bodyLarge.copy(
-                        color = Color.Black.copy(alpha = 0.6f),
+                        color = Color.White.copy(alpha = 0.7f),
                         fontWeight = FontWeight.Bold
                     )
                 )
@@ -131,13 +130,13 @@ fun TapTapMatchCard(
                         val isSelected = selectedLeft == pair.leftId
                         
                         val baseColor = when {
-                            isMatched -> QuizMint
-                            isWrong -> KeyPink
-                            isSelected -> QuizPurple
-                            else -> QuizPurple.copy(alpha = 0.2f)
+                            isMatched -> Color.Green.copy(alpha = 0.3f)
+                            isWrong -> Color.Red.copy(alpha = 0.3f)
+                            isSelected -> Color.Cyan.copy(alpha = 0.3f)
+                            else -> Color.White.copy(alpha = 0.1f)
                         }
                         
-                        val contentColor = if (isMatched || isWrong || isSelected) Color.White else QuizPurple
+                        val contentColor = Color.White
 
                         PuzzlePieceButton(
                             label = pair.leftLabel,
@@ -155,12 +154,12 @@ fun TapTapMatchCard(
                         val isWrong = wrongRight == rightId
                         
                         val baseColor = when {
-                            isMatched -> QuizMint
-                            isWrong -> KeyPink
-                            else -> KeyOrange.copy(alpha = 0.2f)
+                            isMatched -> Color.Green.copy(alpha = 0.3f)
+                            isWrong -> Color.Red.copy(alpha = 0.3f)
+                            else -> Color.White.copy(alpha = 0.1f)
                         }
                         
-                        val contentColor = if (isMatched || isWrong) Color.White else KeyOrange
+                        val contentColor = Color.White
 
                         PuzzlePieceButton(
                             label = rightById[rightId].orEmpty(),
@@ -189,47 +188,28 @@ fun PuzzlePieceButton(
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     
-    val shadowColor = Color(
-        (backgroundColor.red * 0.8f).coerceIn(0f, 1f),
-        (backgroundColor.green * 0.8f).coerceIn(0f, 1f),
-        (backgroundColor.blue * 0.8f).coerceIn(0f, 1f),
-        backgroundColor.alpha
-    )
-
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(60.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(backgroundColor)
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
                 enabled = enabled,
                 onClick = onClick
-            )
+            ),
+        contentAlignment = Alignment.Center
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = 4.dp)
-                .background(if (enabled) shadowColor else Color(0xFFCDD3DF), RoundedCornerShape(16.dp))
+        Text(
+            text = label,
+            modifier = Modifier.padding(horizontal = 8.dp),
+            style = MaterialTheme.typography.bodyLarge.copy(
+                fontWeight = FontWeight.ExtraBold,
+                color = contentColor
+            ),
+            maxLines = 1
         )
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(bottom = if (isPressed) 0.dp else 4.dp)
-                .offset(y = if (isPressed) 4.dp else 0.dp)
-                .background(if (enabled) backgroundColor else Color(0xFFE0E3EA), RoundedCornerShape(16.dp)),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = label,
-                modifier = Modifier.padding(horizontal = 8.dp),
-                style = MaterialTheme.typography.bodyLarge.copy(
-                    fontWeight = FontWeight.ExtraBold,
-                    color = contentColor
-                ),
-                maxLines = 1
-            )
-        }
     }
 }

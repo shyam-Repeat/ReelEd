@@ -61,8 +61,21 @@ fun LoadingScreen(
             .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
-        // Blurs for modern UI feel
-        Box(modifier = Modifier.fillMaxSize()) {
+        // 1. Monkey Mascot (Fills Screen)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .alpha(pulse),
+            contentAlignment = Alignment.Center
+        ) {
+            MonkeyMascot(
+                emotion = MascotEmotion.HAPPY,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        // 2. Blurs for modern UI feel (on top of mascot but subtle)
+        Box(modifier = Modifier.fillMaxSize().alpha(0.5f)) {
             Box(
                 modifier = Modifier
                     .offset(x = (-50).dp, y = (-50).dp)
@@ -80,83 +93,55 @@ fun LoadingScreen(
             )
         }
 
-        // Main content
+        // 3. Main content on top
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
             modifier = Modifier.padding(24.dp)
         ) {
-            // Mascot + Loading Bar Overlay
-            Box(
-                modifier = Modifier
-                    .size(220.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                // Monkey Mascot (Rive Animation)
-                Box(
-                    modifier = Modifier
-                        .size(180.dp)
-                        .alpha(pulse),
-                    contentAlignment = Alignment.Center
-                ) {
-                    MonkeyMascot(
-                        emotion = MascotEmotion.HAPPY,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
-
-                // Integrated Progress Bar (On top of mascot, at the bottom)
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(bottom = 12.dp)
-                        .fillMaxWidth(0.8f)
-                        .height(6.dp)
-                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f), CircleShape)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth(progress)
-                            .height(6.dp)
-                            .background(Primary, CircleShape)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
             // Title
             Row {
                 Text(
                     text = "Reel",
                     style = MaterialTheme.typography.headlineLarge,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 42.sp
+                    fontSize = 48.sp,
+                    color = MaterialTheme.colorScheme.onBackground
                 )
                 Text(
                     text = "Ed",
                     style = MaterialTheme.typography.headlineLarge,
                     color = Primary,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 42.sp
+                    fontSize = 48.sp
                 )
             }
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "LEARNING THROUGH MOTION",
-                style = MaterialTheme.typography.labelSmall,
-                letterSpacing = 3.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontWeight = FontWeight.ExtraBold
-            )
             
             Spacer(modifier = Modifier.height(32.dp))
+
+            // Integrated Progress Bar
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(0.6f)
+                    .height(8.dp)
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f), CircleShape)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(progress)
+                        .height(8.dp)
+                        .background(Primary, CircleShape)
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
             
             // Status Text
             Text(
                 text = "Initializing Learning Engine...",
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                fontWeight = FontWeight.Bold
             )
         }
     }

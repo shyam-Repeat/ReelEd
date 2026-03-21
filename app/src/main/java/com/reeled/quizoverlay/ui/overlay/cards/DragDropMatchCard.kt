@@ -47,11 +47,11 @@ fun DragDropMatchCard(
     val chipById = payload.chips.associateBy { it.chipId }
     val allFilled = slotContents.values.all { it != null }
 
-    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(config.display.questionText, fontWeight = FontWeight.Bold)
-        Text(config.display.instructionLabel, color = Color.Gray)
+    Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Text(config.display.questionText, fontWeight = FontWeight.Bold, color = Color.White, fontSize = 24.sp)
+        Text(config.display.instructionLabel, color = Color.White.copy(alpha = 0.7f))
 
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             payload.chips.forEach { chip ->
                 val inSlot = slotContents.values.contains(chip.chipId)
                 if (!inSlot) {
@@ -63,16 +63,19 @@ fun DragDropMatchCard(
         payload.slots.forEach { slot ->
             val placedChip = chipById[slotContents[slot.slotId]]
             val isCorrect = placedChip?.chipId in slot.correctChipIds
-            val fill = if (!evaluated) Color.White else if (isCorrect) Color(0xFFD7F5E1) else Color(0xFFFFD8D8)
-            Surface(
-                color = fill,
-                border = BorderStroke(1.dp, Color(0xFFCDD3DF)),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(modifier = Modifier.padding(12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("${slot.slotLabel}: ${placedChip?.label ?: "___"}")
-                    Button(onClick = {
-                        if (evaluated) return@Button
+            
+            val slotBg = when {
+                !evaluated -> Color.White.copy(alpha = 0.1f)
+                isCorrect -> Color.Green.copy(alpha = 0.2f)
+                else -> Color.Red.copy(alpha = 0.2f)
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(slotBg)
+                    .clickable(enabled = !evaluated) {
                         if (placedChip != null) {
                             slotContents = slotContents + (slot.slotId to null)
                         } else if (selectedChipId != null) {
@@ -80,31 +83,51 @@ fun DragDropMatchCard(
                             slotContents = slotContents.mapValues { if (it.value == chipId) null else it.value } + (slot.slotId to chipId)
                             selectedChipId = null
                         }
-                    }) {
-                        Text(if (placedChip != null) "Clear" else "Place")
                     }
+            ) {
+                Row(modifier = Modifier.padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "${slot.slotLabel}: ${placedChip?.label ?: "___"}",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
+                    
+                    Text(
+                        text = if (placedChip != null) "Clear" else "Place",
+                        color = Color.White.copy(alpha = 0.6f),
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }
 
         if (allFilled && !evaluated) {
-            Button(onClick = {
-                scope.launch {
-                    evaluated = true
-                    delay(1500)
-                    onResult(
-                        QuizAttemptResult(
-                            questionId = config.id,
-                            selectedOptionId = "SUBMIT",
-                            isCorrect = payload.slots.all { slotContents[it.slotId] in it.correctChipIds },
-                            wasDismissed = false,
-                            wasTimerExpired = false,
-                            responseTimeMs = System.currentTimeMillis() - startTime,
-                            sourceApp = sourceApp
+            Button(
+                onClick = {
+                    scope.launch {
+                        evaluated = true
+                        delay(1500)
+                        onResult(
+                            QuizAttemptResult(
+                                questionId = config.id,
+                                selectedOptionId = "SUBMIT",
+                                isCorrect = payload.slots.all { slotContents[it.slotId] in it.correctChipIds },
+                                wasDismissed = false,
+                                wasTimerExpired = false,
+                                responseTimeMs = System.currentTimeMillis() - startTime,
+                                sourceApp = sourceApp
+                            )
                         )
-                    )
-                }
-            }) { Text("Submit") }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth().height(60.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = 0.2f)),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Text("Submit", color = Color.White, fontWeight = FontWeight.Bold)
+            }
         }
 
         if (!config.rules.strictMode) ParentCornerButton()

@@ -58,70 +58,63 @@ fun QuizCardRouter(
         }
     }
 
-    Surface(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .offset(x = shakeOffset.value.dp),
-        shape = RoundedCornerShape(20.dp),
-        color = Color.White,
-        shadowElevation = 8.dp
+            .offset(x = shakeOffset.value.dp)
     ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                // 1. Train Section (Top 80dp)
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(80.dp)
-                        .background(
-                            color = Color(0xFFF0F9FF), // Soft blue for train area
-                            shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
-                        )
-                ) {
-                    TrainAnimation(modifier = Modifier.fillMaxSize())
-                }
-
-                // 2. Quiz Content Area (Bottom 80dp)
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(80.dp)
-                        .padding(start = 12.dp, end = 80.dp) // Space for mascot (width 64 + offset 16 = 80)
-                ) {
-                    when (config.cardType) {
-                        QuizCardType.TAP_CHOICE -> TapChoiceCard(config, sourceApp, onResultIntercept)
-                        QuizCardType.TAP_TAP_MATCH -> TapTapMatchCard(config, sourceApp, onResultIntercept)
-                        QuizCardType.DRAG_DROP_MATCH -> DragDropMatchCard(config, sourceApp, onResultIntercept)
-                        QuizCardType.FILL_BLANK -> FillBlankCard(config, sourceApp, onResultIntercept)
-                    }
-                }
-            }
-
-            // 3. Mascot (Floating on divider line)
-            // Specs: 64x64dp, centered on 80dp divider, -16dp from right edge
+        Column(modifier = Modifier.fillMaxSize()) {
+            // 1. Train Section (Top 25%)
             Box(
                 modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .offset(x = (-16).dp, y = (80 - 32).dp) 
+                    .fillMaxWidth()
+                    .weight(0.25f)
+            ) {
+                TrainAnimation(modifier = Modifier.fillMaxSize())
+            }
+
+            // 2. Quiz Content Area (Bottom 75%)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(0.75f)
+                    .padding(horizontal = 20.dp, vertical = 20.dp)
+            ) {
+                when (config.cardType) {
+                    QuizCardType.TAP_CHOICE -> TapChoiceCard(config, sourceApp, onResultIntercept)
+                    QuizCardType.TAP_TAP_MATCH -> TapTapMatchCard(config, sourceApp, onResultIntercept)
+                    QuizCardType.DRAG_DROP_MATCH -> DragDropMatchCard(config, sourceApp, onResultIntercept)
+                    QuizCardType.FILL_BLANK -> FillBlankCard(config, sourceApp, onResultIntercept)
+                }
+            }
+        }
+
+        // 3. Mascot (Floating on divider line)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.25f)
+        ) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .offset(x = (-10).dp, y = 32.dp) // centered on the divider
                     .zIndex(1f)
-                    .shadow(elevation = 4.dp, shape = CircleShape)
-                    .background(Color.White, CircleShape)
                     .size(64.dp)
-                    .clip(CircleShape)
             ) {
                 RightMascot(
                     modifier = Modifier.fillMaxSize()
                 )
             }
+        }
 
-            // 4. Confetti overlay
-            if (showConfetti) {
-                ConfettiEffect(
-                    modifier = Modifier.fillMaxSize(),
-                    trigger = showConfetti,
-                    onFinished = { showConfetti = false }
-                )
-            }
+        // 4. Confetti overlay
+        if (showConfetti) {
+            ConfettiEffect(
+                modifier = Modifier.fillMaxSize(),
+                trigger = showConfetti,
+                onFinished = { showConfetti = false }
+            )
         }
     }
 }

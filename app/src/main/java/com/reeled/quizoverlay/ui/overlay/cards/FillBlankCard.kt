@@ -63,14 +63,13 @@ fun FillBlankCard(
     var revealCorrectId by remember { mutableStateOf<String?>(null) }
     var evaluated by remember { mutableStateOf(false) }
 
-    Surface(
-        modifier = Modifier.padding(12.dp),
-        shape = RoundedCornerShape(24.dp),
-        color = QuizBackground,
-        shadowElevation = 8.dp
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(20.dp)
     ) {
         Column(
-            modifier = Modifier.padding(24.dp),
+            modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -78,59 +77,52 @@ fun FillBlankCard(
                     text = config.display.questionText,
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontWeight = FontWeight.ExtraBold,
-                        color = QuizBlue,
+                        color = Color.White,
                         lineHeight = 32.sp
                     )
                 )
                 Text(
                     text = config.display.instructionLabel,
                     style = MaterialTheme.typography.bodyLarge.copy(
-                        color = Color.Black.copy(alpha = 0.6f),
+                        color = Color.White.copy(alpha = 0.7f),
                         fontWeight = FontWeight.Bold
                     )
                 )
             }
 
-            Surface(
-                color = Color.White,
-                shape = RoundedCornerShape(24.dp),
-                border = BorderStroke(2.dp, QuizBlue.copy(alpha = 0.1f)),
-                modifier = Modifier.fillMaxWidth()
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    modifier = Modifier.padding(24.dp),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = parts.firstOrNull().orEmpty(),
-                        style = MaterialTheme.typography.headlineSmall.copy(
-                            fontWeight = FontWeight.ExtraBold,
-                            color = Color.Black
-                        )
+                Text(
+                    text = parts.firstOrNull().orEmpty(),
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontWeight = FontWeight.ExtraBold,
+                        color = Color.White
                     )
-                    
-                    val selected = payload.wordBank.find { it.chipId == blankFilledChipId }
-                    
-                    Spacer(modifier = Modifier.width(12.dp))
-                    
-                    LargeTactileBlank(
-                        label = selected?.label ?: " ? ",
-                        isFilled = selected != null,
-                        enabled = !evaluated,
-                        onClick = { if (blankFilledChipId != null && !evaluated) blankFilledChipId = null }
+                )
+                
+                val selected = payload.wordBank.find { it.chipId == blankFilledChipId }
+                
+                Spacer(modifier = Modifier.width(12.dp))
+                
+                LargeTactileBlank(
+                    label = selected?.label ?: " ? ",
+                    isFilled = selected != null,
+                    enabled = !evaluated,
+                    onClick = { if (blankFilledChipId != null && !evaluated) blankFilledChipId = null }
+                )
+                
+                Spacer(modifier = Modifier.width(12.dp))
+                
+                Text(
+                    text = parts.getOrNull(1).orEmpty(),
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontWeight = FontWeight.ExtraBold,
+                        color = Color.White
                     )
-                    
-                    Spacer(modifier = Modifier.width(12.dp))
-                    
-                    Text(
-                        text = parts.getOrNull(1).orEmpty(),
-                        style = MaterialTheme.typography.headlineSmall.copy(
-                            fontWeight = FontWeight.ExtraBold,
-                            color = Color.Black
-                        )
-                    )
-                }
+                )
             }
 
             FlowRow(
@@ -138,7 +130,7 @@ fun FillBlankCard(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                val chipColors = listOf(QuizBlue, QuizPurple, KeyOrange, QuizMint)
+                val chipColors = listOf(Color.White, Color.Cyan, Color.Yellow, Color.Magenta)
                 
                 payload.wordBank.forEachIndexed { index, chip ->
                     val used = blankFilledChipId == chip.chipId
@@ -148,7 +140,7 @@ fun FillBlankCard(
                         label = chip.label, 
                         enabled = !used && !evaluated,
                         backgroundColor = baseColor.copy(alpha = 0.2f),
-                        contentColor = baseColor
+                        contentColor = Color.White
                     ) {
                         if (blankFilledChipId == null) blankFilledChipId = chip.chipId
                     }
@@ -183,31 +175,31 @@ fun FillBlankCard(
                     },
                     modifier = Modifier.fillMaxWidth().heightIn(min = 60.dp),
                     shape = RoundedCornerShape(24.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = QuizBlue),
-                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp)
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = 0.2f)),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
                 ) {
-                    Text("Check Answer", fontWeight = FontWeight.ExtraBold, fontSize = 18.sp)
+                    Text("Check Answer", fontWeight = FontWeight.ExtraBold, fontSize = 18.sp, color = Color.White)
                 }
             }
 
             if (revealCorrectId != null || (evaluated && blankFilledChipId != null)) {
                 val selected = payload.wordBank.find { it.chipId == blankFilledChipId }
                 val isCorrect = selected?.isCorrect == true
-                val feedbackColor = if (isCorrect) QuizMint else KeyPink
+                val feedbackColor = if (isCorrect) Color.Green else Color.Red
                 val feedbackText = if (isCorrect) "Awesome! Correct!" else "Nice try! Correct: ${payload.wordBank.find { it.isCorrect }?.label}"
                 
-                Surface(
-                    color = feedbackColor.copy(alpha = 0.15f),
-                    border = BorderStroke(2.dp, feedbackColor),
-                    shape = RoundedCornerShape(24.dp),
-                    modifier = Modifier.fillMaxWidth()
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp)
+                        .background(feedbackColor.copy(alpha = 0.2f), RoundedCornerShape(16.dp))
+                        .padding(20.dp)
                 ) {
                     Text(
                         text = feedbackText,
-                        modifier = Modifier.padding(20.dp),
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.ExtraBold,
-                            color = Color.Black
+                            color = Color.White
                         )
                     )
                 }
@@ -216,6 +208,7 @@ fun FillBlankCard(
             if (!config.rules.strictMode) ParentCornerButton()
         }
     }
+}
 }
 
 @Composable
@@ -228,43 +221,29 @@ fun LargeTactileBlank(
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     
-    val bgColor = if (isFilled) QuizYellow else Color.White
-    val shadowColor = if (isFilled) Color(0xFFCCAC00) else Color(0xFFCDD3DF)
+    val bgColor = if (isFilled) Color.White.copy(alpha = 0.3f) else Color.White.copy(alpha = 0.1f)
 
     Box(
         modifier = Modifier
             .height(64.dp)
             .width(IntrinsicSize.Min)
+            .clip(RoundedCornerShape(16.dp))
+            .background(bgColor)
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
                 enabled = enabled,
                 onClick = onClick
-            )
+            ),
+        contentAlignment = Alignment.Center
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = 4.dp)
-                .background(shadowColor, RoundedCornerShape(16.dp))
-        )
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(bottom = if (isPressed) 0.dp else 4.dp)
-                .offset(y = if (isPressed) 4.dp else 0.dp)
-                .background(bgColor, RoundedCornerShape(16.dp))
-                .then(if (!isFilled) Modifier.border(2.dp, QuizBlue.copy(alpha = 0.3f), RoundedCornerShape(16.dp)) else Modifier),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = label,
-                modifier = Modifier.padding(horizontal = 32.dp),
-                style = MaterialTheme.typography.headlineSmall.copy(
-                    fontWeight = FontWeight.ExtraBold,
-                    color = if (isFilled) Color.Black else Color.LightGray
-                )
+        Text(
+            text = label,
+            modifier = Modifier.padding(horizontal = 32.dp),
+            style = MaterialTheme.typography.headlineSmall.copy(
+                fontWeight = FontWeight.ExtraBold,
+                color = if (isFilled) Color.White else Color.White.copy(alpha = 0.4f)
             )
-        }
+        )
     }
 }

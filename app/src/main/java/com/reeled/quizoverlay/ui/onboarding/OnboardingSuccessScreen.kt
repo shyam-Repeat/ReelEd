@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.reeled.quizoverlay.ui.theme.Primary
 
+import com.reeled.quizoverlay.ui.overlay.components.RightMascot
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 
@@ -59,8 +60,8 @@ fun OnboardingSuccessScreen(
 
         // Success Header
         Box(contentAlignment = Alignment.Center) {
-            Box(modifier = Modifier.size(80.dp).background(Primary.copy(alpha = 0.1f), CircleShape))
-            Icon(Icons.Outlined.Verified, contentDescription = null, tint = Primary, modifier = Modifier.size(48.dp))
+            Box(modifier = Modifier.size(100.dp).background(Primary.copy(alpha = 0.1f), CircleShape))
+            RightMascot(modifier = Modifier.size(80.dp))
         }
         
         Spacer(modifier = Modifier.height(24.dp))
@@ -99,7 +100,7 @@ fun OnboardingSuccessScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.offset(y = bounce.dp)
             ) {
-                Icon(Icons.Outlined.RocketLaunch, contentDescription = null, tint = Color.White, modifier = Modifier.size(72.dp))
+                RightMascot(modifier = Modifier.size(120.dp))
             }
         }
 

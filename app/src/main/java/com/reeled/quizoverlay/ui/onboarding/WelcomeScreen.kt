@@ -19,6 +19,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.reeled.quizoverlay.ui.theme.Primary
 
+import com.reeled.quizoverlay.ui.overlay.components.RightMascot
+
 @Composable
 fun WelcomeScreen(
     onNext: () -> Unit
@@ -45,14 +47,10 @@ fun WelcomeScreen(
                 ),
             contentAlignment = Alignment.Center
         ) {
-            // Placeholder for the playful brain character
-            Icon(
-                imageVector = Icons.Outlined.Psychology,
-                contentDescription = null,
-                tint = Primary,
-                modifier = Modifier.size(120.dp)
+            // Playful book character (Rive)
+            RightMascot(
+                modifier = Modifier.size(160.dp)
             )
-            // Floating icons can be added here with Box + offset
         }
 
         // Content Area

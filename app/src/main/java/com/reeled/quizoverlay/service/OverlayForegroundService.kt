@@ -354,12 +354,11 @@ class OverlayForegroundService : Service() {
                             color = Color.Black.copy(alpha = 0.25f)
                         ) {}
 
-                        // 2. The Compact Floating Window (280dp x 160dp)
+                        // 2. Full-screen overlay with 20dp padding
                         Box(
                             modifier = Modifier
-                                .align(Alignment.BottomStart)
-                                .padding(start = 20.dp, bottom = 120.dp)
-                                .size(width = 280.dp, height = 160.dp)
+                                .fillMaxSize()
+                                .padding(20.dp)
                         ) {
                             val config = QuizCardConfig.from(question)
                             QuizCardRouter(

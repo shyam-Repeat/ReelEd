@@ -1,144 +1,94 @@
-import { useState } from 'react';
-import { useDrag, useDrop } from 'react-dnd';
-import type { DragSourceMonitor } from 'react-dnd';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Tap Choice & Tap Tap Match — UI Mockup</title>
+<style>
+  body {
+    font-family: sans-serif;
+    background: #f5f5f0;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 40px 20px;
+    min-height: 100vh;
+    margin: 0;
+  }
+</style>
+</head>
+<body>
 
-interface NumberTile {
-  id: string;
-  number: number;
-  position: { x: number; y: number };
-}
+<div style="display:flex;gap:32px;flex-wrap:wrap;justify-content:center;padding:1.5rem 0;">
 
-interface DraggableNumberProps {
-  tile: NumberTile;
-  isMatched: boolean;
-}
+  <!-- CARD: TAP_CHOICE -->
+  <div>
+    <p style="font-size:12px;color:#888;margin:0 0 8px;text-transform:uppercase;letter-spacing:0.08em;">TAP_CHOICE</p>
+    <div style="width:300px;background:#fff;border:0.5px solid #e0e0e0;border-radius:24px;padding:24px 20px;display:flex;flex-direction:column;align-items:center;gap:20px;">
+      
+      <!-- Subject emoji -->
+      <div style="width:120px;height:120px;background:#FFF8EC;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:72px;line-height:1;">🍎</div>
 
-const DraggableNumber = ({ tile, isMatched }: DraggableNumberProps) => {
-  const [{ isDragging }, drag] = useDrag({
-    type: 'number',
-    item: tile,
-    canDrag: !isMatched,
-    collect: (monitor: DragSourceMonitor) => ({
-      isDragging: monitor.isDragging(),
-    }),
-  });
+      <!-- Question label -->
+      <p style="margin:0;font-size:13px;color:#888;letter-spacing:0.04em;">what color is this?</p>
 
-  if (isMatched) return null;
-
-  return (
-    <div
-      ref={drag}
-      className="absolute text-blue-600 text-5xl font-bold cursor-move select-none hover:scale-110 transition-transform"
-      style={{
-        left: `${tile.position.x}%`,
-        top: `${tile.position.y}%`,
-        opacity: isDragging ? 0 : 1,
-      }}
-    >
-      {tile.number}
-    </div>
-  );
-};
-
-interface DropTargetProps {
-  targetNumber: number;
-  isMatched: boolean;
-  onDrop: (item: NumberTile) => void;
-}
-
-const DropTarget = ({ targetNumber, isMatched, onDrop }: DropTargetProps) => {
-  const [{ isOver, canDrop }, drop] = useDrop({
-    accept: 'number',
-    drop: (item: NumberTile) => {
-      if (item.number === targetNumber) {
-        onDrop(item);
-      }
-    },
-    canDrop: (item: NumberTile) => item.number === targetNumber && !isMatched,
-    collect: (monitor) => ({
-      isOver: monitor.isOver(),
-      canDrop: monitor.canDrop(),
-    }),
-  });
-
-  const textColor = isMatched
-    ? 'text-green-600'
-    : isOver && canDrop
-    ? 'text-blue-400'
-    : 'text-gray-400';
-
-  return (
-    <div
-      ref={drop}
-      className={`text-6xl font-bold ${textColor} transition-colors`}
-    >
-      {targetNumber}
-    </div>
-  );
-};
-
-export function DragDropQuiz() {
-  const [currentTarget] = useState(1);
-  const [matchedNumbers, setMatchedNumbers] = useState<number[]>([]);
-  
-  // Generate random positions for numbers 1-9 scattered around the screen
-  const [tiles] = useState<NumberTile[]>(() => {
-    const positions = [
-      { x: 10, y: 15 },
-      { x: 75, y: 10 },
-      { x: 5, y: 45 },
-      { x: 80, y: 40 },
-      { x: 15, y: 75 },
-      { x: 70, y: 70 },
-      { x: 40, y: 10 },
-      { x: 85, y: 75 },
-      { x: 50, y: 75 },
-    ];
-    
-    return Array.from({ length: 9 }, (_, i) => ({
-      id: `tile-${i + 1}`,
-      number: i + 1,
-      position: positions[i],
-    }));
-  });
-
-  const handleDrop = (item: NumberTile) => {
-    setMatchedNumbers([...matchedNumbers, item.number]);
-  };
-
-  const isMatched = matchedNumbers.includes(currentTarget);
-
-  return (
-    <div className="relative w-full h-full bg-gradient-to-br from-purple-100 to-blue-100 overflow-hidden">
-      {/* Center drop target */}
-      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-4">
-        <DropTarget
-          targetNumber={currentTarget}
-          isMatched={isMatched}
-          onDrop={handleDrop}
-        />
-        {isMatched && (
-          <p className="text-xl font-semibold text-green-600 animate-bounce">
-            ✓ Correct Match!
-          </p>
-        )}
+      <!-- Color circles -->
+      <div style="display:flex;gap:16px;justify-content:center;">
+        <div style="width:72px;height:72px;border-radius:50%;background:#E24B4A;border:3px solid transparent;"></div>
+        <div style="width:72px;height:72px;border-radius:50%;background:#378ADD;border:3px solid transparent;"></div>
+        <div style="width:72px;height:72px;border-radius:50%;background:#EF9F27;border:3px solid transparent;"></div>
       </div>
 
-      {/* Scattered draggable numbers */}
-      {tiles.map((tile) => (
-        <DraggableNumber
-          key={tile.id}
-          tile={tile}
-          isMatched={matchedNumbers.includes(tile.number)}
-        />
-      ))}
-
-      {/* Instructions */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 bg-white/90 px-6 py-3 rounded-lg shadow-md">
-        <p className="text-gray-700 font-medium">
-          Drag the number <span className="font-bold text-blue-600">{currentTarget}</span> to the center to match
-        </p>
+      <!-- State: correct tapped -->
+      <div style="width:100%;border-top:0.5px solid #e0e0e0;padding-top:16px;">
+        <p style="margin:0 0 8px;font-size:11px;color:#aaa;">↓ after correct tap</p>
+        <div style="display:flex;gap:16px;justify-content:center;">
+          <div style="width:72px;height:72px;border-radius:50%;background:#E24B4A;border:3px solid #3C3489;outline:4px solid #CECBF6;"></div>
+          <div style="width:72px;height:72px;border-radius:50%;background:#378ADD;opacity:0.35;"></div>
+          <div style="width:72px;height:72px;border-radius:50%;background:#EF9F27;opacity:0.35;"></div>
+        </div>
       </div>
+
     </div>
-  );
-}
+  </div>
+
+  <!-- CARD: TAP_TAP_MATCH -->
+  <div>
+    <p style="font-size:12px;color:#888;margin:0 0 8px;text-transform:uppercase;letter-spacing:0.08em;">TAP_TAP_MATCH</p>
+    <div style="width:300px;background:#fff;border:0.5px solid #e0e0e0;border-radius:24px;padding:24px 20px;display:flex;flex-direction:column;align-items:center;gap:16px;">
+
+      <!-- Question label -->
+      <p style="margin:0;font-size:13px;color:#888;letter-spacing:0.04em;">find the matching pair</p>
+
+      <!-- 2x3 grid -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;">
+        <div style="background:#EAF3DE;border-radius:16px;height:80px;display:flex;align-items:center;justify-content:center;font-size:40px;">🔴</div>
+        <div style="background:#E6F1FB;border-radius:16px;height:80px;display:flex;align-items:center;justify-content:center;font-size:40px;">⭐</div>
+        <div style="background:#FAEEDA;border-radius:16px;height:80px;display:flex;align-items:center;justify-content:center;font-size:40px;">🔴</div>
+
+        <div style="background:#EEEDFE;border-radius:16px;height:80px;border:2.5px solid #534AB7;display:flex;align-items:center;justify-content:center;font-size:40px;">⭐</div>
+        <div style="background:#FAEEDA;border-radius:16px;height:80px;display:flex;align-items:center;justify-content:center;font-size:40px;">🟦</div>
+        <div style="background:#E1F5EE;border-radius:16px;height:80px;display:flex;align-items:center;justify-content:center;font-size:40px;">🟦</div>
+      </div>
+
+      <!-- State: after match -->
+      <div style="width:100%;border-top:0.5px solid #e0e0e0;padding-top:12px;">
+        <p style="margin:0 0 8px;font-size:11px;color:#aaa;">↓ after matched pair</p>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;">
+          <div style="background:#EAF3DE;border-radius:16px;height:80px;display:flex;align-items:center;justify-content:center;font-size:40px;opacity:0.4;">🔴</div>
+          <div style="background:#E6F1FB;border-radius:16px;height:80px;display:flex;align-items:center;justify-content:center;font-size:40px;opacity:0.4;">⭐</div>
+          <div style="background:#EAF3DE;border:2.5px solid #3B6D11;border-radius:16px;height:80px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:32px;">🔴<span style="font-size:14px;color:#3B6D11;font-weight:500;">✓</span></div>
+
+          <div style="background:#EEEDFE;border:2.5px solid #3B6D11;border-radius:16px;height:80px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:32px;">🔴<span style="font-size:14px;color:#3B6D11;font-weight:500;">✓</span></div>
+          <div style="background:#FAEEDA;border-radius:16px;height:80px;display:flex;align-items:center;justify-content:center;font-size:40px;opacity:0.4;">🟦</div>
+          <div style="background:#E1F5EE;border-radius:16px;height:80px;display:flex;align-items:center;justify-content:center;font-size:40px;opacity:0.4;">🟦</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

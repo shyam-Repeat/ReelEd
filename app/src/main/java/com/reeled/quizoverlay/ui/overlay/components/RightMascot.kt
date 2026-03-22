@@ -1,7 +1,5 @@
 package com.reeled.quizoverlay.ui.overlay.components
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
@@ -44,7 +42,6 @@ fun RightMascot(
             modifier = Modifier.fillMaxSize(),
             factory = { context ->
                 RiveAnimationView(context).apply {
-                    setBackgroundColor(android.graphics.Color.TRANSPARENT)
                     try {
                         setRiveResource(
                             resId = R.raw.arrow_book,

@@ -1,7 +1,6 @@
 package com.reeled.quizoverlay.ui.onboarding
 
 import androidx.compose.animation.core.*
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -12,21 +11,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.reeled.quizoverlay.ui.theme.Primary
 import kotlinx.coroutines.delay
-
-import com.reeled.quizoverlay.ui.overlay.components.MonkeyMascot
-import com.reeled.quizoverlay.ui.overlay.components.MascotEmotion
 
 @Composable
 fun LoadingScreen(
@@ -62,14 +52,14 @@ fun LoadingScreen(
             .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
-        // 1. Mascot removed for troubleshooting
+        // 1. Keep onboarding startup free of Rive-backed views
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .graphicsLayer { alpha = pulse },
             contentAlignment = Alignment.Center
         ) {
-            // MonkeyMascot removed due to startup crash investigation
+            // Intentionally left empty: avoids native animation startup during onboarding.
         }
 
         // 2. Blurs for modern UI feel (on top of mascot but subtle)

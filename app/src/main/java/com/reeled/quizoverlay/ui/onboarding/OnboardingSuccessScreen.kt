@@ -13,7 +13,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -22,9 +21,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.reeled.quizoverlay.ui.theme.Primary
 
-import com.reeled.quizoverlay.ui.overlay.components.RightMascot
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import com.reeled.quizoverlay.ui.overlay.components.TrainAnimation
 
 @Composable
 fun OnboardingSuccessScreen(
@@ -61,7 +60,7 @@ fun OnboardingSuccessScreen(
         // Success Header
         Box(contentAlignment = Alignment.Center) {
             Box(modifier = Modifier.size(100.dp).background(Primary.copy(alpha = 0.1f), CircleShape))
-            RightMascot(modifier = Modifier.size(80.dp))
+            TrainAnimation(modifier = Modifier.size(120.dp))
         }
         
         Spacer(modifier = Modifier.height(24.dp))
@@ -100,7 +99,7 @@ fun OnboardingSuccessScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.offset(y = bounce.dp)
             ) {
-                RightMascot(modifier = Modifier.size(120.dp))
+                TrainAnimation(modifier = Modifier.size(220.dp))
             }
         }
 

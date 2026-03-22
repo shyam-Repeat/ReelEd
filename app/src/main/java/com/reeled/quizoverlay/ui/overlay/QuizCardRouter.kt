@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -15,6 +16,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -28,6 +30,8 @@ import com.reeled.quizoverlay.ui.overlay.cards.TapTapMatchCard
 import com.reeled.quizoverlay.ui.overlay.components.ConfettiEffect
 import com.reeled.quizoverlay.ui.overlay.components.ModernQuizBackground
 import com.reeled.quizoverlay.ui.overlay.components.TrainAnimation
+import com.reeled.quizoverlay.ui.overlay.components.MonkeyMascot
+import com.reeled.quizoverlay.ui.overlay.components.MascotEmotion
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -41,17 +45,24 @@ fun QuizCardRouter(
     val scope = rememberCoroutineScope()
     var showConfetti by remember { mutableStateOf(false) }
     val shakeOffset = remember { Animatable(0f) }
+    
+    // Global mascot state for the router
+    var mascotEmotion by remember { mutableStateOf(MascotEmotion.IDLE) }
 
     val onResultIntercept: (QuizAttemptResult) -> Unit = { result ->
         if (result.isCorrect) {
             showConfetti = true
+            mascotEmotion = MascotEmotion.CORRECT
         } else {
+            mascotEmotion = MascotEmotion.WRONG
             scope.launch {
                 repeat(4) {
                     shakeOffset.animateTo(10f, tween(50))
                     shakeOffset.animateTo(-10f, tween(50))
                 }
                 shakeOffset.animateTo(0f, tween(50))
+                delay(1000)
+                mascotEmotion = MascotEmotion.IDLE
             }
         }
         scope.launch {
@@ -67,11 +78,12 @@ fun QuizCardRouter(
     ) {
         Surface(
             modifier = Modifier.fillMaxSize(),
-            color = Color.White,
-            shadowElevation = 10.dp
+            color = Color.Transparent,
+            shadowElevation = 0.dp
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
                 Column(modifier = Modifier.fillMaxSize()) {
+                    // Top Section: Train
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -81,6 +93,7 @@ fun QuizCardRouter(
                         TrainAnimation(modifier = Modifier.fillMaxSize())
                     }
 
+                    // Bottom Section: Quiz Card
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -96,6 +109,19 @@ fun QuizCardRouter(
                             }
                         }
                     }
+                }
+
+                // Floating Mascot: Positioned on the right side, overlapping the train area
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(top = 100.dp, end = 16.dp) // Adjusted to overlap nicely
+                        .size(100.dp)
+                ) {
+                    MonkeyMascot(
+                        emotion = mascotEmotion,
+                        modifier = Modifier.fillMaxSize()
+                    )
                 }
 
                 if (showConfetti) {

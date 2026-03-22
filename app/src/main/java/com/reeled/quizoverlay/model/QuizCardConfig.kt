@@ -152,14 +152,14 @@ data class QuizCardConfig(
                     }
 
                     QuizPayload.DragDropPayload(
-                        chips = List(draggables.length()) { index ->
+                        draggables = List(draggables.length()) { index ->
                             val item = draggables.getJSONObject(index)
                             DragChip(
                                 chipId = item.optString("chip_id", item.optString("draggable_id", item.optString("id"))),
                                 label = item.getString("label")
                             )
                         },
-                        slots = List(targets.length()) { index ->
+                        targets = List(targets.length()) { index ->
                             val item = targets.getJSONObject(index)
                             val slotId = item.optString("slot_id", item.optString("target_id", item.optString("id")))
                             DropSlot(

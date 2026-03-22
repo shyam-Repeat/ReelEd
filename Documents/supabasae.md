@@ -185,26 +185,26 @@ insert into quiz_questions
 values
 
 ('q_001', 'TAP_CHOICE', 'math', 1,
- 'What is 6 × 7?', 'Tap the correct answer',
- '{"options":[{"id":"A","label":"42","is_correct":true},{"id":"B","label":"36","is_correct":false},{"id":"C","label":"48","is_correct":false},{"id":"D","label":"54","is_correct":false}]}',
+ 'How many apples are there?', 'Tap the number 3',
+ '{"options":[{"id":"A","label":"1","is_correct":false},{"id":"B","label":"3","is_correct":true},{"id":"C","label":"5","is_correct":false},{"id":"D","label":"2","is_correct":false}]}',
  20, false, true),
 
 ('q_002', 'TAP_CHOICE', 'general', 1,
- 'Which planet is closest to the Sun?', 'Tap the correct answer',
- '{"options":[{"id":"A","label":"Venus","is_correct":false},{"id":"B","label":"Earth","is_correct":false},{"id":"C","label":"Mercury","is_correct":true},{"id":"D","label":"Mars","is_correct":false}]}',
+ 'What color is the sky?', 'Tap the correct color',
+ '{"options":[{"id":"A","label":"Red","is_correct":false},{"id":"B","label":"Green","is_correct":false},{"id":"C","label":"Blue","is_correct":true},{"id":"D","label":"Yellow","is_correct":false}]}',
  20, false, true),
 
 ('q_003', 'TAP_TAP_MATCH', 'english', 1,
- 'Match each word to its meaning', 'Tap left then tap right to match',
- '{"pairs":[{"left_id":"L1","left_label":"Dog","right_id":"R3","right_label":"Animal"},{"left_id":"L2","left_label":"Run","right_id":"R1","right_label":"Move fast"},{"left_id":"L3","left_label":"Big","right_id":"R4","right_label":"Large"},{"left_id":"L4","left_label":"Eat","right_id":"R2","right_label":"Food"}],"right_order_shuffled":["R2","R4","R1","R3"]}',
+ 'Match uppercase to lowercase', 'Tap the big letter then small letter',
+ '{"left_items":[{"id":"L1","label":"A"},{"id":"L2","label":"B"},{"id":"L3","label":"C"}],"right_items":[{"id":"R1","label":"a"},{"id":"R2","label":"b"},{"id":"R3","label":"c"}],"correct_pairs":[["L1","R1"],["L2","R2"],["L3","R3"]]}',
  0, false, true),
 
-('q_004', 'DRAG_DROP_MATCH', 'math', 2,
- 'Put these numbers in order smallest to largest', 'Drag each number to the right slot',
- '{"chips":[{"chip_id":"C1","label":"2"},{"chip_id":"C2","label":"4"},{"chip_id":"C3","label":"7"},{"chip_id":"C4","label":"9"}],"slots":[{"slot_id":"S1","slot_label":"Smallest","correct_chip_id":"C1"},{"slot_id":"S2","slot_label":"2nd","correct_chip_id":"C2"},{"slot_id":"S3","slot_label":"3rd","correct_chip_id":"C3"},{"slot_id":"S4","slot_label":"Largest","correct_chip_id":"C4"}]}',
+('q_004', 'DRAG_DROP_MATCH', 'math', 1,
+ 'Put the number 5 in the box', 'Drag 5 to the circle',
+ '{"draggables":[{"id":"D1","label":"5"},{"id":"D2","label":"1"},{"id":"D3","label":"9"},{"id":"D4","label":"3"}],"targets":[{"id":"T1","label":"5"}],"correct_pairs":[["D1","T1"]]}',
  0, true, true),
 
 ('q_005', 'FILL_BLANK', 'science', 1,
- 'The ___ is the closest star to Earth.', 'Tap a word to fill the blank',
- '{"sentence_template":"The ___ is the closest star to Earth.","word_bank":[{"chip_id":"W1","label":"Moon","is_correct":false},{"chip_id":"W2","label":"Sun","is_correct":true},{"chip_id":"W3","label":"Mars","is_correct":false},{"chip_id":"W4","label":"Earth","is_correct":false}]}',
+ 'The ___ is very hot.', 'Tap the word to fill the blank',
+ '{"sentence_template":"The ___ is very hot.","word_bank":[{"chip_id":"W1","label":"Sun","is_correct":true},{"chip_id":"W2","label":"Ice","is_correct":false},{"chip_id":"W3","label":"Moon","is_correct":false}]}',
  20, false, true);

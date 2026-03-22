@@ -15,8 +15,8 @@ sealed class QuizPayload {
     ) : QuizPayload()
 
     data class DragDropPayload(
-        val chips: List<DragChip>,
-        val slots: List<DropSlot>
+        val draggables: List<DragChip>,
+        val targets: List<DropSlot>
     ) : QuizPayload()
 
     data class FillBlankPayload(

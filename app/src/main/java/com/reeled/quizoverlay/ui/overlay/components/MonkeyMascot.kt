@@ -24,6 +24,7 @@ fun MonkeyMascot(
             .clipToBounds(), // Ensure Rive content never bleeds out
         factory = { context ->
             RiveAnimationView(context).apply {
+                setBackgroundColor(android.graphics.Color.TRANSPARENT)
                 try {
                     setRiveResource(
                         resId = R.raw.swinging_monkey,

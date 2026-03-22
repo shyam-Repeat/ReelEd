@@ -35,72 +35,94 @@ fun TapChoiceCard(
     val scope = rememberCoroutineScope()
     var locked by remember { mutableStateOf(false) }
 
+    val optionColors = listOf(
+        Color(0xFFFFEB3B), // Yellow
+        Color(0xFFF48FB1), // Pink
+        Color(0xFF81D4FA), // Blue
+        Color(0xFFA5D6A7)  // Green
+    )
+
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Question Text
-        Text(
-            text = config.display.questionText,
-            style = MaterialTheme.typography.titleLarge,
-            color = Color(0xFF0D47A1),
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(horizontal = 16.dp)
-        )
-
-        // Rive Media (Hardcoded as requested)
-        RiveMedia(
-            modifier = Modifier.height(180.dp)
-        )
-
-        // Options (Restore take(2) logic)
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        // Header
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            payload.options.take(2).forEach { option ->
-                val bgColor = if (option.isCorrect) Color(0xFF4CAF50) else Color(0xFF2196F3)
-                
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(120.dp)
-                        .shadow(elevation = 8.dp, shape = RoundedCornerShape(24.dp))
-                        .clip(RoundedCornerShape(24.dp))
-                        .background(Color.White)
-                        .border(
-                            width = 4.dp,
-                            color = bgColor.copy(alpha = 0.3f),
-                            shape = RoundedCornerShape(24.dp)
-                        )
-                        .clickable(enabled = !locked) {
-                            locked = true
-                            scope.launch {
-                                delay(500)
-                                onResult(
-                                    QuizAttemptResult(
-                                        questionId = config.id,
-                                        selectedOptionId = option.id,
-                                        isCorrect = option.isCorrect,
-                                        wasDismissed = false,
-                                        wasTimerExpired = false,
-                                        responseTimeMs = System.currentTimeMillis() - startTime,
-                                        sourceApp = sourceApp
-                                    )
-                                )
-                            }
-                        },
-                    contentAlignment = Alignment.Center
+            Text(
+                text = config.display.questionText,
+                style = MaterialTheme.typography.headlineSmall,
+                color = Color(0xFF0D47A1),
+                fontWeight = FontWeight.Black,
+                textAlign = TextAlign.Center
+            )
+            Text(
+                text = config.display.instructionLabel,
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color(0xFF1565C0),
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+        }
+
+        // Options Grid (2x2)
+        Column(
+            modifier = Modifier.fillMaxWidth().weight(1f),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            val rows = payload.options.chunked(2)
+            rows.forEachIndexed { rowIndex, rowOptions ->
+                Row(
+                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text(
-                        text = option.label,
-                        fontWeight = FontWeight.Black,
-                        fontSize = 32.sp,
-                        color = Color(0xFF1A237E),
-                        textAlign = TextAlign.Center
-                    )
+                    rowOptions.forEachIndexed { colIndex, option ->
+                        val colorIndex = (rowIndex * 2 + colIndex) % optionColors.size
+                        val baseColor = optionColors[colorIndex]
+                        
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                                .shadow(8.dp, RoundedCornerShape(24.dp))
+                                .clip(RoundedCornerShape(24.dp))
+                                .background(baseColor)
+                                .border(
+                                    width = 4.dp,
+                                    color = Color.White.copy(alpha = 0.5f),
+                                    shape = RoundedCornerShape(24.dp)
+                                )
+                                .clickable(enabled = !locked) {
+                                    locked = true
+                                    scope.launch {
+                                        delay(500)
+                                        onResult(
+                                            QuizAttemptResult(
+                                                questionId = config.id,
+                                                selectedOptionId = option.id,
+                                                isCorrect = option.isCorrect,
+                                                wasDismissed = false,
+                                                wasTimerExpired = false,
+                                                responseTimeMs = System.currentTimeMillis() - startTime,
+                                                sourceApp = sourceApp
+                                            )
+                                        )
+                                    }
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = option.label,
+                                fontWeight = FontWeight.Black,
+                                fontSize = 36.sp,
+                                color = Color(0xFF1A237E),
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
                 }
             }
         }

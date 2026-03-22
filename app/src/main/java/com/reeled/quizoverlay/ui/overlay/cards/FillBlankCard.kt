@@ -74,11 +74,6 @@ fun FillBlankCard(
                 )
             }
 
-            // Rive Media (Hardcoded as requested)
-            RiveMedia(
-                modifier = Modifier.height(140.dp)
-            )
-
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,

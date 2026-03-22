@@ -16,6 +16,7 @@ fun MonkeyMascot(
     emotion: MascotEmotion,
     modifier: Modifier = Modifier
 ) {
+    // Restoring the correct state machine name as confirmed
     val stateMachineName = "Monkey state machine"
 
     AndroidView(
@@ -50,13 +51,18 @@ fun MonkeyMascot(
             val isChilling = !isSwinging
 
             try {
-                // Only set state if the state machine is actually playing/active
-                if (view.stateMachineNames.contains(stateMachineName)) {
-                    view.setBooleanState(stateMachineName, "Btn_Swing_Hover", isSwinging)
-                    view.setBooleanState(stateMachineName, "Btn_Chill_Hover", isChilling)
+                // Set the boolean states using the correct lowercase 'hover' names
+                view.setBooleanState(stateMachineName, "Btn_Swing_hover", isSwinging)
+                view.setBooleanState(stateMachineName, "Btn_Chill_hover", isChilling)
+                
+                // Use triggers for immediate emotional feedback
+                if (isSwinging) {
+                    view.fireState(stateMachineName, "Button swing click")
+                } else if (emotion == MascotEmotion.IDLE) {
+                    view.fireState(stateMachineName, "Button chill click")
                 }
             } catch (_: Exception) {
-                // If it fails, we just don't animate.
+                // Fail silently to prevent crashes if state machine name or inputs mismatch
             }
         }
     )

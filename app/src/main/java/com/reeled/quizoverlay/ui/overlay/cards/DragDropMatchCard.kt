@@ -6,11 +6,25 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,12 +42,20 @@ import androidx.compose.ui.unit.sp
 import com.reeled.quizoverlay.model.QuizAttemptResult
 import com.reeled.quizoverlay.model.QuizCardConfig
 import com.reeled.quizoverlay.model.QuizPayload
+import com.reeled.quizoverlay.model.payload.DragChip
 import com.reeled.quizoverlay.ui.overlay.components.ChipItem
 import com.reeled.quizoverlay.ui.overlay.components.ParentCornerButton
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.math.max
 import kotlin.math.roundToInt
+import kotlin.math.sqrt
 import kotlin.random.Random
+
+private data class ChipPlacement(
+    val chipId: String,
+    val offset: Offset
+)
 
 @Composable
 fun DragDropMatchCard(
@@ -46,27 +68,23 @@ fun DragDropMatchCard(
     val startTime = remember { System.currentTimeMillis() }
     val density = LocalDensity.current
 
-    // Logic: Simple for kids - usually 1 target slot and multiple draggables
+    // Supabase payload uses `draggables` + `targets` (+ `correct_pairs` parsed in QuizCardConfig).
     val targetSlot = payload.targets.firstOrNull() ?: return
     val draggables = payload.draggables
-    
+
     var matchedChipId by remember { mutableStateOf<String?>(null) }
     var evaluated by remember { mutableStateOf(false) }
-
-    // Slot position for hit testing
     var slotCenter by remember { mutableStateOf(Offset.Zero) }
-    val slotSize = 120.dp
+    val slotSize = 116.dp
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            // Header Section
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
             ) {
                 Text(
                     text = config.display.questionText,
@@ -80,78 +98,64 @@ fun DragDropMatchCard(
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color(0xFF1565C0),
                     fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(top = 6.dp)
                 )
             }
 
-            // Game Area - Utilizing full remaining space (Fix for Point 2: Dead Space)
             BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
+                    .padding(horizontal = 10.dp, vertical = 8.dp)
             ) {
                 val areaWidth = with(density) { maxWidth.toPx() }
                 val areaHeight = with(density) { maxHeight.toPx() }
-                
-                // Calculate random offsets once the constraints are known
-                val draggableOffsets = remember(draggables, areaWidth, areaHeight) {
-                    draggables.map {
-                        var x: Float
-                        var y: Float
-                        val centerX = areaWidth / 2
-                        val centerY = areaHeight / 2
-                        do {
-                            // Spread across the whole BoxWithConstraints area
-                            x = (Random.nextFloat() * areaWidth) - centerX
-                            y = (Random.nextFloat() * areaHeight) - centerY
-                            
-                            // Distance from the center slot
-                            val distSq = x * x + y * y
-                            val minClearance = with(density) { 100.dp.toPx() }
-                        } while (distSq < minClearance * minClearance)
-                        Offset(x, y)
-                    }
+                val slotRadiusPx = with(density) { (slotSize / 2).toPx() }
+                val chipSpacingPx = with(density) { 84.dp.toPx() }
+                val chipMarginPx = with(density) { 40.dp.toPx() }
+                val placements = remember(draggables, areaWidth, areaHeight) {
+                    buildChipPlacements(
+                        draggables = draggables,
+                        areaWidth = areaWidth,
+                        areaHeight = areaHeight,
+                        centerClearancePx = slotRadiusPx + chipSpacingPx,
+                        chipSpacingPx = chipSpacingPx,
+                        edgeMarginPx = chipMarginPx
+                    )
                 }
 
-                // Drop Target (Center)
                 Box(
                     modifier = Modifier
                         .size(slotSize)
                         .align(Alignment.Center)
                         .onGloballyPositioned {
                             val pos = it.positionInParent()
-                            slotCenter = Offset(pos.x + it.size.width / 2, pos.y + it.size.height / 2)
+                            slotCenter = Offset(pos.x + it.size.width / 2f, pos.y + it.size.height / 2f)
                         }
                         .clip(CircleShape)
-                        .background(
-                            if (matchedChipId != null) Color(0xFFC8E6C9) 
-                            else Color(0x1A0D47A1) // Soft translucent blue
-                        )
+                        .background(if (matchedChipId != null) Color(0xFFC8E6C9) else Color(0x1A0D47A1))
                         .border(
                             width = 4.dp,
-                            color = if (matchedChipId != null) Color(0xFF4CAF50) else Color(0xFFBBDEFB).copy(alpha = 0.5f),
+                            color = if (matchedChipId != null) Color(0xFF4CAF50) else Color(0xFFBBDEFB).copy(alpha = 0.65f),
                             shape = CircleShape
                         ),
                     contentAlignment = Alignment.Center
                 ) {
-                    if (matchedChipId != null) {
-                        val matchedDraggable = draggables.find { it.chipId == matchedChipId }
-                        Text(
-                            text = matchedDraggable?.label ?: "",
-                            fontSize = 48.sp,
-                            fontWeight = FontWeight.Black,
-                            color = Color(0xFF2E7D32)
-                        )
+                    val centerLabel = if (matchedChipId != null) {
+                        draggables.find { it.chipId == matchedChipId }?.label.orEmpty()
                     } else {
-                        // FIX for Point 3: Grayed out/faint version of the correct answer
-                        val correctDraggable = draggables.find { it.chipId in targetSlot.correctChipIds }
-                        Text(
-                            text = correctDraggable?.label ?: "?",
-                            fontSize = 48.sp,
-                            fontWeight = FontWeight.Black,
-                            color = Color(0x22000000) // Faint "faded" look
-                        )
+                        draggables.find { it.chipId in targetSlot.correctChipIds }?.label ?: "?"
                     }
+
+                    Text(
+                        text = centerLabel,
+                        fontSize = 40.sp,
+                        fontWeight = FontWeight.Black,
+                        color = if (matchedChipId != null) Color(0xFF2E7D32) else Color(0x22000000),
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.widthIn(max = 88.dp)
+                    )
                 }
 
                 if (matchedChipId != null && evaluated) {
@@ -159,27 +163,28 @@ fun DragDropMatchCard(
                         text = "✓ Correct Match!",
                         color = Color(0xFF4CAF50),
                         fontWeight = FontWeight.Black,
-                        fontSize = 22.sp,
+                        fontSize = 20.sp,
                         modifier = Modifier
                             .align(Alignment.Center)
-                            .offset(y = (slotSize / 2) + 32.dp)
+                            .offset(y = (slotSize / 2) + 28.dp)
                     )
                 }
 
-                // Draggable Items scattered everywhere within the Box area
-                draggables.forEachIndexed { index, draggable ->
-                    if (draggable.chipId != matchedChipId && index < draggableOffsets.size) {
+                draggables.forEach { draggable ->
+                    val placement = placements.firstOrNull { it.chipId == draggable.chipId } ?: return@forEach
+                    if (draggable.chipId != matchedChipId) {
                         DraggableChip(
                             label = draggable.label,
-                            initialOffset = draggableOffsets[index],
-                            onDropped = { offset ->
-                                val distance = (offset - slotCenter).getDistance()
-                                if (distance < 160f && draggable.chipId in targetSlot.correctChipIds) {
+                            initialOffset = placement.offset,
+                            onDropped = { center ->
+                                val distance = (center - slotCenter).getDistance()
+                                val dropTolerancePx = with(density) { 18.dp.toPx() }
+                                if (distance <= slotRadiusPx + dropTolerancePx && draggable.chipId in targetSlot.correctChipIds) {
                                     matchedChipId = draggable.chipId
                                     if (!evaluated) {
                                         evaluated = true
                                         scope.launch {
-                                            delay(1200)
+                                            delay(350)
                                             onResult(
                                                 QuizAttemptResult(
                                                     questionId = config.id,
@@ -212,6 +217,57 @@ fun DragDropMatchCard(
     }
 }
 
+private fun buildChipPlacements(
+    draggables: List<DragChip>,
+    areaWidth: Float,
+    areaHeight: Float,
+    centerClearancePx: Float,
+    chipSpacingPx: Float,
+    edgeMarginPx: Float
+): List<ChipPlacement> {
+    if (draggables.isEmpty() || areaWidth <= 0f || areaHeight <= 0f) return emptyList()
+
+    val center = Offset(areaWidth / 2f, areaHeight / 2f)
+    val minX = -center.x + edgeMarginPx
+    val maxX = center.x - edgeMarginPx
+    val minY = -center.y + edgeMarginPx
+    val maxY = center.y - edgeMarginPx
+    val random = Random(draggables.joinToString("|") { it.chipId }.hashCode())
+    val placements = mutableListOf<ChipPlacement>()
+
+    draggables.forEachIndexed { index, draggable ->
+        var chosen: Offset? = null
+        repeat(100) {
+            val candidate = Offset(
+                x = random.nextFloat() * (maxX - minX) + minX,
+                y = random.nextFloat() * (maxY - minY) + minY
+            )
+            val distanceFromCenter = sqrt(candidate.x * candidate.x + candidate.y * candidate.y)
+            val farEnoughFromCenter = distanceFromCenter >= centerClearancePx
+            val farEnoughFromOthers = placements.none { placed ->
+                (placed.offset - candidate).getDistance() < chipSpacingPx
+            }
+            if (farEnoughFromCenter && farEnoughFromOthers) {
+                chosen = candidate
+                return@repeat
+            }
+        }
+
+        if (chosen == null) {
+            val orbit = centerClearancePx + (index % 3) * (chipSpacingPx * 0.35f)
+            val angle = (index.toFloat() / max(draggables.size, 1)) * (Math.PI.toFloat() * 2f)
+            chosen = Offset(
+                x = (kotlin.math.cos(angle) * orbit).coerceIn(minX, maxX),
+                y = (kotlin.math.sin(angle) * orbit).coerceIn(minY, maxY)
+            )
+        }
+
+        placements += ChipPlacement(chipId = draggable.chipId, offset = chosen!!)
+    }
+
+    return placements
+}
+
 @Composable
 fun BoxScope.DraggableChip(
     label: String,
@@ -220,7 +276,7 @@ fun BoxScope.DraggableChip(
 ) {
     val scope = rememberCoroutineScope()
     val dragOffset = remember { Animatable(Offset.Zero, Offset.VectorConverter) }
-    var currentPos by remember { mutableStateOf(Offset.Zero) }
+    var baseCenter by remember { mutableStateOf<Offset?>(null) }
 
     Box(
         modifier = Modifier
@@ -231,11 +287,11 @@ fun BoxScope.DraggableChip(
                     (initialOffset.y + dragOffset.value.y).roundToInt()
                 )
             }
-            .pointerInput(Unit) {
+            .pointerInput(label, initialOffset) {
                 detectDragGestures(
                     onDragEnd = {
-                        val absolutePos = currentPos + dragOffset.value
-                        if (!onDropped(absolutePos)) {
+                        val center = (baseCenter ?: Offset.Zero) + dragOffset.value
+                        if (!onDropped(center)) {
                             scope.launch {
                                 dragOffset.animateTo(Offset.Zero, spring())
                             }
@@ -251,17 +307,15 @@ fun BoxScope.DraggableChip(
             }
             .onGloballyPositioned {
                 val pos = it.positionInParent()
-                currentPos = Offset(
-                    pos.x + it.size.width / 2,
-                    pos.y + it.size.height / 2
+                baseCenter = Offset(
+                    x = pos.x + (it.size.width / 2f) - dragOffset.value.x,
+                    y = pos.y + (it.size.height / 2f) - dragOffset.value.y
                 )
             }
     ) {
         ChipItem(
             label = label,
-            backgroundColor = Color(0xFFBBDEFB),
-            contentColor = Color(0xFF0D47A1),
-            onClick = {} // Dragging handles it
+            onClick = {}
         )
     }
 }

@@ -44,6 +44,7 @@ fun RightMascot(
             modifier = Modifier.fillMaxSize(),
             factory = { context ->
                 RiveAnimationView(context).apply {
+                    setBackgroundColor(android.graphics.Color.TRANSPARENT)
                     try {
                         setRiveResource(
                             resId = R.raw.arrow_book,

@@ -30,8 +30,7 @@ import com.reeled.quizoverlay.ui.overlay.cards.TapTapMatchCard
 import com.reeled.quizoverlay.ui.overlay.components.ConfettiEffect
 import com.reeled.quizoverlay.ui.overlay.components.ModernQuizBackground
 import com.reeled.quizoverlay.ui.overlay.components.TrainAnimation
-import com.reeled.quizoverlay.ui.overlay.components.MonkeyMascot
-import com.reeled.quizoverlay.ui.overlay.components.MascotEmotion
+import com.reeled.quizoverlay.ui.overlay.components.RightMascot
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -45,24 +44,17 @@ fun QuizCardRouter(
     val scope = rememberCoroutineScope()
     var showConfetti by remember { mutableStateOf(false) }
     val shakeOffset = remember { Animatable(0f) }
-    
-    // Global mascot state for the router
-    var mascotEmotion by remember { mutableStateOf(MascotEmotion.IDLE) }
 
     val onResultIntercept: (QuizAttemptResult) -> Unit = { result ->
         if (result.isCorrect) {
             showConfetti = true
-            mascotEmotion = MascotEmotion.CORRECT
         } else {
-            mascotEmotion = MascotEmotion.WRONG
             scope.launch {
                 repeat(4) {
                     shakeOffset.animateTo(10f, tween(50))
                     shakeOffset.animateTo(-10f, tween(50))
                 }
                 shakeOffset.animateTo(0f, tween(50))
-                delay(1000)
-                mascotEmotion = MascotEmotion.IDLE
             }
         }
         scope.launch {
@@ -111,15 +103,14 @@ fun QuizCardRouter(
                     }
                 }
 
-                // Floating Mascot: Positioned on the right side, overlapping the train area
+                // Floating Mascot: Using RightMascot (arrow_book.riv)
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .padding(top = 100.dp, end = 16.dp) // Adjusted to overlap nicely
-                        .size(100.dp)
+                        .padding(top = 100.dp, end = 16.dp)
+                        .size(120.dp)
                 ) {
-                    MonkeyMascot(
-                        emotion = mascotEmotion,
+                    RightMascot(
                         modifier = Modifier.fillMaxSize()
                     )
                 }

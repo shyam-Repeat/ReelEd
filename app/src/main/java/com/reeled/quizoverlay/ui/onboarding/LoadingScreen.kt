@@ -62,17 +62,14 @@ fun LoadingScreen(
             .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
-        // 1. Monkey Mascot (Fills Screen)
+        // 1. Mascot removed for troubleshooting
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .graphicsLayer { alpha = pulse },
             contentAlignment = Alignment.Center
         ) {
-            MonkeyMascot(
-                emotion = MascotEmotion.HAPPY,
-                modifier = Modifier.fillMaxSize()
-            )
+            // MonkeyMascot removed due to startup crash investigation
         }
 
         // 2. Blurs for modern UI feel (on top of mascot but subtle)

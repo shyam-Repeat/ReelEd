@@ -1,12 +1,14 @@
 package com.reeled.quizoverlay.ui.overlay.components
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.viewinterop.AndroidView
 import app.rive.runtime.kotlin.RiveAnimationView
 import app.rive.runtime.kotlin.core.Alignment
 import app.rive.runtime.kotlin.core.Fit
@@ -25,40 +27,32 @@ fun RightMascot(
                 detectTapGestures(
                     onPress = {
                         try {
-                            riveView?.setBooleanState(stateMachineName, "mouse move", true)
-                            riveView?.fireState(stateMachineName, "click")
+                            riveView?.setBooleanState(stateMachineName, "IsTracking", true)
                         } catch (_: Exception) {}
                         
                         tryAwaitRelease()
                         
                         try {
-                            riveView?.setBooleanState(stateMachineName, "mouse move", false)
+                            riveView?.setBooleanState(stateMachineName, "IsTracking", false)
                         } catch (_: Exception) {}
                     }
                 )
             }
     ) {
         AndroidView(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Transparent),
             factory = { context ->
                 RiveAnimationView(context).apply {
-                    try {
-                        setRiveResource(
-                            resId = R.raw.arrow_book,
-                            stateMachineName = stateMachineName,
-                            fit = Fit.CONTAIN,
-                            alignment = Alignment.CENTER,
-                            autoplay = true
-                        )
-                        riveView = this
-                    } catch (_: Exception) {
-                        setRiveResource(
-                            resId = R.raw.arrow_book,
-                            fit = Fit.CONTAIN,
-                            alignment = Alignment.CENTER,
-                            autoplay = true
-                        )
-                    }
+                    setRiveResource(
+                        resId = R.raw.hover,
+                        stateMachineName = stateMachineName,
+                        fit = Fit.CONTAIN,
+                        alignment = Alignment.CENTER,
+                        autoplay = true
+                    )
+                    riveView = this
                 }
             },
             update = { _ -> }

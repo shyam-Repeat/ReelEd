@@ -103,7 +103,7 @@ fun QuizCardRouter(
                     }
                 }
 
-                // Floating Mascot: Using RightMascot (arrow_book.riv)
+                // Floating Mascot: Using RightMascot (hover.riv)
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopEnd)

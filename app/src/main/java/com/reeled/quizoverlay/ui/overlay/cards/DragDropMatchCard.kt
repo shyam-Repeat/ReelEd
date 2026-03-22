@@ -8,7 +8,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -20,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
@@ -30,7 +30,6 @@ import com.reeled.quizoverlay.model.QuizCardConfig
 import com.reeled.quizoverlay.model.QuizPayload
 import com.reeled.quizoverlay.ui.overlay.components.ChipItem
 import com.reeled.quizoverlay.ui.overlay.components.ParentCornerButton
-import com.reeled.quizoverlay.ui.overlay.components.RiveMedia
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -42,9 +41,10 @@ fun DragDropMatchCard(
     sourceApp: String,
     onResult: (QuizAttemptResult) -> Unit
 ) {
-    val payload = config.payload as QuizPayload.DragDropPayload
+    val payload = config.payload as? QuizPayload.DragDropPayload ?: return
     val scope = rememberCoroutineScope()
     val startTime = remember { System.currentTimeMillis() }
+    val density = LocalDensity.current
 
     // Logic: Simple for kids - usually 1 target slot and multiple draggables
     val targetSlot = payload.targets.firstOrNull() ?: return
@@ -52,22 +52,6 @@ fun DragDropMatchCard(
     
     var matchedChipId by remember { mutableStateOf<String?>(null) }
     var evaluated by remember { mutableStateOf(false) }
-
-    // Stable random positions for draggables, avoiding the center
-    val draggableOffsets = remember(draggables) {
-        draggables.map {
-            var x: Float
-            var y: Float
-            do {
-                // Wide scatter range
-                x = (Random.nextFloat() * 460 - 230)
-                y = (Random.nextFloat() * 640 - 320)
-                // Distance from center (0,0) where the slot is
-                val dist = Math.sqrt((x * x + y * y).toDouble())
-            } while (dist < 180.0) // Don't cover the center slot
-            Offset(x, y)
-        }
-    }
 
     // Slot position for hit testing
     var slotCenter by remember { mutableStateOf(Offset.Zero) }
@@ -77,13 +61,12 @@ fun DragDropMatchCard(
         Column(
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Header
+            // Header Section
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(4.dp),
-                modifier = Modifier.padding(horizontal = 16.dp)
+                modifier = Modifier.padding(16.dp)
             ) {
                 Text(
                     text = config.display.questionText,
@@ -101,13 +84,36 @@ fun DragDropMatchCard(
                 )
             }
 
-            // Game Area (Mascot is now globally managed in Router)
-            Box(
+            // Game Area - Utilizing full remaining space (Fix for Point 2: Dead Space)
+            BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
             ) {
-                // Drop Target in the center
+                val areaWidth = with(density) { maxWidth.toPx() }
+                val areaHeight = with(density) { maxHeight.toPx() }
+                
+                // Calculate random offsets once the constraints are known
+                val draggableOffsets = remember(draggables, areaWidth, areaHeight) {
+                    draggables.map {
+                        var x: Float
+                        var y: Float
+                        val centerX = areaWidth / 2
+                        val centerY = areaHeight / 2
+                        do {
+                            // Spread across the whole BoxWithConstraints area
+                            x = (Random.nextFloat() * areaWidth) - centerX
+                            y = (Random.nextFloat() * areaHeight) - centerY
+                            
+                            // Distance from the center slot
+                            val distSq = x * x + y * y
+                            val minClearance = with(density) { 100.dp.toPx() }
+                        } while (distSq < minClearance * minClearance)
+                        Offset(x, y)
+                    }
+                }
+
+                // Drop Target (Center)
                 Box(
                     modifier = Modifier
                         .size(slotSize)
@@ -119,11 +125,11 @@ fun DragDropMatchCard(
                         .clip(CircleShape)
                         .background(
                             if (matchedChipId != null) Color(0xFFC8E6C9) 
-                            else Color(0xFFF5F5F5)
+                            else Color(0x1A0D47A1) // Soft translucent blue
                         )
                         .border(
                             width = 4.dp,
-                            color = if (matchedChipId != null) Color(0xFF4CAF50) else Color(0xFFBBDEFB),
+                            color = if (matchedChipId != null) Color(0xFF4CAF50) else Color(0xFFBBDEFB).copy(alpha = 0.5f),
                             shape = CircleShape
                         ),
                     contentAlignment = Alignment.Center
@@ -137,11 +143,13 @@ fun DragDropMatchCard(
                             color = Color(0xFF2E7D32)
                         )
                     } else {
+                        // FIX for Point 3: Grayed out/faint version of the correct answer
+                        val correctDraggable = draggables.find { it.chipId in targetSlot.correctChipIds }
                         Text(
-                            text = "?",
+                            text = correctDraggable?.label ?: "?",
                             fontSize = 48.sp,
                             fontWeight = FontWeight.Black,
-                            color = Color(0xFFBBDEFB)
+                            color = Color(0x22000000) // Faint "faded" look
                         )
                     }
                 }
@@ -158,21 +166,20 @@ fun DragDropMatchCard(
                     )
                 }
 
-                // Draggable Items
+                // Draggable Items scattered everywhere within the Box area
                 draggables.forEachIndexed { index, draggable ->
-                    if (draggable.chipId != matchedChipId) {
+                    if (draggable.chipId != matchedChipId && index < draggableOffsets.size) {
                         DraggableChip(
                             label = draggable.label,
                             initialOffset = draggableOffsets[index],
                             onDropped = { offset ->
                                 val distance = (offset - slotCenter).getDistance()
-                                // Forgiving hit box: 150f radius
                                 if (distance < 160f && draggable.chipId in targetSlot.correctChipIds) {
                                     matchedChipId = draggable.chipId
                                     if (!evaluated) {
                                         evaluated = true
                                         scope.launch {
-                                            delay(1500)
+                                            delay(1200)
                                             onResult(
                                                 QuizAttemptResult(
                                                     questionId = config.id,

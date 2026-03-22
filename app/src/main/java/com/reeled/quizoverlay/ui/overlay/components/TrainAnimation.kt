@@ -9,11 +9,15 @@ import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -21,6 +25,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.withTransform
+import androidx.compose.ui.unit.dp
 import kotlin.math.min
 
 @Composable
@@ -48,29 +53,38 @@ fun TrainAnimation(modifier: Modifier = Modifier) {
         )
     }
 
-    Canvas(modifier = modifier.fillMaxSize()) {
-        val canvasWidth = size.width
-        val canvasHeight = size.height
-        val widthScale = (canvasWidth * 0.88f) / 400f
-        val heightScale = (canvasHeight * 0.72f) / 120f
-        val scale = min(widthScale, heightScale).coerceAtLeast(0.35f)
+    Box(modifier = modifier) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val canvasWidth = size.width
+            val canvasHeight = size.height
+            val widthScale = (canvasWidth * 0.88f) / 400f
+            val heightScale = (canvasHeight * 0.72f) / 120f
+            val scale = min(widthScale, heightScale).coerceAtLeast(0.35f)
 
-        val scaledWidth = 400f * scale
-        val scaledHeight = 120f * scale
-        val xOffsetBase = (canvasWidth - scaledWidth) / 2f
-        val yOffsetBase = (canvasHeight - scaledHeight) / 2f
-        val bounceY = trainBounce * scale
+            val scaledWidth = 400f * scale
+            val scaledHeight = 120f * scale
+            val xOffsetBase = (canvasWidth - scaledWidth) / 2f
+            val yOffsetBase = (canvasHeight - scaledHeight) / 2f
+            val bounceY = trainBounce * scale
 
-        withTransform({
-            translate(left = entryAnim.value + xOffsetBase, top = yOffsetBase + bounceY)
-            scale(scale, scale, Offset.Zero)
-        }) {
-            drawTrack()
-            drawBackCar()
-            drawMiddleCar()
-            drawFrontCarBody()
-            drawEngine()
+            withTransform({
+                translate(left = entryAnim.value + xOffsetBase, top = yOffsetBase + bounceY)
+                scale(scale, scale, Offset.Zero)
+            }) {
+                drawTrack()
+                drawBackCar()
+                drawMiddleCar()
+                drawFrontCarBody()
+                drawEngine()
+            }
         }
+
+        RiveMedia(
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .offset(x = (-86).dp, y = (-2).dp)
+                .size(34.dp)
+        )
     }
 }
 

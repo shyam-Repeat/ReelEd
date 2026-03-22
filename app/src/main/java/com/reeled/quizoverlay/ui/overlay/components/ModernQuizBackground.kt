@@ -10,11 +10,17 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.unit.dp
 
 @Composable
 fun ModernQuizBackground(
@@ -54,8 +60,28 @@ fun ModernQuizBackground(
             )
         }
 
+        BubbleMascot(
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .offset(x = (-24).dp, y = 92.dp)
+                .size(124.dp)
+        )
+        BubbleMascot(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .offset(x = 24.dp, y = 42.dp)
+                .size(148.dp)
+        )
+
         Box(modifier = Modifier.fillMaxSize()) {
             content()
         }
+    }
+}
+
+@Composable
+private fun BubbleMascot(modifier: Modifier = Modifier) {
+    Box(modifier = modifier.clip(CircleShape)) {
+        RiveMedia(modifier = Modifier.fillMaxSize())
     }
 }

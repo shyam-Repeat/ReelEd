@@ -15,12 +15,7 @@ import android.view.WindowManager
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.unit.dp
 import androidx.core.app.NotificationCompat
@@ -89,6 +84,7 @@ class OverlayForegroundService : Service() {
     private var totalTimerExpired = 0
 
     private var overlayView: ComposeView? = null
+    private var currentOverlaySourceApp: String? = null
     private var currentViewLifecycleOwner: OverlayLifecycleOwner? = null
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var pollingJob: Job? = null
@@ -295,6 +291,7 @@ class OverlayForegroundService : Service() {
         if (!attached) {
             if (overlayView != null) {
                 overlayView = null
+                currentOverlaySourceApp = null
                 currentViewLifecycleOwner?.let { owner ->
                     owner.onPause()
                     owner.onStop()
@@ -308,6 +305,21 @@ class OverlayForegroundService : Service() {
                 logEventSafely(
                     eventType = "overlay_state_recovered",
                     payloadJson = "{\"reason\":\"stale_overlay_flag\"}"
+                )
+            }
+            return
+        }
+
+        val activeSourceApp = currentOverlaySourceApp
+        if (overlayView != null && activeSourceApp != null) {
+            val currentForeground = triggerEngineForegroundPackage()
+            if (currentForeground != activeSourceApp) {
+                withContext(Dispatchers.Main) {
+                    removeOverlayIfShowing()
+                }
+                logEventSafely(
+                    eventType = "overlay_removed_app_backgrounded",
+                    payloadJson = "{\"expected\":\"${jsonSafe(activeSourceApp)}\",\"actual\":\"${jsonSafe(currentForeground.orEmpty())}\"}"
                 )
             }
         }
@@ -337,6 +349,15 @@ class OverlayForegroundService : Service() {
     private fun showOverlay(question: com.reeled.quizoverlay.model.QuizQuestion, sourceApp: String) {
         if (overlayView != null) return
 
+        val latestForeground = triggerEngineForegroundPackage()
+        if (sourceApp != latestForeground) {
+            logEventSafely(
+                eventType = "overlay_show_aborted_not_foreground",
+                payloadJson = "{\"expected\":\"${jsonSafe(sourceApp)}\",\"actual\":\"${jsonSafe(latestForeground.orEmpty())}\"}"
+            )
+            return
+        }
+
         val params = buildWindowParams(strictMode = question.strictMode)
 
         val viewLifecycleOwner = OverlayLifecycleOwner().also { it.onCreate() }
@@ -347,27 +368,18 @@ class OverlayForegroundService : Service() {
 
             setContent {
                 ReelEdTheme {
-                    Box(modifier = Modifier.fillMaxSize()) {
-                        // 1. Blurred Background (Modern UI)
-                        Surface(
-                            modifier = Modifier.fillMaxSize(),
-                            color = Color.Black.copy(alpha = 0.25f)
-                        ) {}
-
-                        // 2. Full-screen overlay with 20dp padding
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(20.dp)
-                        ) {
-                            val config = QuizCardConfig.from(question)
-                            QuizCardRouter(
-                                config = config,
-                                sourceApp = sourceApp,
-                                onResult = { result -> onQuizResult(result) },
-                                onDismissed = { onQuizDismissed(question, sourceApp) }
-                            )
-                        }
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(20.dp)
+                    ) {
+                        val config = QuizCardConfig.from(question)
+                        QuizCardRouter(
+                            config = config,
+                            sourceApp = sourceApp,
+                            onResult = { result -> onQuizResult(result) },
+                            onDismissed = { onQuizDismissed(question, sourceApp) }
+                        )
                     }
                 }
             }
@@ -387,6 +399,7 @@ class OverlayForegroundService : Service() {
         viewLifecycleOwner.onResume()
 
         currentViewLifecycleOwner = viewLifecycleOwner
+        currentOverlaySourceApp = sourceApp
         overlayView = composeView
         serviceScope.launch(Dispatchers.IO) {
             triggerPrefs.markQuizShown(question.id)
@@ -466,6 +479,7 @@ class OverlayForegroundService : Service() {
             } catch (_: Exception) {
             }
             overlayView = null
+            currentOverlaySourceApp = null
         }
         currentViewLifecycleOwner?.let { owner ->
             owner.onPause()

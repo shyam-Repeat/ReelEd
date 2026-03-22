@@ -24,17 +24,15 @@ fun MonkeyMascot(
             .clipToBounds(), // Ensure Rive content never bleeds out
         factory = { context ->
             RiveAnimationView(context).apply {
-                setBackgroundColor(android.graphics.Color.TRANSPARENT)
                 try {
                     setRiveResource(
                         resId = R.raw.swinging_monkey,
                         stateMachineName = stateMachineName,
-                        fit = Fit.COVER, // Focus on the monkey, crop edges
+                        fit = Fit.COVER,
                         alignment = Alignment.CENTER,
                         autoplay = true
                     )
                 } catch (_: Exception) {
-                    // Fall back to default artboard animation instead of crashing
                     setRiveResource(
                         resId = R.raw.swinging_monkey,
                         fit = Fit.COVER,
@@ -45,8 +43,6 @@ fun MonkeyMascot(
             }
         },
         update = { view ->
-            // Map MascotEmotion to the new Rive State Machine Inputs (Bool)
-            // For now, we use hoverSwing and hoverChill based on the emotion.
             val isSwinging = when (emotion) {
                 MascotEmotion.HAPPY, MascotEmotion.CHEER, MascotEmotion.CORRECT -> true
                 else -> false
@@ -54,11 +50,13 @@ fun MonkeyMascot(
             val isChilling = !isSwinging
 
             try {
-                view.setBooleanState(stateMachineName, "Btn_Swing_Hover", isSwinging)
-                view.setBooleanState(stateMachineName, "Btn_Chill_Hover", isChilling)
-            } catch (e: Exception) {
-                // If the state machine doesn't exist or input is wrong, 
-                // it will just play the default animation.
+                // Only set state if the state machine is actually playing/active
+                if (view.stateMachineNames.contains(stateMachineName)) {
+                    view.setBooleanState(stateMachineName, "Btn_Swing_Hover", isSwinging)
+                    view.setBooleanState(stateMachineName, "Btn_Chill_Hover", isChilling)
+                }
+            } catch (_: Exception) {
+                // If it fails, we just don't animate.
             }
         }
     )

@@ -15,10 +15,7 @@ class App : Application() {
         // 1. Initialize global crash detection
         CrashLogger.init(this)
 
-        // 2. Initialize Rive Runtime
-        Rive.init(this)
-        
-        // 3. Schedule periodic background tasks
+        // 2. Schedule periodic background tasks
         QuizFetchWorker.scheduleDaily(this)
         SyncWorker.schedule(this)
         ServiceWatchdogWorker.schedule(this)

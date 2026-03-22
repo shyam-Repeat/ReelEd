@@ -116,13 +116,13 @@ fun ParentDashboardScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.White
+                    containerColor = MaterialTheme.colorScheme.surface
                 )
             )
         },
         bottomBar = {
             NavigationBar(
-                containerColor = Color.White,
+                containerColor = MaterialTheme.colorScheme.surface,
                 tonalElevation = 8.dp
             ) {
                 val tabs = listOf(DashboardTab.Dashboard, DashboardTab.Controls, DashboardTab.Settings)
@@ -136,7 +136,7 @@ fun ParentDashboardScreen(
                 }
             }
         },
-        containerColor = Color(0xFFF7F9FD)
+        containerColor = MaterialTheme.colorScheme.surfaceVariant
     ) { padding ->
         Box(modifier = Modifier.padding(padding)) {
             when (selectedTab) {
@@ -219,7 +219,7 @@ private fun ControlsContent(
         
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = Color.White)
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text("Overlay Management", style = MaterialTheme.typography.titleMedium)
@@ -247,7 +247,7 @@ private fun ControlsContent(
 
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = Color.White)
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text("Support", style = MaterialTheme.typography.titleMedium)
@@ -294,7 +294,7 @@ private fun SettingsContent(
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
@@ -356,7 +356,7 @@ private fun SettingsContent(
         items(uiState.logs) { log ->
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.7f))
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f))
             ) {
                 Column(
                     modifier = Modifier.padding(12.dp),

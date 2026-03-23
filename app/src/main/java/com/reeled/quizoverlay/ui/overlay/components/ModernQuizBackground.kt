@@ -10,17 +10,9 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Color
 
 @Composable
 fun ModernQuizBackground(
@@ -28,14 +20,23 @@ fun ModernQuizBackground(
     content: @Composable () -> Unit
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "BackgroundAnim")
-    val animValue by infiniteTransition.animateFloat(
+    val floatPhase by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(10000, easing = LinearEasing),
+            animation = tween(9000, easing = LinearEasing),
             repeatMode = RepeatMode.Reverse
         ),
         label = "ShapeFloat"
+    )
+    val driftPhase by infiniteTransition.animateFloat(
+        initialValue = -1f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(12000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "ShapeDrift"
     )
 
     Box(modifier = modifier.fillMaxSize().background(Color.White)) {
@@ -45,43 +46,32 @@ fun ModernQuizBackground(
 
             drawCircle(
                 color = Color(0xFFE3F2FD),
-                radius = 120f,
-                center = Offset(width * 0.12f, height * 0.18f + (animValue * 36f))
+                radius = 120f + (floatPhase * 10f),
+                center = Offset(
+                    width * 0.08f + (driftPhase * 18f),
+                    height * 0.24f + (floatPhase * 34f)
+                )
             )
             drawCircle(
                 color = Color(0xFFFCE7F3),
-                radius = 140f,
-                center = Offset(width * 0.88f, height * 0.14f - (animValue * 24f))
+                radius = 150f + (floatPhase * 14f),
+                center = Offset(
+                    width * 0.92f - (driftPhase * 16f),
+                    height * 0.18f - (floatPhase * 26f)
+                )
             )
             drawCircle(
                 color = Color(0xFFDCFCE7),
-                radius = 180f,
-                center = Offset(width * 0.5f, height * 0.92f + (animValue * 40f))
+                radius = 188f + (floatPhase * 16f),
+                center = Offset(
+                    width * 0.5f + (driftPhase * 20f),
+                    height * 0.9f + (floatPhase * 28f)
+                )
             )
         }
-
-        BubbleMascot(
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .offset(x = (-24).dp, y = 92.dp)
-                .size(124.dp)
-        )
-        BubbleMascot(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .offset(x = 24.dp, y = 42.dp)
-                .size(148.dp)
-        )
 
         Box(modifier = Modifier.fillMaxSize()) {
             content()
         }
-    }
-}
-
-@Composable
-private fun BubbleMascot(modifier: Modifier = Modifier) {
-    Box(modifier = modifier.clip(CircleShape)) {
-        RiveMedia(modifier = Modifier.fillMaxSize())
     }
 }

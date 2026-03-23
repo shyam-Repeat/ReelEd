@@ -103,12 +103,12 @@ fun QuizCardRouter(
                     }
                 }
 
-                // Floating Mascot: Using RightMascot (hover.riv)
+                // Floating mascot kept on the upper-right corner without covering draggable chips.
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .padding(top = 100.dp, end = 16.dp)
-                        .size(120.dp)
+                        .padding(top = 132.dp, end = 8.dp)
+                        .size(136.dp)
                 ) {
                     RightMascot(
                         modifier = Modifier.fillMaxSize()

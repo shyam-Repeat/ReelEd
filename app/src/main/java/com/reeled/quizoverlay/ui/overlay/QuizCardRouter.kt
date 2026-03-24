@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -19,6 +20,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.reeled.quizoverlay.model.QuizAttemptResult
 import com.reeled.quizoverlay.model.QuizCardConfig
@@ -31,6 +33,7 @@ import com.reeled.quizoverlay.ui.overlay.components.ConfettiEffect
 import com.reeled.quizoverlay.ui.overlay.components.ModernQuizBackground
 import com.reeled.quizoverlay.ui.overlay.components.TrainAnimation
 import com.reeled.quizoverlay.ui.overlay.components.RightMascot
+import com.reeled.quizoverlay.util.SoundManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -41,14 +44,24 @@ fun QuizCardRouter(
     onResult: (QuizAttemptResult) -> Unit,
     onDismissed: () -> Unit
 ) {
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var showConfetti by remember { mutableStateOf(false) }
     val shakeOffset = remember { Animatable(0f) }
+    
+    val soundManager = remember { SoundManager(context) }
+    DisposableEffect(Unit) {
+        onDispose {
+            soundManager.release()
+        }
+    }
 
     val onResultIntercept: (QuizAttemptResult) -> Unit = { result ->
         if (result.isCorrect) {
+            soundManager.play("correct")
             showConfetti = true
         } else {
+            soundManager.play("wrong")
             scope.launch {
                 repeat(4) {
                     shakeOffset.animateTo(10f, tween(50))
@@ -82,7 +95,10 @@ fun QuizCardRouter(
                             .weight(0.22f)
                             .padding(horizontal = 12.dp, vertical = 8.dp)
                     ) {
-                        TrainAnimation(modifier = Modifier.fillMaxSize())
+                        TrainAnimation(
+                            modifier = Modifier.fillMaxSize(),
+                            onStart = { soundManager.playTrain(1500) }
+                        )
                     }
 
                     // Bottom Section: Quiz Card
@@ -95,7 +111,7 @@ fun QuizCardRouter(
                         Box(modifier = Modifier.fillMaxSize()) {
                             when (config.cardType) {
                                 QuizCardType.TAP_CHOICE -> TapChoiceCard(config, sourceApp, onResultIntercept)
-                                QuizCardType.TAP_TAP_MATCH -> TapTapMatchCard(config, sourceApp, onResultIntercept)
+                                QuizCardType.TAP_TAP_MATCH -> TapTapMatchCard(config, sourceApp, soundManager, onResultIntercept)
                                 QuizCardType.DRAG_DROP_MATCH -> DragDropMatchCard(config, sourceApp, onResultIntercept)
                                 QuizCardType.FILL_BLANK -> FillBlankCard(config, sourceApp, onResultIntercept)
                             }

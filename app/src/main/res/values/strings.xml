@@ -1,3 +1,21 @@
 <resources>
     <string name="app_name">ReelEd</string>
+    
+    <!-- Quiz General -->
+    <string name="quiz_instruction_default">Tap the correct answer</string>
+    <string name="quiz_matching_instruction">Find the matching pairs</string>
+    
+    <!-- Onboarding -->
+    <string name="welcome_title">Welcome to ReelEd</string>
+    <string name="welcome_desc">Transform social media time into learning moments.</string>
+    <string name="setup_pin">Setup Parent PIN</string>
+    <string name="permissions_required">Permissions Required</string>
+    
+    <!-- Dashboard -->
+    <string name="parent_dashboard">Parent Dashboard</string>
+    <string name="today_progress">Today\'s Progress</string>
+    <string name="subject_breakdown">Subject Breakdown</string>
+    
+    <!-- Card Specific -->
+    <string name="match_correct_symbol">✓</string>
 </resources>

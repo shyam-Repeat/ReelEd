@@ -7,12 +7,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -21,13 +17,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.reeled.quizoverlay.R
 import com.reeled.quizoverlay.model.QuizAttemptResult
 import com.reeled.quizoverlay.model.QuizCardConfig
 import com.reeled.quizoverlay.model.QuizPayload
+import com.reeled.quizoverlay.util.SoundManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -35,6 +34,7 @@ import kotlinx.coroutines.launch
 fun TapTapMatchCard(
     config: QuizCardConfig,
     sourceApp: String,
+    soundManager: SoundManager,
     onResult: (QuizAttemptResult) -> Unit
 ) {
     val payload = config.payload as QuizPayload.TapTapMatchPayload
@@ -49,7 +49,7 @@ fun TapTapMatchCard(
     }
 
     var selectedTile by remember { mutableStateOf<MatchTile?>(null) }
-    var matchedIds by remember { mutableStateOf(setOf<String>()) } // Stores both left and right IDs that are matched
+    var matchedIds by remember { mutableStateOf(setOf<String>()) }
 
     val gridColors = listOf(
         Color(0xFFEAF3DE), // Light Green
@@ -71,9 +71,8 @@ fun TapTapMatchCard(
         if (currentSelected == null) {
             selectedTile = tile
         } else {
-            // Check if they match
             val isMatch = if (currentSelected.side == tile.side) {
-                false // Can't match same side
+                false
             } else {
                 val (left, right) = if (currentSelected.side == TileSide.LEFT) {
                     currentSelected to tile
@@ -84,6 +83,7 @@ fun TapTapMatchCard(
             }
 
             if (isMatch) {
+                soundManager.play("match")
                 matchedIds = matchedIds + currentSelected.id + tile.id
                 selectedTile = null
                 
@@ -104,8 +104,7 @@ fun TapTapMatchCard(
                     }
                 }
             } else {
-                // Wrong match - shake or just deselect
-                selectedTile = tile // Select the new one instead
+                selectedTile = tile
             }
         }
     }
@@ -115,17 +114,31 @@ fun TapTapMatchCard(
         verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Question Label
-        Text(
-            text = config.display.questionText,
-            style = MaterialTheme.typography.titleMedium,
-            color = Color(0xFF888888),
-            fontWeight = FontWeight.Normal,
-            textAlign = TextAlign.Center,
-            letterSpacing = 0.04.sp
-        )
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = config.display.questionText,
+                style = MaterialTheme.typography.titleMedium,
+                color = Color(0xFF888888),
+                fontWeight = FontWeight.Normal,
+                textAlign = TextAlign.Center,
+                letterSpacing = 0.04.sp
+            )
+            
+            val instruction = config.display.instructionLabel.ifBlank {
+                stringResource(R.string.quiz_matching_instruction)
+            }
+            
+            Text(
+                text = instruction,
+                style = MaterialTheme.typography.bodySmall,
+                color = Color(0xFFAAAAAA),
+                textAlign = TextAlign.Center
+            )
+        }
 
-        // 2x3 Grid
         LazyVerticalGrid(
             columns = GridCells.Fixed(3),
             modifier = Modifier.fillMaxWidth().weight(1f),
@@ -134,8 +147,7 @@ fun TapTapMatchCard(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             userScrollEnabled = false
         ) {
-            items(tiles.indices.toList()) { index ->
-                val tile = tiles[index]
+            itemsIndexed(tiles) { index, tile ->
                 val isMatched = matchedIds.contains(tile.id)
                 val isSelected = selectedTile == tile
                 val baseColor = gridColors[index % gridColors.size]
@@ -161,11 +173,12 @@ fun MatchGridTile(
     onClick: () -> Unit
 ) {
     val alpha by animateFloatAsState(if (isMatched) 0.4f else 1f)
+    val checkSymbol = stringResource(R.string.match_correct_symbol)
     
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(100.dp) // Adjusted height to fit 2 rows in the space
+            .height(100.dp)
             .alpha(alpha)
             .clip(RoundedCornerShape(16.dp))
             .background(baseColor)
@@ -187,7 +200,7 @@ fun MatchGridTile(
             )
             if (isMatched) {
                 Text(
-                    text = "✓",
+                    text = checkSymbol,
                     color = Color(0xFF3B6D11),
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp

@@ -15,10 +15,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.reeled.quizoverlay.R
 import com.reeled.quizoverlay.model.QuizAttemptResult
 import com.reeled.quizoverlay.model.QuizCardConfig
 import com.reeled.quizoverlay.model.QuizPayload
@@ -47,7 +49,7 @@ fun TapChoiceCard(
 
     Column(
         modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(24.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Subject Emoji Box
@@ -77,20 +79,22 @@ fun TapChoiceCard(
                 textAlign = TextAlign.Center,
                 letterSpacing = 0.04.sp
             )
-            // Use instructionLabel as sub-question text if it's different
-            if (config.display.instructionLabel.isNotBlank()) {
-                Text(
-                    text = config.display.instructionLabel,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFFAAAAAA),
-                    textAlign = TextAlign.Center
-                )
+            
+            val instruction = config.display.instructionLabel.ifBlank {
+                stringResource(R.string.quiz_instruction_default)
             }
+            
+            Text(
+                text = instruction,
+                style = MaterialTheme.typography.bodySmall,
+                color = Color(0xFFAAAAAA),
+                textAlign = TextAlign.Center
+            )
         }
 
         // Options Row
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -142,26 +146,28 @@ fun ChoiceCircleButton(
     
     Box(
         modifier = Modifier
-            .size(80.dp)
+            .size(92.dp)
             .alpha(alpha)
-            .clip(androidx.compose.foundation.shape.CircleShape)
+            .clip(CircleShape)
             .background(color)
             .let { 
                 if (isSelected) {
-                    it.border(3.dp, Color(0xFF3C3489), androidx.compose.foundation.shape.CircleShape)
+                    it.border(3.dp, Color(0xFF3C3489), CircleShape)
                       .padding(2.dp)
-                      .border(4.dp, Color(0xFFCECBF6), androidx.compose.foundation.shape.CircleShape)
+                      .border(4.dp, Color(0xFFCECBF6), CircleShape)
                 } else it
             }
             .clickable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        if (label.length <= 3) {
+        if (label.isNotBlank()) {
             Text(
                 text = label,
                 color = Color.White,
                 fontWeight = FontWeight.Black,
-                fontSize = 28.sp
+                fontSize = 16.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(4.dp)
             )
         }
     }

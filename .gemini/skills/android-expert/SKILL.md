@@ -17,6 +17,10 @@ To provide a unified workflow for Android development, covering both production-
 - `adb` installed and in PATH.
 - Android project set up with Jetpack Compose dependencies.
 
+## ⚠️ Environment Constraints
+- **No Android SDK**: This environment does **NOT** have the Android SDK installed. Executing `./gradlew` commands (build, lint, etc.) will fail.
+- **Static Analysis Only**: Focus on code logic, architectural integrity, and resource mapping. Do not attempt to compile or run the app within this shell.
+
 ## 🚀 Workflow: Building with Jetpack Compose
 
 ### 1. State Management Pattern

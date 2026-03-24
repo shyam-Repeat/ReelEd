@@ -52,9 +52,19 @@ This checklist was re-audited against the current codebase and docs (`Documents/
 - [x] Implement pause/resume/extend notification action handling in service command routing.
 
 ### 4) UI quality + platform hardening
-- [ ] Verify `TimerBar` and `OptionButton` behavior with real countdown/answer states (beyond static rendering).
+- [x] Verify `TimerBar` and `OptionButton` behavior with real countdown/answer states (beyond static rendering).
 - [ ] Move hardcoded UI text to `res/values/strings.xml`.
 - [ ] Verify dependency boundaries: UI should talk to ViewModel/Repository interfaces and prefs only where intended.
+
+### 5) Audio & SFX (NEW)
+- [ ] Add the following sound files to `app/src/main/res/raw/`:
+    - `sfx_correct.mp3` - Quick "Ding" for correct answers.
+    - `sfx_wrong.mp3` - Short buzzer/fail sound.
+    - `sfx_match.mp3` - Satisfying click/pop for tile matching.
+    - `sfx_train.mp3` - Steam train "Choo-Choo" or engine sound (syncs with 1.5s entry animation).
+- [ ] Implement `SoundManager.kt` using SoundPool.
+- [ ] Integrate `SoundManager` trigger calls in `TapChoiceCard`, `TapTapMatchCard`, and `TrainAnimation`.
+- [ ] Audit `AudioMuter.kt` to ensure system-wide music is silenced correctly during quiz.
 
 
 

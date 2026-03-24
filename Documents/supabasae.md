@@ -193,14 +193,14 @@ insert into quiz_questions
   (id, card_type, subject, difficulty, question_text, instruction_label, payload_json, timer_seconds, strict_mode, show_correct_on_wrong)
 values
 
-('q_001', 'TAP_CHOICE', 'math', 1,
- 'How many apples are there?', 'Tap the number 3',
- '{"options":[{"id":"A","label":"1","is_correct":false,"color":"#E24B4A"},{"id":"B","label":"3","is_correct":true,"color":"#378ADD"},{"id":"C","label":"5","is_correct":false,"color":"#EF9F27"},{"id":"D","label":"2","is_correct":false,"color":"#7CB342"}]}',
+('q_001', 'TAP_CHOICE', 'general', 1,
+ 'What color is the apple?', 'Tap the matching color',
+ '{"options":[{"id":"A","label":"Red","is_correct":true,"color":"#E24B4A"},{"id":"B","label":"Blue","is_correct":false,"color":"#378ADD"},{"id":"C","label":"Orange","is_correct":false,"color":"#EF9F27"}]}',
  20, false, true),
 
-('q_002', 'TAP_CHOICE', 'general', 1,
- 'What color is this?', 'Tap the matching color',
- '{"options":[{"id":"A","label":"","is_correct":false,"color":"#E24B4A"},{"id":"B","label":"","is_correct":true,"color":"#378ADD"},{"id":"C","label":"","is_correct":false,"color":"#EF9F27"}]}',
+('q_002', 'TAP_CHOICE', 'science', 1,
+ 'What color is the leaf?', 'Tap the matching color',
+ '{"options":[{"id":"A","label":"Yellow","is_correct":false,"color":"#EF9F27"},{"id":"B","label":"Green","is_correct":true,"color":"#7CB342"},{"id":"C","label":"Red","is_correct":false,"color":"#E24B4A"}]}',
  20, false, true),
 
 ('q_003', 'TAP_TAP_MATCH', 'english', 1,

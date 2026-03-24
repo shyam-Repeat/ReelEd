@@ -29,7 +29,10 @@ import androidx.compose.ui.unit.dp
 import kotlin.math.min
 
 @Composable
-fun TrainAnimation(modifier: Modifier = Modifier) {
+fun TrainAnimation(
+    modifier: Modifier = Modifier,
+    onStart: (() -> Unit)? = null
+) {
     val infiniteTransition = rememberInfiniteTransition(label = "TrainAnimation")
 
     val trainBounce by infiniteTransition.animateFloat(
@@ -47,6 +50,7 @@ fun TrainAnimation(modifier: Modifier = Modifier) {
 
     val entryAnim = remember { Animatable(-420f) }
     LaunchedEffect(Unit) {
+        onStart?.invoke()
         entryAnim.animateTo(
             targetValue = 0f,
             animationSpec = tween(1500, easing = CubicBezierEasing(0.34f, 1.56f, 0.64f, 1.0f))

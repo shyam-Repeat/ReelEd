@@ -26,6 +26,15 @@ create table testers (
 -- payload_json holds the full type-specific payload as JSON string.
 -- card_type must match exactly: TAP_CHOICE | TAP_TAP_MATCH |
 -- DRAG_DROP_MATCH | FILL_BLANK
+--
+-- [UI BEHAVIORS]
+-- TAP_CHOICE: 
+--   - Uses circular buttons.
+--   - payload.options[].color (optional hex) used for button background.
+--   - Empty label + color is used for "Color Matching" questions.
+-- TAP_TAP_MATCH:
+--   - Items from left_items and right_items are shuffled into a 2x3 grid.
+--   - Users tap two items to match based on correct_pairs.
 
 create table quiz_questions (
   id                   text primary key,
@@ -186,16 +195,16 @@ values
 
 ('q_001', 'TAP_CHOICE', 'math', 1,
  'How many apples are there?', 'Tap the number 3',
- '{"options":[{"id":"A","label":"1","is_correct":false},{"id":"B","label":"3","is_correct":true},{"id":"C","label":"5","is_correct":false},{"id":"D","label":"2","is_correct":false}]}',
+ '{"options":[{"id":"A","label":"1","is_correct":false,"color":"#E24B4A"},{"id":"B","label":"3","is_correct":true,"color":"#378ADD"},{"id":"C","label":"5","is_correct":false,"color":"#EF9F27"},{"id":"D","label":"2","is_correct":false,"color":"#7CB342"}]}',
  20, false, true),
 
 ('q_002', 'TAP_CHOICE', 'general', 1,
- 'What color is the sky?', 'Tap the correct color',
- '{"options":[{"id":"A","label":"Red","is_correct":false},{"id":"B","label":"Green","is_correct":false},{"id":"C","label":"Blue","is_correct":true},{"id":"D","label":"Yellow","is_correct":false}]}',
+ 'What color is this?', 'Tap the matching color',
+ '{"options":[{"id":"A","label":"","is_correct":false,"color":"#E24B4A"},{"id":"B","label":"","is_correct":true,"color":"#378ADD"},{"id":"C","label":"","is_correct":false,"color":"#EF9F27"}]}',
  20, false, true),
 
 ('q_003', 'TAP_TAP_MATCH', 'english', 1,
- 'Match uppercase to lowercase', 'Tap the big letter then small letter',
+ 'Match uppercase to lowercase', 'Find the matching pairs',
  '{"left_items":[{"id":"L1","label":"A"},{"id":"L2","label":"B"},{"id":"L3","label":"C"}],"right_items":[{"id":"R1","label":"a"},{"id":"R2","label":"b"},{"id":"R3","label":"c"}],"correct_pairs":[["L1","R1"],["L2","R2"],["L3","R3"]]}',
  0, false, true),
 

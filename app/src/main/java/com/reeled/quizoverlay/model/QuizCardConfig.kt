@@ -72,7 +72,8 @@ data class QuizCardConfig(
                             ChoiceOption(
                                 id = item.getString("id"),
                                 label = item.getString("label"),
-                                isCorrect = item.getBoolean("is_correct")
+                                isCorrect = item.getBoolean("is_correct"),
+                                color = item.optString("color", null)
                             )
                         }
                     )

@@ -104,6 +104,18 @@ fun TapTapMatchCard(
                     }
                 }
             } else {
+                // INCORRECT MATCH - report to router for strike counting
+                onResult(
+                    QuizAttemptResult(
+                        questionId = config.id,
+                        selectedOptionId = "${currentSelected.id}_${tile.id}",
+                        isCorrect = false,
+                        wasDismissed = false,
+                        wasTimerExpired = false,
+                        responseTimeMs = System.currentTimeMillis() - startTime,
+                        sourceApp = sourceApp
+                    )
+                )
                 selectedTile = tile
             }
         }

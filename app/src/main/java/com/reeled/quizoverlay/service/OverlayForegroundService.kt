@@ -287,18 +287,9 @@ class OverlayForegroundService : Service() {
     }
 
     private suspend fun reconcileOverlayState() {
-        val attached = overlayView?.isAttachedToWindow == true
-        if (!attached) {
-            if (overlayView != null) {
-                overlayView = null
-                currentOverlaySourceApp = null
-                currentViewLifecycleOwner?.let { owner ->
-                    owner.onPause()
-                    owner.onStop()
-                    owner.onDestroy()
-                    currentViewLifecycleOwner = null
-                }
-            }
+        val view = overlayView
+        if (view == null) {
+            // Check if we have a stale flag in triggerPrefs
             val state = triggerPrefs.getTriggerState()
             if (state.overlayActive) {
                 triggerPrefs.setOverlayActive(false)
@@ -310,27 +301,32 @@ class OverlayForegroundService : Service() {
             return
         }
 
-        val activeSourceApp = currentOverlaySourceApp
-        if (overlayView != null && activeSourceApp != null) {
-            val currentForeground = triggerEngineForegroundPackage()
-            // Strict check: if user leaves the target app, the quiz is dismissed.
-            if (currentForeground != activeSourceApp) {
-                withContext(Dispatchers.Main) {
-                    onQuizDismissed(activeSourceApp) // Helper to trigger result with wasDismissed = true
+        // If the view is attached, check for app switches.
+        // We only check for app switches if the view is attached to a window.
+        if (view.isAttachedToWindow) {
+            val activeSourceApp = currentOverlaySourceApp
+            if (activeSourceApp != null) {
+                val currentForeground = triggerEngineForegroundPackage()
+                
+                // Only dismiss if we are CERTAIN we are in a different, known app.
+                // Avoid dismissing on null (transient transitions) or system UI (home, recent).
+                if (currentForeground != null && 
+                    currentForeground != activeSourceApp && 
+                    ForegroundAppDetector.TARGET_PACKAGES.contains(currentForeground)) {
+                    
+                    withContext(Dispatchers.Main) {
+                        logEventSafely(
+                            eventType = "overlay_removed_app_switched",
+                            payloadJson = "{\"expected\":\"${jsonSafe(activeSourceApp)}\",\"actual\":\"${jsonSafe(currentForeground)}\"}"
+                        )
+                        onQuizDismissed(activeSourceApp)
+                    }
                 }
-                logEventSafely(
-                    eventType = "overlay_removed_app_switched",
-                    payloadJson = "{\"expected\":\"${jsonSafe(activeSourceApp)}\",\"actual\":\"${jsonSafe(currentForeground.orEmpty())}\"}"
-                )
             }
         }
     }
 
     private fun onQuizDismissed(sourceApp: String) {
-        val view = overlayView ?: return
-        // We need the config ID, but since we're dismissing due to app switch, 
-        // we can just use a placeholder or the last known ID if we stored it.
-        // For simplicity, we call removeOverlayIfShowing and let the service state reset.
         removeOverlayIfShowing()
     }
 
@@ -422,9 +418,15 @@ class OverlayForegroundService : Service() {
     }
 
     private fun onQuizResult(result: QuizAttemptResult) {
+        // Use a lock-like check to ensure we only process one "ending" result per overlay instance
+        val currentView = overlayView
+        if (currentView == null) return
+
         serviceScope.launch(Dispatchers.IO) {
             try {
                 withContext(Dispatchers.Main) {
+                    if (overlayView != currentView) return@withContext // Already handled this view
+                    
                     if (result.wasTimerExpired) {
                         totalTimerExpired++
                     } else if (result.wasDismissed) {
@@ -484,18 +486,22 @@ class OverlayForegroundService : Service() {
     private fun removeOverlayIfShowing() {
         overlayView?.let { view ->
             try {
-                windowManager.removeView(view)
+                if (view.isAttachedToWindow || view.windowToken != null) {
+                    windowManager.removeView(view)
+                }
             } catch (_: Exception) {
             }
-            overlayView = null
-            currentOverlaySourceApp = null
         }
+        overlayView = null
+        currentOverlaySourceApp = null
+
         currentViewLifecycleOwner?.let { owner ->
             owner.onPause()
             owner.onStop()
             owner.onDestroy()
-            currentViewLifecycleOwner = null
         }
+        currentViewLifecycleOwner = null
+
         serviceScope.launch(Dispatchers.IO) { triggerPrefs.setOverlayActive(false) }
         syncAudioState()
     }

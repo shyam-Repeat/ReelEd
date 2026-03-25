@@ -64,37 +64,39 @@ fun QuizCardRouter(
     var timeLeft by remember { mutableStateOf(totalTimerSeconds) }
     var wrongAttempts by remember { mutableStateOf(0) }
 
-    if (!quizFinished) {
-        LaunchedEffect(Unit) {
-            val startTime = System.currentTimeMillis()
-            while (timeLeft > 0 && !quizFinished) {
-                delay(200)
-                val elapsed = (System.currentTimeMillis() - startTime) / 1000f
-                timeLeft = (totalTimerSeconds - elapsed).coerceAtLeast(0f)
-            }
-            if (timeLeft <= 0 && !quizFinished) {
-                quizFinished = true
-                soundManager.play("wrong")
-                delay(800)
-                onResult(
-                    QuizAttemptResult(
-                        questionId = config.id,
-                        selectedOptionId = "TIMER_EXPIRED",
-                        isCorrect = false,
-                        wasDismissed = false,
-                        wasTimerExpired = true,
-                        responseTimeMs = (totalTimerSeconds * 1000).toLong(),
-                        sourceApp = sourceApp
-                    )
+    // Timer Loop
+    LaunchedEffect(quizFinished) {
+        if (quizFinished) return@LaunchedEffect
+        
+        val startTime = System.currentTimeMillis()
+        while (timeLeft > 0 && !quizFinished) {
+            delay(250)
+            val elapsed = (System.currentTimeMillis() - startTime) / 1000f
+            timeLeft = (totalTimerSeconds - elapsed).coerceAtLeast(0f)
+        }
+        
+        if (timeLeft <= 0 && !quizFinished) {
+            quizFinished = true // Mark finished IMMEDIATELY
+            soundManager.play("wrong")
+            delay(800)
+            onResult(
+                QuizAttemptResult(
+                    questionId = config.id,
+                    selectedOptionId = "TIMER_EXPIRED",
+                    isCorrect = false,
+                    wasDismissed = false,
+                    wasTimerExpired = true,
+                    responseTimeMs = (totalTimerSeconds * 1000).toLong(),
+                    sourceApp = sourceApp
                 )
-            }
+            )
         }
     }
 
     val onResultIntercept: (QuizAttemptResult) -> Unit = { result ->
         if (!quizFinished) {
             if (result.isCorrect) {
-                quizFinished = true
+                quizFinished = true // Mark finished IMMEDIATELY
                 soundManager.play("correct")
                 showConfetti = true
                 scope.launch {
@@ -114,9 +116,9 @@ fun QuizCardRouter(
                 }
                 
                 if (wrongAttempts >= 3) {
-                    quizFinished = true
+                    quizFinished = true // Mark finished IMMEDIATELY
                     scope.launch {
-                        delay(1500)
+                        delay(1200)
                         onResult(result) // End quiz after 3rd strike
                     }
                 }

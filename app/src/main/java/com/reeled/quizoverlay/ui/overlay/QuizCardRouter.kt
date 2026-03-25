@@ -92,33 +92,33 @@ fun QuizCardRouter(
     }
 
     val onResultIntercept: (QuizAttemptResult) -> Unit = { result ->
-        if (quizFinished) return@onResultIntercept
-        
-        if (result.isCorrect) {
-            quizFinished = true
-            soundManager.play("correct")
-            showConfetti = true
-            scope.launch {
-                delay(1500)
-                onResult(result)
-            }
-        } else {
-            // INCORRECT ATTEMPT - Count strikes
-            wrongAttempts++
-            soundManager.play("wrong")
-            scope.launch {
-                repeat(4) {
-                    shakeOffset.animateTo(10f, tween(50))
-                    shakeOffset.animateTo(-10f, tween(50))
-                }
-                shakeOffset.animateTo(0f, tween(50))
-            }
-            
-            if (wrongAttempts >= 3) {
+        if (!quizFinished) {
+            if (result.isCorrect) {
                 quizFinished = true
+                soundManager.play("correct")
+                showConfetti = true
                 scope.launch {
                     delay(1500)
-                    onResult(result) // End quiz after 3rd strike
+                    onResult(result)
+                }
+            } else {
+                // INCORRECT ATTEMPT - Count strikes
+                wrongAttempts++
+                soundManager.play("wrong")
+                scope.launch {
+                    repeat(4) {
+                        shakeOffset.animateTo(10f, tween(50))
+                        shakeOffset.animateTo(-10f, tween(50))
+                    }
+                    shakeOffset.animateTo(0f, tween(50))
+                }
+                
+                if (wrongAttempts >= 3) {
+                    quizFinished = true
+                    scope.launch {
+                        delay(1500)
+                        onResult(result) // End quiz after 3rd strike
+                    }
                 }
             }
         }

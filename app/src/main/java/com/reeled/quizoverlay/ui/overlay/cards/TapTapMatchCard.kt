@@ -131,7 +131,7 @@ fun TapTapMatchCard(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(bottom = 20.dp, start = 16.dp, end = 16.dp, top = 12.dp),
+            .padding(bottom = 12.dp, start = 14.dp, end = 14.dp, top = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
@@ -155,27 +155,32 @@ fun TapTapMatchCard(
             textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
-        MatchTileRow(
-            tiles = leftTiles,
-            matchedKeys = matchedKeys,
-            selectedTile = selectedTile,
-            pairColors = pairColors,
-            onTileClick = ::onTileClick
-        )
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            MatchTileRow(
+                tiles = leftTiles,
+                matchedKeys = matchedKeys,
+                selectedTile = selectedTile,
+                pairColors = pairColors,
+                modifier = Modifier.weight(1f),
+                onTileClick = ::onTileClick
+            )
 
-        Spacer(modifier = Modifier.height(10.dp))
-
-        MatchTileRow(
-            tiles = rightTiles,
-            matchedKeys = matchedKeys,
-            selectedTile = selectedTile,
-            pairColors = pairColors,
-            onTileClick = ::onTileClick
-        )
-
-        Spacer(modifier = Modifier.weight(1f))
+            MatchTileRow(
+                tiles = rightTiles,
+                matchedKeys = matchedKeys,
+                selectedTile = selectedTile,
+                pairColors = pairColors,
+                modifier = Modifier.weight(1f),
+                onTileClick = ::onTileClick
+            )
+        }
     }
 }
 
@@ -185,10 +190,11 @@ private fun MatchTileRow(
     matchedKeys: Set<String>,
     selectedTile: MatchTile?,
     pairColors: List<Color>,
+    modifier: Modifier = Modifier,
     onTileClick: (MatchTile) -> Unit
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -202,7 +208,9 @@ private fun MatchTileRow(
                 baseColor = baseColor,
                 isMatched = isMatched,
                 isSelected = isSelected,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
                 onClick = { onTileClick(tile) }
             )
         }
@@ -223,17 +231,16 @@ fun MatchGridTile(
 
     Box(
         modifier = modifier
-            .aspectRatio(1f)
             .alpha(alpha)
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(20.dp))
             .background(baseColor)
             .let {
                 if (isSelected) {
-                    it.border(2.5.dp, Color(0xFF534AB7), RoundedCornerShape(16.dp))
+                    it.border(3.dp, Color(0xFF534AB7), RoundedCornerShape(20.dp))
                 } else if (isMatched) {
-                    it.border(2.5.dp, Color(0xFF3B6D11), RoundedCornerShape(16.dp))
+                    it.border(3.dp, Color(0xFF3B6D11), RoundedCornerShape(20.dp))
                 } else {
-                    it.border(2.dp, Color(0xFFA7B999), RoundedCornerShape(16.dp))
+                    it.border(2.dp, Color(0xFFA7B999), RoundedCornerShape(20.dp))
                 }
             }
             .clickable(enabled = !isMatched, onClick = onClick),
@@ -242,7 +249,7 @@ fun MatchGridTile(
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 text = label,
-                fontSize = 32.sp,
+                fontSize = 44.sp,
                 textAlign = TextAlign.Center
             )
             if (isMatched) {

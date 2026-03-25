@@ -5,7 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -48,32 +49,33 @@ fun TapChoiceCard(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(bottom = 32.dp),
-        verticalArrangement = Arrangement.SpaceBetween,
+            .padding(bottom = 20.dp, start = 16.dp, end = 16.dp),
+        verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         val instruction = config.display.instructionLabel.ifBlank {
             stringResource(R.string.quiz_instruction_default)
         }
 
-        // Center question text + instruction block.
+        // Big centered prompt/emoji section.
         Box(
             modifier = Modifier
-                .weight(1f)
+                .weight(0.52f)
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp),
+                .padding(horizontal = 8.dp),
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = config.display.questionText,
-                    style = MaterialTheme.typography.headlineMedium,
+                    style = MaterialTheme.typography.displayLarge,
                     color = Color(0xFF333333),
                     fontWeight = FontWeight.Bold,
+                    fontSize = 72.sp,
                     textAlign = TextAlign.Center
                 )
 
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(14.dp))
 
                 Text(
                     text = instruction,
@@ -84,14 +86,13 @@ fun TapChoiceCard(
             }
         }
 
-        // Options row at the bottom.
-        Row(
+        // Full-width answer area with oval buttons.
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 120.dp)
-                .padding(top = 24.dp, start = 8.dp, end = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
-            verticalAlignment = Alignment.CenterVertically
+                .weight(0.48f)
+                .fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.Top),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             payload.options.forEachIndexed { index, option ->
                 val color = option.color?.let { parseColor(it) } ?: defaultColors[index % defaultColors.size]
@@ -104,7 +105,9 @@ fun TapChoiceCard(
                     isSelected = isSelected,
                     isDimmed = isAnySelected && !isSelected,
                     enabled = !locked,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 84.dp),
                     onClick = {
                         selectedOptionId = option.id
                         locked = true
@@ -145,18 +148,18 @@ fun ChoiceCircleButton(
     onClick: () -> Unit
 ) {
     val alpha by animateFloatAsState(if (isDimmed) 0.35f else 1f)
+    val shape: Shape = RoundedCornerShape(percent = 50)
 
     Box(
         modifier = modifier
-            .aspectRatio(1f) // Keep it a perfect circle
             .alpha(alpha)
-            .clip(CircleShape)
+            .clip(shape)
             .background(color)
             .let {
                 if (isSelected) {
-                    it.border(3.dp, Color(0xFF3C3489), CircleShape)
+                    it.border(3.dp, Color(0xFF3C3489), shape)
                         .padding(2.dp)
-                        .border(4.dp, Color(0xFFCECBF6), CircleShape)
+                        .border(4.dp, Color(0xFFCECBF6), shape)
                 } else it
             }
             .clickable(enabled = enabled, onClick = onClick),

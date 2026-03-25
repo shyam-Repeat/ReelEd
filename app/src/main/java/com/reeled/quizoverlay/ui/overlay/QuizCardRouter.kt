@@ -31,6 +31,7 @@ import com.reeled.quizoverlay.ui.overlay.cards.TapChoiceCard
 import com.reeled.quizoverlay.ui.overlay.cards.TapTapMatchCard
 import com.reeled.quizoverlay.ui.overlay.components.ConfettiEffect
 import com.reeled.quizoverlay.ui.overlay.components.ModernQuizBackground
+import com.reeled.quizoverlay.ui.overlay.components.ParentCornerButton
 import com.reeled.quizoverlay.ui.overlay.components.TrainAnimation
 import com.reeled.quizoverlay.ui.overlay.components.RightMascot
 import com.reeled.quizoverlay.util.SoundManager
@@ -196,6 +197,15 @@ fun QuizCardRouter(
                         modifier = Modifier.fillMaxSize(),
                         trigger = showConfetti,
                         onFinished = { showConfetti = false }
+                    )
+                }
+
+                if (!config.rules.strictMode) {
+                    ParentCornerButton(
+                        sourceApp = sourceApp,
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(start = 14.dp, bottom = 14.dp)
                     )
                 }
             }

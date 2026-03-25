@@ -48,7 +48,6 @@ import com.reeled.quizoverlay.model.QuizCardConfig
 import com.reeled.quizoverlay.model.QuizPayload
 import com.reeled.quizoverlay.model.payload.DragChip
 import com.reeled.quizoverlay.ui.overlay.components.ChipItem
-import com.reeled.quizoverlay.ui.overlay.components.ParentCornerButton
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Locale
@@ -257,12 +256,6 @@ fun DragDropMatchCard(
                         )
                     }
                 }
-            }
-        }
-
-        if (!config.rules.strictMode) {
-            Box(modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp)) {
-                ParentCornerButton()
             }
         }
     }

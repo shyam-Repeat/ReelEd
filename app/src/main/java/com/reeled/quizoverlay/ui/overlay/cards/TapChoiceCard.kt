@@ -6,7 +6,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -24,7 +23,6 @@ import com.reeled.quizoverlay.R
 import com.reeled.quizoverlay.model.QuizAttemptResult
 import com.reeled.quizoverlay.model.QuizCardConfig
 import com.reeled.quizoverlay.model.QuizPayload
-import com.reeled.quizoverlay.model.payload.ChoiceOption
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -48,64 +46,58 @@ fun TapChoiceCard(
     )
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(bottom = 32.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(bottom = 32.dp),
         verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Large Question Emoji
+        val instruction = config.display.instructionLabel.ifBlank {
+            stringResource(R.string.quiz_instruction_default)
+        }
+
+        // Center question text + instruction block.
         Box(
             modifier = Modifier
                 .weight(1f)
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = getSubjectEmoji(config.subject),
-                fontSize = 120.sp,
-                textAlign = TextAlign.Center
-            )
-        }
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = config.display.questionText,
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = Color(0xFF333333),
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
 
-        // Question text and instructions
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(horizontal = 24.dp)
-        ) {
-            Text(
-                text = config.display.questionText,
-                style = MaterialTheme.typography.headlineMedium,
-                color = Color(0xFF333333),
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
-            )
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            val instruction = config.display.instructionLabel.ifBlank {
-                stringResource(R.string.quiz_instruction_default)
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Text(
+                    text = instruction,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = Color(0xFF666666),
+                    textAlign = TextAlign.Center
+                )
             }
-            
-            Text(
-                text = instruction,
-                style = MaterialTheme.typography.bodyLarge,
-                color = Color(0xFF666666),
-                textAlign = TextAlign.Center
-            )
         }
 
-        // Options Row at the bottom
+        // Options row at the bottom.
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 40.dp, start = 16.dp, end = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
+                .heightIn(min = 120.dp)
+                .padding(top = 24.dp, start = 8.dp, end = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
             verticalAlignment = Alignment.CenterVertically
         ) {
             payload.options.forEachIndexed { index, option ->
                 val color = option.color?.let { parseColor(it) } ?: defaultColors[index % defaultColors.size]
                 val isSelected = selectedOptionId == option.id
                 val isAnySelected = selectedOptionId != null
-                
+
                 ChoiceCircleButton(
                     label = option.label,
                     color = color,
@@ -153,18 +145,18 @@ fun ChoiceCircleButton(
     onClick: () -> Unit
 ) {
     val alpha by animateFloatAsState(if (isDimmed) 0.35f else 1f)
-    
+
     Box(
         modifier = modifier
             .aspectRatio(1f) // Keep it a perfect circle
             .alpha(alpha)
             .clip(CircleShape)
             .background(color)
-            .let { 
+            .let {
                 if (isSelected) {
                     it.border(3.dp, Color(0xFF3C3489), CircleShape)
-                      .padding(2.dp)
-                      .border(4.dp, Color(0xFFCECBF6), CircleShape)
+                        .padding(2.dp)
+                        .border(4.dp, Color(0xFFCECBF6), CircleShape)
                 } else it
             }
             .clickable(enabled = enabled, onClick = onClick),
@@ -175,21 +167,12 @@ fun ChoiceCircleButton(
                 text = label,
                 color = Color.White,
                 fontWeight = FontWeight.Black,
-                fontSize = 18.sp,
+                fontSize = 24.sp,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(4.dp)
+                maxLines = 2,
+                modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp)
             )
         }
-    }
-}
-
-fun getSubjectEmoji(subject: String): String {
-    return when (subject.lowercase()) {
-        "math" -> "➗"
-        "english" -> "📖"
-        "science" -> "🧪"
-        "general" -> "🍎"
-        else -> "🌟"
     }
 }
 

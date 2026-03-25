@@ -24,8 +24,6 @@ import com.reeled.quizoverlay.model.QuizAttemptResult
 import com.reeled.quizoverlay.model.QuizCardConfig
 import com.reeled.quizoverlay.model.QuizPayload
 import com.reeled.quizoverlay.ui.overlay.components.ChipItem
-import com.reeled.quizoverlay.ui.overlay.components.ParentCornerButton
-import com.reeled.quizoverlay.ui.overlay.components.RiveMedia
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -190,8 +188,6 @@ fun FillBlankCard(
                     )
                 }
             }
-
-            if (!config.rules.strictMode) ParentCornerButton()
         }
     }
 }

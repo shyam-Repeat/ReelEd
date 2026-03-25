@@ -12,11 +12,16 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import com.reeled.quizoverlay.prefs.PinPrefs
 import com.reeled.quizoverlay.prefs.TriggerPrefs
+import com.reeled.quizoverlay.service.OverlayForegroundService
 import com.reeled.quizoverlay.ui.theme.ReelEdTheme
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class PinActivity : ComponentActivity() {
+
+    companion object {
+        const val EXTRA_SOURCE_APP = "extra_source_app"
+    }
 
     private val pinPrefs by lazy { PinPrefs(this) }
     private val triggerPrefs by lazy { TriggerPrefs(this) }
@@ -61,7 +66,19 @@ class PinActivity : ComponentActivity() {
                         onDurationSelected = { minutes ->
                             lifecycleScope.launch {
                                 val expiry = System.currentTimeMillis() + (minutes * 60 * 1000)
-                                triggerPrefs.setPause(true, expiry)
+                                val sourceApp = intent.getStringExtra(EXTRA_SOURCE_APP)
+                                if (!sourceApp.isNullOrBlank()) {
+                                    triggerPrefs.setAppPause(sourceApp, expiry)
+                                    startService(
+                                        OverlayForegroundService.startIntent(this@PinActivity).apply {
+                                            action = OverlayForegroundService.ACTION_SET_APP_PAUSE
+                                            putExtra(OverlayForegroundService.EXTRA_SOURCE_APP, sourceApp)
+                                            putExtra(OverlayForegroundService.EXTRA_PAUSE_EXPIRY_MS, expiry)
+                                        }
+                                    )
+                                } else {
+                                    triggerPrefs.setPause(true, expiry)
+                                }
                                 finish()
                             }
                         },

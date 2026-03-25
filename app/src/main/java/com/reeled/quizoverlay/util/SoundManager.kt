@@ -8,7 +8,8 @@ import com.reeled.quizoverlay.R
 class SoundManager(private val context: Context) {
     private val soundPool: SoundPool
     private val soundMap = mutableMapOf<String, Int>()
-    private var isLoaded = false
+    private val loadedSoundIds = mutableSetOf<Int>()
+    private val pendingPlayNames = mutableListOf<String>()
 
     init {
         val audioAttributes = AudioAttributes.Builder()
@@ -28,8 +29,11 @@ class SoundManager(private val context: Context) {
         loadSound("match", R.raw.sfx_match)
         loadSound("train", R.raw.sfx_train)
 
-        soundPool.setOnLoadCompleteListener { _, _, _ ->
-            isLoaded = true
+        soundPool.setOnLoadCompleteListener { _, sampleId, status ->
+            if (status == 0) {
+                loadedSoundIds.add(sampleId)
+                flushPendingPlays()
+            }
         }
     }
 
@@ -42,17 +46,38 @@ class SoundManager(private val context: Context) {
     }
 
     fun play(name: String) {
-        val soundId = soundMap[name] ?: return
-        soundPool.play(soundId, 1f, 1f, 1, 0, 1f)
+        playInternal(name, leftVolume = 1f, rightVolume = 1f)
     }
 
     fun playTrain(durationMs: Int) {
-        val soundId = soundMap["train"] ?: return
-        // We could loop or just play once depending on sound file length
-        soundPool.play(soundId, 0.7f, 0.7f, 1, 0, 1f)
+        // Keep parameter for call-site compatibility.
+        playInternal("train", leftVolume = 0.7f, rightVolume = 0.7f)
     }
 
     fun release() {
         soundPool.release()
+    }
+
+    private fun playInternal(name: String, leftVolume: Float, rightVolume: Float) {
+        val soundId = soundMap[name] ?: return
+        if (loadedSoundIds.contains(soundId)) {
+            soundPool.play(soundId, leftVolume, rightVolume, 1, 0, 1f)
+        } else {
+            pendingPlayNames.add(name)
+        }
+    }
+
+    private fun flushPendingPlays() {
+        if (pendingPlayNames.isEmpty()) return
+        val iterator = pendingPlayNames.iterator()
+        while (iterator.hasNext()) {
+            val name = iterator.next()
+            val soundId = soundMap[name] ?: continue
+            if (loadedSoundIds.contains(soundId)) {
+                val volume = if (name == "train") 0.7f else 1f
+                soundPool.play(soundId, volume, volume, 1, 0, 1f)
+                iterator.remove()
+            }
+        }
     }
 }

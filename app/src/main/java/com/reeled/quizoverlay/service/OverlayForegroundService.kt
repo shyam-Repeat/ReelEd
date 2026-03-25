@@ -59,6 +59,9 @@ class OverlayForegroundService : Service() {
         const val ACTION_PAUSE = "com.reeled.quizoverlay.ACTION_PAUSE"
         const val ACTION_RESUME = "com.reeled.quizoverlay.ACTION_RESUME"
         const val ACTION_EXTEND = "com.reeled.quizoverlay.ACTION_EXTEND"
+        const val ACTION_SET_APP_PAUSE = "com.reeled.quizoverlay.ACTION_SET_APP_PAUSE"
+        const val EXTRA_SOURCE_APP = "extra_source_app"
+        const val EXTRA_PAUSE_EXPIRY_MS = "extra_pause_expiry_ms"
 
         fun startIntent(context: Context): Intent =
             Intent(context, OverlayForegroundService::class.java)
@@ -85,6 +88,10 @@ class OverlayForegroundService : Service() {
 
     private var overlayView: ComposeView? = null
     private var currentOverlaySourceApp: String? = null
+    private var currentOverlayQuestionId: String? = null
+    private var overlayShownAtMs: Long = 0L
+    private var overlayTimeoutMs: Long = 120_000L
+    private var overlayForegroundMismatchSinceMs: Long = 0L
     private var currentViewLifecycleOwner: OverlayLifecycleOwner? = null
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var pollingJob: Job? = null
@@ -92,6 +99,7 @@ class OverlayForegroundService : Service() {
     private var audioMutedForSession: Boolean = false
     private var lastReportedSkipReason: String? = null
     private var lastTestModeQuizTime: Long = 0
+    private var lastNotificationPaused: Boolean? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -133,19 +141,44 @@ class OverlayForegroundService : Service() {
                 return START_NOT_STICKY
             }
             ACTION_RESUME -> {
-                serviceScope.launch { triggerPrefs.clearParentPause() }
+                serviceScope.launch {
+                    triggerPrefs.clearParentPause()
+                    triggerPrefs.clearAllAppPauses()
+                    refreshNotificationPauseState()
+                }
             }
             ACTION_EXTEND -> {
                 serviceScope.launch {
                     val state = triggerPrefs.getTriggerState()
                     val base = maxOf(System.currentTimeMillis(), state.parentPauseExpiryMs)
                     triggerPrefs.setPause(true, base + 30 * 60 * 1000)
+                    refreshNotificationPauseState()
+                }
+            }
+            ACTION_SET_APP_PAUSE -> {
+                val sourceApp = intent.getStringExtra(EXTRA_SOURCE_APP)
+                val expiryMs = intent.getLongExtra(EXTRA_PAUSE_EXPIRY_MS, 0L)
+                if (!sourceApp.isNullOrBlank() && expiryMs > System.currentTimeMillis()) {
+                    serviceScope.launch {
+                        triggerPrefs.setAppPause(sourceApp, expiryMs)
+                        if (currentOverlaySourceApp == sourceApp) {
+                            withContext(Dispatchers.Main) {
+                                logEventSafely(
+                                    eventType = "overlay_removed_parent_pause_app",
+                                    payloadJson = "{\"source_app\":\"${jsonSafe(sourceApp)}\",\"expiry_ms\":$expiryMs}"
+                                )
+                                removeOverlayIfShowing()
+                            }
+                        }
+                        refreshNotificationPauseState()
+                    }
                 }
             }
         }
 
         sessionActive = true
         startForeground(NOTIF_ID, buildNotification(paused = false))
+        serviceScope.launch { refreshNotificationPauseState() }
         syncAudioState()
 
         startPollingLoop()
@@ -197,7 +230,9 @@ class OverlayForegroundService : Service() {
                         payloadJson = "{\"message\":\"${jsonSafe(exception.message.orEmpty())}\"}"
                     )
                 }
-                delay(TriggerConfig.POLLING_INTERVAL_MS)
+                refreshNotificationPauseState()
+                val nextDelay = if (overlayView != null) 1000L else TriggerConfig.POLLING_INTERVAL_MS
+                delay(nextDelay)
             }
         }
     }
@@ -289,6 +324,7 @@ class OverlayForegroundService : Service() {
     private suspend fun reconcileOverlayState() {
         val view = overlayView
         if (view == null) {
+            overlayForegroundMismatchSinceMs = 0L
             // Check if we have a stale flag in triggerPrefs
             val state = triggerPrefs.getTriggerState()
             if (state.overlayActive) {
@@ -304,30 +340,76 @@ class OverlayForegroundService : Service() {
         // If the view is attached, check for app switches.
         // We only check for app switches if the view is attached to a window.
         if (view.isAttachedToWindow) {
-            val activeSourceApp = currentOverlaySourceApp
-            if (activeSourceApp != null) {
-                val currentForeground = triggerEngineForegroundPackage()
-                
-                // Only dismiss if we are CERTAIN we are in a different, known app.
-                // Avoid dismissing on null (transient transitions) or system UI (home, recent).
-                if (currentForeground != null && 
-                    currentForeground != activeSourceApp && 
-                    ForegroundAppDetector.TARGET_PACKAGES.contains(currentForeground)) {
-                    
+            val now = System.currentTimeMillis()
+
+            // Service-side timeout safety: always end quiz even if UI timer fails.
+            if (overlayShownAtMs > 0L && now - overlayShownAtMs >= overlayTimeoutMs) {
+                val qid = currentOverlayQuestionId
+                val src = currentOverlaySourceApp
+                if (qid != null && src != null) {
                     withContext(Dispatchers.Main) {
                         logEventSafely(
-                            eventType = "overlay_removed_app_switched",
-                            payloadJson = "{\"expected\":\"${jsonSafe(activeSourceApp)}\",\"actual\":\"${jsonSafe(currentForeground)}\"}"
+                            eventType = "overlay_timeout_enforced",
+                            payloadJson = "{\"question_id\":\"${jsonSafe(qid)}\",\"source_app\":\"${jsonSafe(src)}\"}"
                         )
-                        onQuizDismissed(activeSourceApp)
+                        onQuizResult(
+                            QuizAttemptResult(
+                                questionId = qid,
+                                selectedOptionId = "TIMER_EXPIRED_SERVICE",
+                                isCorrect = false,
+                                wasDismissed = false,
+                                wasTimerExpired = true,
+                                responseTimeMs = overlayTimeoutMs,
+                                sourceApp = src
+                            )
+                        )
+                    }
+                }
+                return
+            }
+
+            val activeSourceApp = currentOverlaySourceApp
+            if (activeSourceApp != null) {
+                val appPauseExpiry = triggerPrefs.getAppPauseExpiry(activeSourceApp)
+                if (appPauseExpiry > now) {
+                    withContext(Dispatchers.Main) {
+                        logEventSafely(
+                            eventType = "overlay_removed_parent_pause_app",
+                            payloadJson = "{\"source_app\":\"${jsonSafe(activeSourceApp)}\",\"expiry_ms\":$appPauseExpiry}"
+                        )
+                        removeOverlayIfShowing()
+                    }
+                    return
+                }
+
+                val currentForeground = triggerEngineForegroundPackage()
+
+                // Dismiss when source app is no longer foreground (including app close/home).
+                if (currentForeground == activeSourceApp) {
+                    overlayForegroundMismatchSinceMs = 0L
+                } else {
+                    if (overlayForegroundMismatchSinceMs == 0L) {
+                        overlayForegroundMismatchSinceMs = now
+                    }
+                    if (now - overlayForegroundMismatchSinceMs >= 1500L) {
+                        val qid = currentOverlayQuestionId
+                        if (qid != null) {
+                            withContext(Dispatchers.Main) {
+                                logEventSafely(
+                                    eventType = "overlay_removed_app_switched",
+                                    payloadJson = "{\"question_id\":\"${jsonSafe(qid)}\",\"expected\":\"${jsonSafe(activeSourceApp)}\",\"actual\":\"${jsonSafe(currentForeground.orEmpty())}\"}"
+                                )
+                                onQuizDismissed(qid, activeSourceApp)
+                            }
+                        } else {
+                            withContext(Dispatchers.Main) {
+                                removeOverlayIfShowing()
+                            }
+                        }
                     }
                 }
             }
         }
-    }
-
-    private fun onQuizDismissed(sourceApp: String) {
-        removeOverlayIfShowing()
     }
 
     private fun triggerEngineForegroundPackage(): String? {
@@ -405,6 +487,10 @@ class OverlayForegroundService : Service() {
 
         currentViewLifecycleOwner = viewLifecycleOwner
         currentOverlaySourceApp = sourceApp
+        currentOverlayQuestionId = question.id
+        overlayShownAtMs = System.currentTimeMillis()
+        overlayTimeoutMs = ((if (question.timerSeconds > 0) question.timerSeconds else 120) * 1000L)
+        overlayForegroundMismatchSinceMs = 0L
         overlayView = composeView
         serviceScope.launch(Dispatchers.IO) {
             triggerPrefs.markQuizShown(question.id)
@@ -483,6 +569,20 @@ class OverlayForegroundService : Service() {
         )
     }
 
+    private fun onQuizDismissed(questionId: String, sourceApp: String) {
+        onQuizResult(
+            QuizAttemptResult(
+                questionId = questionId,
+                selectedOptionId = null,
+                isCorrect = false,
+                wasDismissed = true,
+                wasTimerExpired = false,
+                responseTimeMs = 0,
+                sourceApp = sourceApp
+            )
+        )
+    }
+
     private fun removeOverlayIfShowing() {
         overlayView?.let { view ->
             try {
@@ -494,6 +594,10 @@ class OverlayForegroundService : Service() {
         }
         overlayView = null
         currentOverlaySourceApp = null
+        currentOverlayQuestionId = null
+        overlayShownAtMs = 0L
+        overlayTimeoutMs = 120_000L
+        overlayForegroundMismatchSinceMs = 0L
 
         currentViewLifecycleOwner?.let { owner ->
             owner.onPause()
@@ -583,12 +687,12 @@ class OverlayForegroundService : Service() {
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(if (paused) "Learning mode paused" else "Learning mode active")
-            .setContentText(if (paused) "Quiz overlay is paused" else "Quiz overlay is running")
+            .setContentText(if (paused) "Quiz overlay paused for one or more apps" else "Quiz overlay is running")
             .setSmallIcon(R.drawable.ic_brain)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true)
             .addAction(0, "Pause Quizzes", pausePendingIntent)
-            .addAction(0, "Resume", resumePendingIntent)
+            .addAction(0, "Resume All", resumePendingIntent)
             .addAction(0, "Extend", extendPendingIntent)
             .build()
     }
@@ -629,5 +733,25 @@ class OverlayForegroundService : Service() {
     }
     private fun jsonSafe(value: String): String =
         value.replace("\\", "\\\\").replace("\"", "\\\"")
+
+    private suspend fun refreshNotificationPauseState() {
+        val paused = isPauseActiveNow()
+        if (lastNotificationPaused == paused) return
+        val notification = buildNotification(paused = paused)
+        val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        nm.notify(NOTIF_ID, notification)
+        lastNotificationPaused = paused
+    }
+
+    private suspend fun isPauseActiveNow(): Boolean {
+        val now = System.currentTimeMillis()
+        val state = triggerPrefs.getTriggerState()
+        val parentPaused = state.parentPauseActive && now < state.parentPauseExpiryMs
+        if (state.parentPauseActive && !parentPaused) {
+            triggerPrefs.clearParentPause()
+        }
+        val anyAppPaused = triggerPrefs.hasActiveAppPause()
+        return parentPaused || anyAppPaused
+    }
 
 }

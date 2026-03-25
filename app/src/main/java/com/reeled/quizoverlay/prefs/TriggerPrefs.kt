@@ -15,6 +15,7 @@ class TriggerPrefs(private val context: Context) {
     companion object {
         private val PAUSE_ACTIVE = booleanPreferencesKey("pause_active")
         private val PAUSE_EXPIRY = longPreferencesKey("pause_expiry")
+        private val APP_PAUSE_ENTRIES = stringSetPreferencesKey("app_pause_entries")
         private val OVERLAY_ACTIVE = booleanPreferencesKey("overlay_active")
         private val QUIZZES_SHOWN_TODAY = intPreferencesKey("quizzes_shown_today")
         private val LAST_QUIZ_SHOWN_TIME = longPreferencesKey("last_quiz_shown_time")
@@ -69,6 +70,56 @@ class TriggerPrefs(private val context: Context) {
         }
     }
 
+    suspend fun setAppPause(packageName: String, expiryMs: Long) {
+        context.triggerDataStore.edit { prefs ->
+            val current = prefs[APP_PAUSE_ENTRIES].orEmpty()
+            val updated = current
+                .filterNot { decodePackageName(it) == packageName }
+                .toMutableSet()
+            if (expiryMs > System.currentTimeMillis()) {
+                updated += encodeAppPause(packageName, expiryMs)
+            }
+            prefs[APP_PAUSE_ENTRIES] = updated
+        }
+    }
+
+    suspend fun clearAppPause(packageName: String) {
+        context.triggerDataStore.edit { prefs ->
+            val current = prefs[APP_PAUSE_ENTRIES].orEmpty()
+            prefs[APP_PAUSE_ENTRIES] = current.filterNot { decodePackageName(it) == packageName }.toSet()
+        }
+    }
+
+    suspend fun clearAllAppPauses() {
+        context.triggerDataStore.edit { prefs ->
+            prefs[APP_PAUSE_ENTRIES] = emptySet()
+        }
+    }
+
+    suspend fun hasActiveAppPause(): Boolean {
+        val now = System.currentTimeMillis()
+        val entries = context.triggerDataStore.data.first()[APP_PAUSE_ENTRIES].orEmpty()
+        val activeEntries = entries.filter { decodeExpiryMs(it) > now }.toSet()
+        if (activeEntries.size != entries.size) {
+            context.triggerDataStore.edit { prefs ->
+                prefs[APP_PAUSE_ENTRIES] = activeEntries
+            }
+        }
+        return activeEntries.isNotEmpty()
+    }
+
+    suspend fun getAppPauseExpiry(packageName: String): Long {
+        val entries = context.triggerDataStore.data.first()[APP_PAUSE_ENTRIES].orEmpty()
+        val now = System.currentTimeMillis()
+        val matched = entries.firstOrNull { decodePackageName(it) == packageName }
+        val expiry = matched?.let(::decodeExpiryMs) ?: 0L
+        if (expiry in 1 until now) {
+            clearAppPause(packageName)
+            return 0L
+        }
+        return expiry
+    }
+
     suspend fun markQuizShown(questionId: String) {
         context.triggerDataStore.edit {
             it[LAST_SHOWN_QUESTION_ID] = questionId
@@ -103,4 +154,13 @@ class TriggerPrefs(private val context: Context) {
 
     suspend fun getLastForegroundApp(): String = 
         context.triggerDataStore.data.first()[LAST_FOREGROUND_APP] ?: ""
+
+    private fun encodeAppPause(packageName: String, expiryMs: Long): String =
+        "$packageName::$expiryMs"
+
+    private fun decodePackageName(entry: String): String =
+        entry.substringBeforeLast("::", "")
+
+    private fun decodeExpiryMs(entry: String): Long =
+        entry.substringAfterLast("::", "0").toLongOrNull() ?: 0L
 }

@@ -41,6 +41,12 @@ class TriggerEngine(
 
         prefs.updateSessionIfNeeded(foregroundPackage)
 
+        val appPauseExpiryMs = prefs.getAppPauseExpiry(foregroundPackage)
+        if (appPauseExpiryMs > now) {
+            val remaining = (appPauseExpiryMs - now) / 1000
+            return skip("app_paused (${remaining}s)", foregroundPackage)
+        }
+
         if (state.quizzesShownToday >= TriggerConfig.MAX_DAILY) {
             return skip("daily_cap_reached", foregroundPackage)
         }

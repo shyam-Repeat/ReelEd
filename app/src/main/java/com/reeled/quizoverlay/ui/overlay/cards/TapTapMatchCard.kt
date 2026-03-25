@@ -5,9 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -41,27 +38,44 @@ fun TapTapMatchCard(
     val startTime = remember { System.currentTimeMillis() }
     val scope = rememberCoroutineScope()
 
-    // Flatten left and right items into a single list of 6 tiles
-    val tiles = remember(payload) {
-        val leftTiles = payload.pairs.map { MatchTile(it.leftId, it.leftLabel, TileSide.LEFT) }
-        val rightTiles = payload.pairs.map { MatchTile(it.rightId, it.rightLabel, TileSide.RIGHT) }
-        (leftTiles + rightTiles).shuffled()
+    // Keep payload order: top row left_items, bottom row right_items.
+    val leftTiles = remember(payload.pairs) {
+        payload.pairs.mapIndexed { index, pair ->
+            MatchTile(
+                key = "L:${pair.leftId}:$index",
+                id = pair.leftId,
+                label = pair.leftLabel,
+                side = TileSide.LEFT,
+                pairIndex = index
+            )
+        }
+    }
+    val rightTiles = remember(payload.pairs) {
+        payload.pairs.mapIndexed { index, pair ->
+            MatchTile(
+                key = "R:${pair.rightId}:$index",
+                id = pair.rightId,
+                label = pair.rightLabel,
+                side = TileSide.RIGHT,
+                pairIndex = index
+            )
+        }
     }
 
-    var selectedTile by remember { mutableStateOf<MatchTile?>(null) }
-    var matchedIds by remember { mutableStateOf(setOf<String>()) }
+    var selectedTile by remember(config.id) { mutableStateOf<MatchTile?>(null) }
+    var matchedKeys by remember(config.id) { mutableStateOf(setOf<String>()) }
 
-    val gridColors = listOf(
+    val pairColors = listOf(
         Color(0xFFEAF3DE), // Light Green
         Color(0xFFE6F1FB), // Light Blue
         Color(0xFFFAEEDA), // Light Orange
         Color(0xFFEEEDFE), // Light Purple
-        Color(0xFFFAEEDA),
-        Color(0xFFE1F5EE)  // Light Cyan
+        Color(0xFFEDE8DC), // Light Sand
+        Color(0xFFE1F5EE)  // Light Mint
     )
 
     fun onTileClick(tile: MatchTile) {
-        if (matchedIds.contains(tile.id)) return
+        if (matchedKeys.contains(tile.key)) return
         if (selectedTile == tile) {
             selectedTile = null
             return
@@ -70,111 +84,127 @@ fun TapTapMatchCard(
         val currentSelected = selectedTile
         if (currentSelected == null) {
             selectedTile = tile
-        } else {
-            val isMatch = if (currentSelected.side == tile.side) {
-                false
-            } else {
-                val (left, right) = if (currentSelected.side == TileSide.LEFT) {
-                    currentSelected to tile
-                } else {
-                    tile to currentSelected
-                }
-                payload.pairs.any { it.leftId == left.id && it.rightId == right.id }
-            }
+            return
+        }
 
-            if (isMatch) {
-                soundManager.play("match")
-                matchedIds = matchedIds + currentSelected.id + tile.id
-                selectedTile = null
-                
-                if (matchedIds.size == tiles.size) {
-                    scope.launch {
-                        delay(1000)
-                        onResult(
-                            QuizAttemptResult(
-                                questionId = config.id,
-                                selectedOptionId = "ALL_MATCHED",
-                                isCorrect = true,
-                                wasDismissed = false,
-                                wasTimerExpired = false,
-                                responseTimeMs = System.currentTimeMillis() - startTime,
-                                sourceApp = sourceApp
-                            )
+        val isMatch = currentSelected.side != tile.side && currentSelected.pairIndex == tile.pairIndex
+
+        if (isMatch) {
+            soundManager.play("match")
+            val updatedMatched = matchedKeys + currentSelected.key + tile.key
+            matchedKeys = updatedMatched
+            selectedTile = null
+
+            if (updatedMatched.size == leftTiles.size + rightTiles.size) {
+                scope.launch {
+                    delay(1000)
+                    onResult(
+                        QuizAttemptResult(
+                            questionId = config.id,
+                            selectedOptionId = "ALL_MATCHED",
+                            isCorrect = true,
+                            wasDismissed = false,
+                            wasTimerExpired = false,
+                            responseTimeMs = System.currentTimeMillis() - startTime,
+                            sourceApp = sourceApp
                         )
-                    }
-                }
-            } else {
-                // INCORRECT MATCH - report to router for strike counting
-                onResult(
-                    QuizAttemptResult(
-                        questionId = config.id,
-                        selectedOptionId = "${currentSelected.id}_${tile.id}",
-                        isCorrect = false,
-                        wasDismissed = false,
-                        wasTimerExpired = false,
-                        responseTimeMs = System.currentTimeMillis() - startTime,
-                        sourceApp = sourceApp
                     )
-                )
-                selectedTile = tile
+                }
             }
+        } else {
+            // Incorrect selection pair, report for strike counting.
+            onResult(
+                QuizAttemptResult(
+                    questionId = config.id,
+                    selectedOptionId = "${currentSelected.id}_${tile.id}",
+                    isCorrect = false,
+                    wasDismissed = false,
+                    wasTimerExpired = false,
+                    responseTimeMs = System.currentTimeMillis() - startTime,
+                    sourceApp = sourceApp
+                )
+            )
+            selectedTile = tile
         }
     }
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(bottom = 32.dp),
-        verticalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(bottom = 20.dp, start = 16.dp, end = 16.dp, top = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.padding(top = 16.dp, start = 24.dp, end = 24.dp)
-        ) {
-            Text(
-                text = config.display.questionText,
-                style = MaterialTheme.typography.headlineSmall,
-                color = Color(0xFF333333),
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
-            )
-            
-            val instruction = config.display.instructionLabel.ifBlank {
-                stringResource(R.string.quiz_matching_instruction)
-            }
-            
-            Text(
-                text = instruction,
-                style = MaterialTheme.typography.bodyLarge,
-                color = Color(0xFF666666),
-                textAlign = TextAlign.Center
-            )
+        Text(
+            text = config.display.questionText,
+            style = MaterialTheme.typography.headlineSmall,
+            color = Color(0xFF333333),
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center
+        )
+
+        val instruction = config.display.instructionLabel.ifBlank {
+            stringResource(R.string.quiz_matching_instruction)
         }
 
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(3),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp),
-            contentPadding = PaddingValues(4.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            userScrollEnabled = false
-        ) {
-            itemsIndexed(tiles) { index, tile ->
-                val isMatched = matchedIds.contains(tile.id)
-                val isSelected = selectedTile == tile
-                val baseColor = gridColors[index % gridColors.size]
+        Spacer(modifier = Modifier.height(8.dp))
 
-                MatchGridTile(
-                    label = tile.label,
-                    baseColor = baseColor,
-                    isMatched = isMatched,
-                    isSelected = isSelected,
-                    onClick = { onTileClick(tile) }
-                )
-            }
+        Text(
+            text = instruction,
+            style = MaterialTheme.typography.bodyLarge,
+            color = Color(0xFF666666),
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        MatchTileRow(
+            tiles = leftTiles,
+            matchedKeys = matchedKeys,
+            selectedTile = selectedTile,
+            pairColors = pairColors,
+            onTileClick = ::onTileClick
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        MatchTileRow(
+            tiles = rightTiles,
+            matchedKeys = matchedKeys,
+            selectedTile = selectedTile,
+            pairColors = pairColors,
+            onTileClick = ::onTileClick
+        )
+
+        Spacer(modifier = Modifier.weight(1f))
+    }
+}
+
+@Composable
+private fun MatchTileRow(
+    tiles: List<MatchTile>,
+    matchedKeys: Set<String>,
+    selectedTile: MatchTile?,
+    pairColors: List<Color>,
+    onTileClick: (MatchTile) -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        tiles.forEach { tile ->
+            val isMatched = matchedKeys.contains(tile.key)
+            val isSelected = selectedTile?.key == tile.key
+            val baseColor = pairColors[tile.pairIndex % pairColors.size]
+
+            MatchGridTile(
+                label = tile.label,
+                baseColor = baseColor,
+                isMatched = isMatched,
+                isSelected = isSelected,
+                modifier = Modifier.weight(1f),
+                onClick = { onTileClick(tile) }
+            )
         }
     }
 }
@@ -185,24 +215,26 @@ fun MatchGridTile(
     baseColor: Color,
     isMatched: Boolean,
     isSelected: Boolean,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
-    val alpha by animateFloatAsState(if (isMatched) 0.4f else 1f)
+    val alpha by animateFloatAsState(if (isMatched) 0.5f else 1f)
     val checkSymbol = stringResource(R.string.match_correct_symbol)
-    
+
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(100.dp)
+        modifier = modifier
+            .aspectRatio(1f)
             .alpha(alpha)
             .clip(RoundedCornerShape(16.dp))
             .background(baseColor)
-            .let { 
+            .let {
                 if (isSelected) {
                     it.border(2.5.dp, Color(0xFF534AB7), RoundedCornerShape(16.dp))
                 } else if (isMatched) {
                     it.border(2.5.dp, Color(0xFF3B6D11), RoundedCornerShape(16.dp))
-                } else it
+                } else {
+                    it.border(2.dp, Color(0xFFA7B999), RoundedCornerShape(16.dp))
+                }
             }
             .clickable(enabled = !isMatched, onClick = onClick),
         contentAlignment = Alignment.Center
@@ -226,9 +258,11 @@ fun MatchGridTile(
 }
 
 data class MatchTile(
+    val key: String,
     val id: String,
     val label: String,
-    val side: TileSide
+    val side: TileSide,
+    val pairIndex: Int
 )
 
 enum class TileSide { LEFT, RIGHT }

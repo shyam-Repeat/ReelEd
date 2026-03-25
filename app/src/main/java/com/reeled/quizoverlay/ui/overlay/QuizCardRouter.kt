@@ -37,6 +37,9 @@ import com.reeled.quizoverlay.util.SoundManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+import androidx.compose.runtime.LaunchedEffect
+import com.reeled.quizoverlay.ui.overlay.components.TimerBar
+
 @Composable
 fun QuizCardRouter(
     config: QuizCardConfig,
@@ -47,6 +50,7 @@ fun QuizCardRouter(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var showConfetti by remember { mutableStateOf(false) }
+    var quizFinished by remember { mutableStateOf(false) }
     val shakeOffset = remember { Animatable(0f) }
     
     val soundManager = remember { SoundManager(context) }
@@ -56,11 +60,51 @@ fun QuizCardRouter(
         }
     }
 
+    val totalTimerSeconds = (if (config.rules.timerSeconds > 0) config.rules.timerSeconds else 120).toFloat()
+    var timeLeft by remember { mutableStateOf(totalTimerSeconds) }
+    var wrongAttempts by remember { mutableStateOf(0) }
+
+    if (!quizFinished) {
+        LaunchedEffect(Unit) {
+            val startTime = System.currentTimeMillis()
+            while (timeLeft > 0 && !quizFinished) {
+                delay(200)
+                val elapsed = (System.currentTimeMillis() - startTime) / 1000f
+                timeLeft = (totalTimerSeconds - elapsed).coerceAtLeast(0f)
+            }
+            if (timeLeft <= 0 && !quizFinished) {
+                quizFinished = true
+                soundManager.play("wrong")
+                delay(800)
+                onResult(
+                    QuizAttemptResult(
+                        questionId = config.id,
+                        selectedOptionId = "TIMER_EXPIRED",
+                        isCorrect = false,
+                        wasDismissed = false,
+                        wasTimerExpired = true,
+                        responseTimeMs = (totalTimerSeconds * 1000).toLong(),
+                        sourceApp = sourceApp
+                    )
+                )
+            }
+        }
+    }
+
     val onResultIntercept: (QuizAttemptResult) -> Unit = { result ->
+        if (quizFinished) return@onResultIntercept
+        
         if (result.isCorrect) {
+            quizFinished = true
             soundManager.play("correct")
             showConfetti = true
+            scope.launch {
+                delay(1500)
+                onResult(result)
+            }
         } else {
+            // INCORRECT ATTEMPT - Count strikes
+            wrongAttempts++
             soundManager.play("wrong")
             scope.launch {
                 repeat(4) {
@@ -69,10 +113,14 @@ fun QuizCardRouter(
                 }
                 shakeOffset.animateTo(0f, tween(50))
             }
-        }
-        scope.launch {
-            delay(1500)
-            onResult(result)
+            
+            if (wrongAttempts >= 3) {
+                quizFinished = true
+                scope.launch {
+                    delay(1500)
+                    onResult(result) // End quiz after 3rd strike
+                }
+            }
         }
     }
 
@@ -83,16 +131,27 @@ fun QuizCardRouter(
     ) {
         Surface(
             modifier = Modifier.fillMaxSize(),
-            color = Color.Transparent,
-            shadowElevation = 0.dp
+            color = Color.White // Solid white for the main card area
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
+                // Background Circles are already inside ModernQuizBackground Canvas
+                
                 Column(modifier = Modifier.fillMaxSize()) {
+                    // Timer bar
+                    if (totalTimerSeconds > 0) {
+                        TimerBar(
+                            progress = timeLeft / totalTimerSeconds,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 40.dp, vertical = 12.dp)
+                        )
+                    }
+
                     // Top Section: Train
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .weight(0.22f)
+                            .weight(0.25f)
                             .padding(horizontal = 12.dp, vertical = 8.dp)
                     ) {
                         TrainAnimation(
@@ -105,8 +164,7 @@ fun QuizCardRouter(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .weight(0.78f)
-                            .padding(start = 20.dp, end = 20.dp, bottom = 20.dp)
+                            .weight(0.75f)
                     ) {
                         Box(modifier = Modifier.fillMaxSize()) {
                             when (config.cardType) {
@@ -119,12 +177,12 @@ fun QuizCardRouter(
                     }
                 }
 
-                // Floating mascot kept on the upper-right corner without covering draggable chips.
+                // Repositioned Mascot: Top-Right, larger, anchored
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .padding(top = 132.dp, end = 8.dp)
-                        .size(136.dp)
+                        .padding(top = 80.dp, end = 12.dp)
+                        .size(160.dp)
                 ) {
                     RightMascot(
                         modifier = Modifier.fillMaxSize()

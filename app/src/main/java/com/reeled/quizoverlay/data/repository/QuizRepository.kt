@@ -85,9 +85,13 @@ class QuizRepository(internal val context: Context) {
     // Questions
     suspend fun getActiveQuestionCount(): Int = questionDao.getActiveCount()
 
-    suspend fun fetchActiveQuestionsFromRemote(limit: Int): List<QuizQuestionEntity> {
+    suspend fun fetchActiveQuestionsFromRemote(
+        limit: Int,
+        cardType: String? = null
+    ): List<QuizQuestionEntity> {
         val remoteApi = api ?: return emptyList()
-        return remoteApi.getActiveQuestions(limit = limit).map { it.toEntity() }
+        val filter = cardType?.let { "eq.$it" }
+        return remoteApi.getActiveQuestions(limit = limit, cardType = filter).map { it.toEntity() }
     }
 
     suspend fun upsertQuestions(questions: List<QuizQuestionEntity>) {

@@ -46,6 +46,7 @@ fun ModernQuizBackground(
             val width = size.width
             val height = size.height
 
+            // These circles must be behind the content
             drawCircle(
                 color = Color(0xFFE3F2FD),
                 radius = 120f + (floatPhase * 10f),
@@ -72,8 +73,6 @@ fun ModernQuizBackground(
             )
         }
 
-        Box(modifier = Modifier.fillMaxSize()) {
-            content()
-        }
+        content()
     }
 }

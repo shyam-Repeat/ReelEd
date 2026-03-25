@@ -82,13 +82,6 @@ fun TrainAnimation(
                 drawEngine()
             }
         }
-
-        RiveMedia(
-            modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .offset(x = (-86).dp, y = (-2).dp)
-                .size(34.dp)
-        )
     }
 }
 

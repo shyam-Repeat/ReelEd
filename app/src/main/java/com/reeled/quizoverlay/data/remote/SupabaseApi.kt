@@ -15,6 +15,7 @@ interface SupabaseApi {
     @GET("rest/v1/quiz_questions")
     suspend fun getActiveQuestions(
         @Query("active", encoded = true) active: String = "eq.true",
+        @Query("card_type", encoded = true) cardType: String? = null,
         @Query("limit") limit: Int = 100,
         @Header("Range") range: String = "0-99"
     ): List<QuizQuestionDto>

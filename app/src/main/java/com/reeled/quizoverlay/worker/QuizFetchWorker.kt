@@ -74,7 +74,7 @@ class QuizFetchWorker(
          */
         fun scheduleDaily(context: Context) {
             val request = PeriodicWorkRequestBuilder<QuizFetchWorker>(
-                repeatInterval = 24,
+                repeatInterval = 48,
                 repeatIntervalTimeUnit = TimeUnit.HOURS
             )
                 .setConstraints(networkConstraints)
@@ -103,27 +103,26 @@ class QuizFetchWorker(
                 return@withContext Result.success()
             }
 
-            // ── Fetch from Supabase ───────────────────────────────────────────
-            // fetchActiveQuestions returns QuizQuestionDto list.
-            // toEntity() extension functions live on the DTO classes (layout doc).
-            val questions = repository.fetchActiveQuestionsFromRemote(limit = MAX_FETCH)
+            // ── Balanced Fetch from Supabase ─────────────────────────────────
+            // Fetch 10 questions of each type to maintain a 1:1:1 ratio.
+            val types = listOf("TAP_CHOICE", "TAP_TAP_MATCH", "DRAG_DROP_MATCH")
+            val allFetched = mutableListOf<com.reeled.quizoverlay.data.local.entity.QuizQuestionEntity>()
+            
+            for (type in types) {
+                val questions = repository.fetchActiveQuestionsFromRemote(limit = 10, cardType = type)
+                allFetched.addAll(questions)
+            }
 
-            if (questions.isEmpty()) {
-                // Supabase returned nothing — succeed silently.
-                // Could be an empty table in early dev; don't retry aggressively.
+            if (allFetched.isEmpty()) {
                 return@withContext Result.success()
             }
 
             // ── Upsert into Room ──────────────────────────────────────────────
-            // INSERT OR REPLACE semantics — safe to re-fetch the same question IDs.
-            // Updates existing rows if question content has changed server-side.
-            repository.upsertQuestions(questions)
+            repository.upsertQuestions(allFetched)
 
             Result.success()
 
         } catch (e: Exception) {
-            // Retry with WorkManager default backoff.
-            // The overlay can still fire from whatever is cached — non-fatal.
             Result.retry()
         }
     }

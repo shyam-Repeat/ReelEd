@@ -48,37 +48,38 @@ fun TapChoiceCard(
     )
 
     Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        modifier = Modifier.fillMaxSize().padding(bottom = 32.dp),
+        verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Subject Emoji Box
+        // Large Question Emoji
         Box(
             modifier = Modifier
-                .size(120.dp)
-                .background(Color(0xFFFFF8EC), RoundedCornerShape(20.dp)),
+                .weight(1f)
+                .fillMaxWidth(),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = getSubjectEmoji(config.subject),
-                fontSize = 72.sp,
-                lineHeight = 1.sp
+                fontSize = 120.sp,
+                textAlign = TextAlign.Center
             )
         }
 
-        // Question & Instruction
+        // Question text and instructions
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            modifier = Modifier.padding(horizontal = 24.dp)
         ) {
             Text(
                 text = config.display.questionText,
-                style = MaterialTheme.typography.titleMedium,
-                color = Color(0xFF888888),
-                fontWeight = FontWeight.Normal,
-                textAlign = TextAlign.Center,
-                letterSpacing = 0.04.sp
+                style = MaterialTheme.typography.headlineMedium,
+                color = Color(0xFF333333),
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
             )
+            
+            Spacer(modifier = Modifier.height(8.dp))
             
             val instruction = config.display.instructionLabel.ifBlank {
                 stringResource(R.string.quiz_instruction_default)
@@ -86,16 +87,18 @@ fun TapChoiceCard(
             
             Text(
                 text = instruction,
-                style = MaterialTheme.typography.bodySmall,
-                color = Color(0xFFAAAAAA),
+                style = MaterialTheme.typography.bodyLarge,
+                color = Color(0xFF666666),
                 textAlign = TextAlign.Center
             )
         }
 
-        // Options Row
+        // Options Row at the bottom
         Row(
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 40.dp, start = 16.dp, end = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
             verticalAlignment = Alignment.CenterVertically
         ) {
             payload.options.forEachIndexed { index, option ->
@@ -109,11 +112,12 @@ fun TapChoiceCard(
                     isSelected = isSelected,
                     isDimmed = isAnySelected && !isSelected,
                     enabled = !locked,
+                    modifier = Modifier.weight(1f),
                     onClick = {
                         selectedOptionId = option.id
                         locked = true
                         scope.launch {
-                            delay(800)
+                            delay(600)
                             onResult(
                                 QuizAttemptResult(
                                     questionId = config.id,
@@ -125,6 +129,11 @@ fun TapChoiceCard(
                                     sourceApp = sourceApp
                                 )
                             )
+                            if (!option.isCorrect) {
+                                delay(400)
+                                selectedOptionId = null
+                                locked = false
+                            }
                         }
                     }
                 )
@@ -140,13 +149,14 @@ fun ChoiceCircleButton(
     isSelected: Boolean,
     isDimmed: Boolean,
     enabled: Boolean,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
     val alpha by animateFloatAsState(if (isDimmed) 0.35f else 1f)
     
     Box(
-        modifier = Modifier
-            .size(92.dp)
+        modifier = modifier
+            .aspectRatio(1f) // Keep it a perfect circle
             .alpha(alpha)
             .clip(CircleShape)
             .background(color)
@@ -165,7 +175,7 @@ fun ChoiceCircleButton(
                 text = label,
                 color = Color.White,
                 fontWeight = FontWeight.Black,
-                fontSize = 16.sp,
+                fontSize = 18.sp,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(4.dp)
             )

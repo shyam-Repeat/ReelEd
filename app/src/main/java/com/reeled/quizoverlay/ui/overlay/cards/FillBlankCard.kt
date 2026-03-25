@@ -135,15 +135,10 @@ fun FillBlankCard(
                 Button(
                     onClick = {
                         scope.launch {
-                            evaluated = true
                             val selected = payload.wordBank.find { it.chipId == blankFilledChipId }
                             val isCorrect = selected?.isCorrect == true
-                            if (!isCorrect && config.rules.showCorrectOnWrong) {
-                                revealCorrectId = payload.wordBank.find { it.isCorrect }?.chipId
-                                delay(2000)
-                            } else {
-                                delay(1000)
-                            }
+                            
+                            evaluated = true // Lock UI temporarily
                             onResult(
                                 QuizAttemptResult(
                                     questionId = config.id,
@@ -155,6 +150,12 @@ fun FillBlankCard(
                                     sourceApp = sourceApp
                                 )
                             )
+                            
+                            if (!isCorrect) {
+                                delay(1000)
+                                evaluated = false // Re-enable for another try
+                                blankFilledChipId = null
+                            }
                         }
                     },
                     modifier = Modifier.fillMaxWidth(0.8f).height(64.dp).align(Alignment.CenterHorizontally).shadow(8.dp, RoundedCornerShape(32.dp)),

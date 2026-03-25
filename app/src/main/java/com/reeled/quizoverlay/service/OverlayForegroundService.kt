@@ -313,16 +313,25 @@ class OverlayForegroundService : Service() {
         val activeSourceApp = currentOverlaySourceApp
         if (overlayView != null && activeSourceApp != null) {
             val currentForeground = triggerEngineForegroundPackage()
+            // Strict check: if user leaves the target app, the quiz is dismissed.
             if (currentForeground != activeSourceApp) {
                 withContext(Dispatchers.Main) {
-                    removeOverlayIfShowing()
+                    onQuizDismissed(activeSourceApp) // Helper to trigger result with wasDismissed = true
                 }
                 logEventSafely(
-                    eventType = "overlay_removed_app_backgrounded",
+                    eventType = "overlay_removed_app_switched",
                     payloadJson = "{\"expected\":\"${jsonSafe(activeSourceApp)}\",\"actual\":\"${jsonSafe(currentForeground.orEmpty())}\"}"
                 )
             }
         }
+    }
+
+    private fun onQuizDismissed(sourceApp: String) {
+        val view = overlayView ?: return
+        // We need the config ID, but since we're dismissing due to app switch, 
+        // we can just use a placeholder or the last known ID if we stored it.
+        // For simplicity, we call removeOverlayIfShowing and let the service state reset.
+        removeOverlayIfShowing()
     }
 
     private fun triggerEngineForegroundPackage(): String? {

@@ -213,26 +213,43 @@ fun DragDropMatchCard(
                             onDropped = { center ->
                                 val distance = (center - slotCenter).getDistance()
                                 val dropTolerancePx = with(density) { 18.dp.toPx() }
-                                if (distance <= slotRadiusPx + dropTolerancePx && draggable.chipId in targetSlot.correctChipIds) {
-                                    matchedChipId = draggable.chipId
-                                    if (!evaluated) {
-                                        evaluated = true
-                                        scope.launch {
-                                            delay(350)
-                                            onResult(
-                                                QuizAttemptResult(
-                                                    questionId = config.id,
-                                                    selectedOptionId = draggable.chipId,
-                                                    isCorrect = true,
-                                                    wasDismissed = false,
-                                                    wasTimerExpired = false,
-                                                    responseTimeMs = System.currentTimeMillis() - startTime,
-                                                    sourceApp = sourceApp
+                                
+                                if (distance <= slotRadiusPx + dropTolerancePx) {
+                                    if (draggable.chipId in targetSlot.correctChipIds) {
+                                        matchedChipId = draggable.chipId
+                                        if (!evaluated) {
+                                            evaluated = true
+                                            scope.launch {
+                                                delay(350)
+                                                onResult(
+                                                    QuizAttemptResult(
+                                                        questionId = config.id,
+                                                        selectedOptionId = draggable.chipId,
+                                                        isCorrect = true,
+                                                        wasDismissed = false,
+                                                        wasTimerExpired = false,
+                                                        responseTimeMs = System.currentTimeMillis() - startTime,
+                                                        sourceApp = sourceApp
+                                                    )
                                                 )
-                                            )
+                                            }
                                         }
+                                        true
+                                    } else {
+                                        // WRONG DROP detected
+                                        onResult(
+                                            QuizAttemptResult(
+                                                questionId = config.id,
+                                                selectedOptionId = draggable.chipId,
+                                                isCorrect = false,
+                                                wasDismissed = false,
+                                                wasTimerExpired = false,
+                                                responseTimeMs = System.currentTimeMillis() - startTime,
+                                                sourceApp = sourceApp
+                                            )
+                                        )
+                                        false // Return to original position
                                     }
-                                    true
                                 } else {
                                     false
                                 }

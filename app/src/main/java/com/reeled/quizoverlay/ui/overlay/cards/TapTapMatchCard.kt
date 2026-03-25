@@ -110,21 +110,21 @@ fun TapTapMatchCard(
     }
 
     Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        modifier = Modifier.fillMaxSize().padding(bottom = 32.dp),
+        verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(top = 16.dp, start = 24.dp, end = 24.dp)
         ) {
             Text(
                 text = config.display.questionText,
-                style = MaterialTheme.typography.titleMedium,
-                color = Color(0xFF888888),
-                fontWeight = FontWeight.Normal,
-                textAlign = TextAlign.Center,
-                letterSpacing = 0.04.sp
+                style = MaterialTheme.typography.headlineSmall,
+                color = Color(0xFF333333),
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
             )
             
             val instruction = config.display.instructionLabel.ifBlank {
@@ -133,18 +133,21 @@ fun TapTapMatchCard(
             
             Text(
                 text = instruction,
-                style = MaterialTheme.typography.bodySmall,
-                color = Color(0xFFAAAAAA),
+                style = MaterialTheme.typography.bodyLarge,
+                color = Color(0xFF666666),
                 textAlign = TextAlign.Center
             )
         }
 
         LazyVerticalGrid(
             columns = GridCells.Fixed(3),
-            modifier = Modifier.fillMaxWidth().weight(1f),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 16.dp),
             contentPadding = PaddingValues(4.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
             userScrollEnabled = false
         ) {
             itemsIndexed(tiles) { index, tile ->

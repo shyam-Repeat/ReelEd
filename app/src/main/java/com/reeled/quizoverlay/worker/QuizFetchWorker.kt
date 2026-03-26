@@ -9,7 +9,9 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import com.reeled.quizoverlay.data.local.entity.QuizQuestionEntity
 import com.reeled.quizoverlay.data.repository.QuizRepository
+import com.reeled.quizoverlay.model.QuizCardConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
@@ -96,10 +98,11 @@ class QuizFetchWorker(
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         try {
-            val cachedCount = repository.getActiveQuestionCount()
+            val cachedQuestions = repository.getAllActiveQuestions()
+            val renderableCachedCount = cachedQuestions.count(::isRenderableQuestion)
 
             // Cache is healthy — no fetch needed
-            if (cachedCount >= MIN_CACHE_SIZE) {
+            if (renderableCachedCount >= MIN_CACHE_SIZE) {
                 return@withContext Result.success()
             }
 
@@ -112,19 +115,24 @@ class QuizFetchWorker(
                 "FILL_BLANK",
                 "DRAW_MATCH"
             )
-            val allFetched = mutableListOf<com.reeled.quizoverlay.data.local.entity.QuizQuestionEntity>()
+            val perTypeLimit = (MAX_FETCH / types.size).coerceAtLeast(1)
+            val allFetched = mutableListOf<QuizQuestionEntity>()
             
             for (type in types) {
-                val questions = repository.fetchActiveQuestionsFromRemote(limit = 10, cardType = type)
+                val questions = repository.fetchActiveQuestionsFromRemote(limit = perTypeLimit, cardType = type)
                 allFetched.addAll(questions)
             }
 
-            if (allFetched.isEmpty()) {
+            val validFetched = allFetched.filter { entity ->
+                isRenderableQuestion(entity)
+            }.distinctBy { it.id }
+
+            if (validFetched.isEmpty()) {
                 return@withContext Result.success()
             }
 
             // ── Upsert into Room ──────────────────────────────────────────────
-            repository.upsertQuestions(allFetched)
+            repository.upsertQuestions(validFetched)
 
             Result.success()
 
@@ -132,4 +140,10 @@ class QuizFetchWorker(
             Result.retry()
         }
     }
+
+    private fun isRenderableQuestion(question: com.reeled.quizoverlay.model.QuizQuestion): Boolean =
+        runCatching { QuizCardConfig.from(question) }.isSuccess
+
+    private fun isRenderableQuestion(entity: QuizQuestionEntity): Boolean =
+        runCatching { QuizCardConfig.from(entity) }.isSuccess
 }

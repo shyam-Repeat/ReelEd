@@ -23,4 +23,8 @@ sealed class QuizPayload {
         val sentenceTemplate: String,
         val wordBank: List<WordChip>
     ) : QuizPayload()
+
+    data class DrawMatchPayload(
+        val text: String
+    ) : QuizPayload()
 }

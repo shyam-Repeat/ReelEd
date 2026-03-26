@@ -433,7 +433,11 @@ class OverlayForegroundService : Service() {
         }
     }
 
-    private fun showOverlay(question: com.reeled.quizoverlay.model.QuizQuestion, sourceApp: String) {
+    private fun showOverlay(
+        question: com.reeled.quizoverlay.model.QuizQuestion,
+        sourceApp: String,
+        skippedInvalidQuestionIds: Set<String> = emptySet()
+    ) {
         if (overlayView != null) return
 
         val latestForeground = triggerEngineForegroundPackage()
@@ -441,6 +445,19 @@ class OverlayForegroundService : Service() {
             logEventSafely(
                 eventType = "overlay_show_aborted_not_foreground",
                 payloadJson = "{\"expected\":\"${jsonSafe(sourceApp)}\",\"actual\":\"${jsonSafe(latestForeground.orEmpty())}\"}"
+            )
+            return
+        }
+
+        val config = try {
+            QuizCardConfig.from(question)
+        } catch (exception: Exception) {
+            continueAfterInvalidQuestion(
+                invalidQuestionId = question.id,
+                sourceApp = sourceApp,
+                skippedInvalidQuestionIds = skippedInvalidQuestionIds,
+                reason = "config_parse_failed:${exception.javaClass.simpleName}",
+                incrementShownForNext = false
             )
             return
         }
@@ -460,12 +477,20 @@ class OverlayForegroundService : Service() {
                             .fillMaxSize()
                             .padding(20.dp)
                     ) {
-                        val config = QuizCardConfig.from(question)
                         QuizCardRouter(
                             config = config,
                             sourceApp = sourceApp,
                             onResult = { result -> onQuizResult(result) },
-                            onDismissed = { onQuizDismissed(question, sourceApp) }
+                            onDismissed = { onQuizDismissed(question, sourceApp) },
+                            onInvalidPayload = { questionId, reason ->
+                                continueAfterInvalidQuestion(
+                                    invalidQuestionId = questionId,
+                                    sourceApp = sourceApp,
+                                    skippedInvalidQuestionIds = skippedInvalidQuestionIds,
+                                    reason = reason,
+                                    incrementShownForNext = true
+                                )
+                            }
                         )
                     }
                 }
@@ -501,6 +526,49 @@ class OverlayForegroundService : Service() {
             )
         }
         syncAudioState()
+    }
+
+    private fun continueAfterInvalidQuestion(
+        invalidQuestionId: String,
+        sourceApp: String,
+        skippedInvalidQuestionIds: Set<String>,
+        reason: String,
+        incrementShownForNext: Boolean
+    ) {
+        val updatedSkippedIds = skippedInvalidQuestionIds + invalidQuestionId
+        serviceScope.launch(Dispatchers.IO) {
+            logEventSafely(
+                eventType = "quiz_invalid_skipped",
+                payloadJson = "{\"question_id\":\"${jsonSafe(invalidQuestionId)}\",\"source_app\":\"${jsonSafe(sourceApp)}\",\"reason\":\"${jsonSafe(reason)}\"}"
+            )
+
+            withContext(Dispatchers.Main) {
+                removeOverlayIfShowing()
+            }
+
+            val candidates = repository.getAllActiveQuestions()
+                .filter { it.id !in updatedSkippedIds }
+            val nextQuestion = candidates.randomOrNull() ?: return@launch
+
+            val latestForeground = triggerEngineForegroundPackage()
+            if (latestForeground != sourceApp) {
+                logEventSafely(
+                    eventType = "overlay_show_aborted_not_foreground",
+                    payloadJson = "{\"expected\":\"${jsonSafe(sourceApp)}\",\"actual\":\"${jsonSafe(latestForeground.orEmpty())}\"}"
+                )
+                return@launch
+            }
+
+            withContext(Dispatchers.Main) {
+                if (overlayView == null) {
+                    if (incrementShownForNext) {
+                        totalQuizzesShown++
+                        updateSessionStats()
+                    }
+                    showOverlay(nextQuestion, sourceApp, updatedSkippedIds)
+                }
+            }
+        }
     }
 
     private fun onQuizResult(result: QuizAttemptResult) {

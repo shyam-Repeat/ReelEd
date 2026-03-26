@@ -186,6 +186,12 @@ data class QuizCardConfig(
                         }
                     )
                 }
+
+                QuizCardType.DRAW_MATCH -> {
+                    QuizPayload.DrawMatchPayload(
+                        text = root.optString("text", "1")
+                    )
+                }
             }
         }
     }

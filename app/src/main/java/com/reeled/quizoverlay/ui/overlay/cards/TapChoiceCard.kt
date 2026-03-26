@@ -91,7 +91,7 @@ fun TapChoiceCard(
             modifier = Modifier
                 .weight(0.48f)
                 .fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.Top),
+            verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             payload.options.forEachIndexed { index, option ->
@@ -107,7 +107,8 @@ fun TapChoiceCard(
                     enabled = !locked,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(min = 84.dp),
+                        .weight(1f)
+                        .heightIn(min = 84.dp, max = 110.dp),
                     onClick = {
                         selectedOptionId = option.id
                         locked = true

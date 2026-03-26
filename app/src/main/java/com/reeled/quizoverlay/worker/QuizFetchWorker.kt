@@ -104,8 +104,14 @@ class QuizFetchWorker(
             }
 
             // ── Balanced Fetch from Supabase ─────────────────────────────────
-            // Fetch 10 questions of each type to maintain a 1:1:1 ratio.
-            val types = listOf("TAP_CHOICE", "TAP_TAP_MATCH", "DRAG_DROP_MATCH")
+            // Fetch 10 questions per supported type to maintain variety.
+            val types = listOf(
+                "TAP_CHOICE",
+                "TAP_TAP_MATCH",
+                "DRAG_DROP_MATCH",
+                "FILL_BLANK",
+                "DRAW_MATCH"
+            )
             val allFetched = mutableListOf<com.reeled.quizoverlay.data.local.entity.QuizQuestionEntity>()
             
             for (type in types) {

@@ -35,6 +35,10 @@ create table testers (
 -- TAP_TAP_MATCH:
 --   - Items from left_items and right_items are shuffled into a 2x3 grid.
 --   - Users tap two items to match based on correct_pairs.
+-- DRAW_MATCH:
+--   - Shows a single large character (1-99 or A-Z).
+--   - payload.text is the character to draw.
+--   - Child traces/draws on screen to complete.
 
 create table quiz_questions (
   id                   text primary key,
@@ -43,7 +47,8 @@ create table quiz_questions (
                            'TAP_CHOICE',
                            'TAP_TAP_MATCH',
                            'DRAG_DROP_MATCH',
-                           'FILL_BLANK'
+                           'FILL_BLANK',
+                           'DRAW_MATCH'
                          )),
   subject              text not null
                          check (subject in (
@@ -216,4 +221,9 @@ values
 ('q_005', 'FILL_BLANK', 'science', 1,
  'The ___ is very hot.', 'Tap the word to fill the blank',
  '{"sentence_template":"The ___ is very hot.","word_bank":[{"chip_id":"W1","label":"Sun","is_correct":true},{"chip_id":"W2","label":"Ice","is_correct":false},{"chip_id":"W3","label":"Moon","is_correct":false}]}',
- 20, false, true);
+ 20, false, true),
+
+('q_006', 'DRAW_MATCH', 'math', 1,
+ '', 'Draw over the number 1',
+ '{"text":"1"}',
+ 30, false, true);

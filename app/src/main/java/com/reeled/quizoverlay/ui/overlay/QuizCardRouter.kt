@@ -25,7 +25,9 @@ import androidx.compose.ui.unit.dp
 import com.reeled.quizoverlay.model.QuizAttemptResult
 import com.reeled.quizoverlay.model.QuizCardConfig
 import com.reeled.quizoverlay.model.QuizCardType
+import com.reeled.quizoverlay.model.QuizPayload
 import com.reeled.quizoverlay.ui.overlay.cards.DragDropMatchCard
+import com.reeled.quizoverlay.ui.overlay.cards.DrawMatchCard
 import com.reeled.quizoverlay.ui.overlay.cards.FillBlankCard
 import com.reeled.quizoverlay.ui.overlay.cards.TapChoiceCard
 import com.reeled.quizoverlay.ui.overlay.cards.TapTapMatchCard
@@ -46,7 +48,8 @@ fun QuizCardRouter(
     config: QuizCardConfig,
     sourceApp: String,
     onResult: (QuizAttemptResult) -> Unit,
-    onDismissed: () -> Unit
+    onDismissed: () -> Unit,
+    onInvalidPayload: (questionId: String, reason: String) -> Unit
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -171,10 +174,41 @@ fun QuizCardRouter(
                     ) {
                         Box(modifier = Modifier.fillMaxSize()) {
                             when (config.cardType) {
-                                QuizCardType.TAP_CHOICE -> TapChoiceCard(config, sourceApp, onResultIntercept)
-                                QuizCardType.TAP_TAP_MATCH -> TapTapMatchCard(config, sourceApp, soundManager, onResultIntercept)
-                                QuizCardType.DRAG_DROP_MATCH -> DragDropMatchCard(config, sourceApp, onResultIntercept)
-                                QuizCardType.FILL_BLANK -> FillBlankCard(config, sourceApp, onResultIntercept)
+                                QuizCardType.TAP_CHOICE -> {
+                                    if (config.payload is QuizPayload.TapChoicePayload) {
+                                        TapChoiceCard(config, sourceApp, onResultIntercept)
+                                    } else {
+                                        InvalidPayloadGate(config.id, "tap_choice_payload_mismatch", onInvalidPayload)
+                                    }
+                                }
+                                QuizCardType.TAP_TAP_MATCH -> {
+                                    if (config.payload is QuizPayload.TapTapMatchPayload) {
+                                        TapTapMatchCard(config, sourceApp, soundManager, onResultIntercept)
+                                    } else {
+                                        InvalidPayloadGate(config.id, "tap_tap_match_payload_mismatch", onInvalidPayload)
+                                    }
+                                }
+                                QuizCardType.DRAG_DROP_MATCH -> {
+                                    if (config.payload is QuizPayload.DragDropPayload) {
+                                        DragDropMatchCard(config, sourceApp, onResultIntercept)
+                                    } else {
+                                        InvalidPayloadGate(config.id, "drag_drop_payload_mismatch", onInvalidPayload)
+                                    }
+                                }
+                                QuizCardType.FILL_BLANK -> {
+                                    if (config.payload is QuizPayload.FillBlankPayload) {
+                                        FillBlankCard(config, sourceApp, onResultIntercept)
+                                    } else {
+                                        InvalidPayloadGate(config.id, "fill_blank_payload_mismatch", onInvalidPayload)
+                                    }
+                                }
+                                QuizCardType.DRAW_MATCH -> {
+                                    if (config.payload is QuizPayload.DrawMatchPayload) {
+                                        DrawMatchCard(config, sourceApp, onResultIntercept)
+                                    } else {
+                                        InvalidPayloadGate(config.id, "draw_match_payload_mismatch", onInvalidPayload)
+                                    }
+                                }
                             }
                         }
                     }
@@ -208,5 +242,16 @@ fun QuizCardRouter(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun InvalidPayloadGate(
+    questionId: String,
+    reason: String,
+    onInvalidPayload: (questionId: String, reason: String) -> Unit
+) {
+    LaunchedEffect(questionId, reason) {
+        onInvalidPayload(questionId, reason)
     }
 }

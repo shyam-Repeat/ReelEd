@@ -1,6 +1,5 @@
 package com.reeled.quizoverlay.ui.onboarding
 
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -10,7 +9,7 @@ import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.RocketLaunch
 import androidx.compose.material.icons.outlined.Verified
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -23,24 +22,12 @@ import com.reeled.quizoverlay.ui.theme.Primary
 
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import com.reeled.quizoverlay.ui.overlay.components.TrainAnimation
 
 @Composable
 fun OnboardingSuccessScreen(
     onEnterChildMode: () -> Unit,
     onGoToDashboard: () -> Unit
 ) {
-    val infiniteTransition = rememberInfiniteTransition()
-    val bounce by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = -20f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1500, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "bounce"
-    )
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -60,7 +47,12 @@ fun OnboardingSuccessScreen(
         // Success Header
         Box(contentAlignment = Alignment.Center) {
             Box(modifier = Modifier.size(100.dp).background(Primary.copy(alpha = 0.1f), CircleShape))
-            TrainAnimation(modifier = Modifier.size(120.dp))
+            Icon(
+                imageVector = Icons.Outlined.Verified,
+                contentDescription = null,
+                tint = Primary,
+                modifier = Modifier.size(72.dp)
+            )
         }
         
         Spacer(modifier = Modifier.height(24.dp))
@@ -96,10 +88,14 @@ fun OnboardingSuccessScreen(
             contentAlignment = Alignment.Center
         ) {
             Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.offset(y = bounce.dp)
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                TrainAnimation(modifier = Modifier.size(220.dp))
+                Icon(
+                    imageVector = Icons.Outlined.CheckCircle,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(120.dp)
+                )
             }
         }
 

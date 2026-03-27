@@ -19,7 +19,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.reeled.quizoverlay.prefs.AppPrefs
-import com.reeled.quizoverlay.prefs.PinPrefs
 import com.reeled.quizoverlay.ui.dashboard.DashboardViewModel
 import com.reeled.quizoverlay.ui.dashboard.ParentDashboardScreen
 import com.reeled.quizoverlay.ui.devmode.DevModeScreen
@@ -80,6 +79,25 @@ fun AppNavGraph(
         context.startActivity(intent)
     }
 
+    suspend fun nextOnboardingRoute(): String {
+        if (!PermissionChecker.hasOverlayPermission(context)) return Screen.PermissionOverlay.route
+        if (!PermissionChecker.hasUsageStatsPermission(context)) return Screen.PermissionUsage.route
+        if (appPrefs.monitoredApps.first().isEmpty()) return Screen.AppSelection.route
+        val notificationsEnabled = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            PermissionChecker.hasNotificationPermission(context)
+        } else {
+            true
+        }
+        if (!notificationsEnabled) return Screen.PermissionNotif.route
+        val batteryOk = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            PermissionChecker.isIgnoringBatteryOptimizations(context)
+        } else {
+            true
+        }
+        if (!batteryOk) return Screen.BatteryOpt.route
+        return Screen.Success.route
+    }
+
     NavHost(
         navController = navController,
         startDestination = startDestination,
@@ -115,7 +133,9 @@ fun AppNavGraph(
             PinSetupScreen(
                 onPinSet = { pin ->
                     onboardingViewModel.onPinSet(pin)
-                    navController.navigate(Screen.PermissionOverlay.route)
+                    scope.launch {
+                        navController.navigate(nextOnboardingRoute())
+                    }
                 },
                 onBack = { navController.popBackStack() }
             )
@@ -124,8 +144,10 @@ fun AppNavGraph(
         composable(Screen.PermissionOverlay.route) {
             PermissionOverlayScreen(
                 onNext = {
-                    if (PermissionChecker.hasOverlayPermission(context)) {
-                        navController.navigate(Screen.PermissionUsage.route)
+                    scope.launch {
+                        if (PermissionChecker.hasOverlayPermission(context)) {
+                            navController.navigate(nextOnboardingRoute())
+                        }
                     }
                 },
                 onBack = { navController.popBackStack() },
@@ -134,7 +156,10 @@ fun AppNavGraph(
                         Intent(
                             Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                             Uri.parse("package:${context.packageName}")
-                        )
+                        ).apply {
+                            putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                            putExtra("package", context.packageName)
+                        }
                     )
                 }
             )
@@ -143,13 +168,21 @@ fun AppNavGraph(
         composable(Screen.PermissionUsage.route) {
             PermissionUsageScreen(
                 onNext = {
-                    if (PermissionChecker.hasUsageStatsPermission(context)) {
-                        navController.navigate(Screen.AppSelection.route)
+                    scope.launch {
+                        if (PermissionChecker.hasUsageStatsPermission(context)) {
+                            navController.navigate(nextOnboardingRoute())
+                        }
                     }
                 },
                 onBack = { navController.popBackStack() },
                 onGrantAccess = {
-                    launchIntent(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+                    launchIntent(
+                        Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS).apply {
+                            data = Uri.parse("package:${context.packageName}")
+                            putExtra(Intent.EXTRA_PACKAGE_NAME, context.packageName)
+                            putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                        }
+                    )
                 }
             )
         }
@@ -157,7 +190,11 @@ fun AppNavGraph(
         composable(Screen.AppSelection.route) {
             val monitoredApps by appPrefs.monitoredApps.collectAsState(initial = emptySet())
             AppSelectionScreen(
-                onNext = { navController.navigate(Screen.PermissionNotif.route) },
+                onNext = {
+                    scope.launch {
+                        navController.navigate(nextOnboardingRoute())
+                    }
+                },
                 onBack = { navController.popBackStack() },
                 initialMonitoredApps = monitoredApps,
                 onSaveSelection = { apps ->
@@ -168,7 +205,11 @@ fun AppNavGraph(
 
         composable(Screen.PermissionNotif.route) {
             PermissionNotifScreen(
-                onNext = { navController.navigate(Screen.BatteryOpt.route) },
+                onNext = {
+                    scope.launch {
+                        navController.navigate(nextOnboardingRoute())
+                    }
+                },
                 onBack = { navController.popBackStack() },
                 onAllowNotifications = {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -186,8 +227,10 @@ fun AppNavGraph(
         composable(Screen.BatteryOpt.route) {
             BatteryOptScreen(
                 onNext = {
-                    if (PermissionChecker.isIgnoringBatteryOptimizations(context)) {
-                        navController.navigate(Screen.Success.route)
+                    scope.launch {
+                        if (PermissionChecker.isIgnoringBatteryOptimizations(context)) {
+                            navController.navigate(nextOnboardingRoute())
+                        }
                     }
                 },
                 onBack = { navController.popBackStack() },

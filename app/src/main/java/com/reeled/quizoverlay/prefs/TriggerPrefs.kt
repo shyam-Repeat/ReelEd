@@ -7,6 +7,7 @@ import com.reeled.quizoverlay.trigger.TriggerState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import java.util.Calendar
 
 private val Context.triggerDataStore by preferencesDataStore(name = "trigger_prefs")
 
@@ -25,9 +26,11 @@ class TriggerPrefs(private val context: Context) {
         private val LAST_SHOWN_QUESTION_ID = stringPreferencesKey("last_shown_question_id")
         private val LAST_FOREGROUND_APP = stringPreferencesKey("last_foreground_app")
         private val LAST_SKIP_REASON = stringPreferencesKey("last_skip_reason")
+        private val DAILY_CAP_DAY_START = longPreferencesKey("daily_cap_day_start")
     }
 
     suspend fun getTriggerState(): TriggerState {
+        ensureDailyCounterForToday()
         val prefs = context.triggerDataStore.data.first()
         return TriggerState(
             parentPauseActive = prefs[PAUSE_ACTIVE] ?: false,
@@ -121,6 +124,7 @@ class TriggerPrefs(private val context: Context) {
     }
 
     suspend fun markQuizShown(questionId: String) {
+        ensureDailyCounterForToday()
         context.triggerDataStore.edit {
             it[LAST_SHOWN_QUESTION_ID] = questionId
             it[LAST_QUIZ_SHOWN_TIME] = System.currentTimeMillis()
@@ -154,6 +158,27 @@ class TriggerPrefs(private val context: Context) {
 
     suspend fun getLastForegroundApp(): String = 
         context.triggerDataStore.data.first()[LAST_FOREGROUND_APP] ?: ""
+
+    private suspend fun ensureDailyCounterForToday() {
+        val startOfToday = getStartOfLocalDay()
+        context.triggerDataStore.edit { prefs ->
+            val storedDayStart = prefs[DAILY_CAP_DAY_START] ?: 0L
+            if (storedDayStart != startOfToday) {
+                prefs[DAILY_CAP_DAY_START] = startOfToday
+                prefs[QUIZZES_SHOWN_TODAY] = 0
+            }
+        }
+    }
+
+    private fun getStartOfLocalDay(): Long {
+        val calendar = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        return calendar.timeInMillis
+    }
 
     private fun encodeAppPause(packageName: String, expiryMs: Long): String =
         "$packageName::$expiryMs"

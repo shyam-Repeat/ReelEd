@@ -28,6 +28,7 @@ import com.reeled.quizoverlay.ui.devmode.DevModeViewModel
 import com.reeled.quizoverlay.ui.pin.PinGateDialog
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 
 sealed class DashboardTab(val title: String, val icon: ImageVector) {
     object Dashboard : DashboardTab("Dashboard", Icons.Default.Home)
@@ -58,8 +59,12 @@ fun ParentDashboardScreen(
     val isLocked = lockoutUntil > currentTime
     val lockoutTimeRemaining = if (isLocked) lockoutUntil - currentTime else 0L
 
-    LaunchedEffect(Unit) {
-        dashboardViewModel.refreshDashboard()
+    LaunchedEffect(selectedTab) {
+        if (selectedTab != DashboardTab.Dashboard) return@LaunchedEffect
+        while (true) {
+            dashboardViewModel.refreshDashboard()
+            delay(5_000)
+        }
     }
 
     LaunchedEffect(dashboardViewModel) {

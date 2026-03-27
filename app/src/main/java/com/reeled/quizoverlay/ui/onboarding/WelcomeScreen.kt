@@ -19,8 +19,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.reeled.quizoverlay.ui.theme.Primary
 
-import com.reeled.quizoverlay.ui.overlay.components.TrainAnimation
-
 @Composable
 fun WelcomeScreen(
     onNext: () -> Unit
@@ -47,12 +45,11 @@ fun WelcomeScreen(
                 ),
             contentAlignment = Alignment.Center
         ) {
-            // Keep onboarding free of Rive-backed views.
-            // The crash path happens immediately after LoadingScreen when the
-            // Welcome screen composes; using a pure Compose illustration here
-            // avoids the native Rive view startup crash and lets onboarding load.
-            TrainAnimation(
-                modifier = Modifier.size(220.dp)
+            Icon(
+                imageVector = Icons.Outlined.AutoAwesome,
+                contentDescription = null,
+                modifier = Modifier.size(120.dp),
+                tint = Primary
             )
         }
 

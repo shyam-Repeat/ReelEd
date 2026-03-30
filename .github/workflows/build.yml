@@ -58,11 +58,32 @@ jobs:
       - name: Decode Release Keystore
         run: echo "${{ secrets.SIGNING_STORE_B64 }}" | base64 -d > "${{ github.workspace }}/release.jks"
 
+      - name: Resolve Keystore Alias
+        env:
+          SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
+          SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+        run: |
+          set -euo pipefail
+          aliases="$(keytool -list -v -keystore "${{ github.workspace }}/release.jks" -storepass "${SIGNING_STORE_PASSWORD}" | awk -F': ' '/Alias name: /{print $2}')"
+          if [ -z "${aliases}" ]; then
+            echo "No aliases found in keystore."
+            exit 1
+          fi
+
+          if [ -n "${SIGNING_KEY_ALIAS}" ] && echo "${aliases}" | grep -Fxq "${SIGNING_KEY_ALIAS}"; then
+            resolved_alias="${SIGNING_KEY_ALIAS}"
+          else
+            resolved_alias="$(echo "${aliases}" | head -n 1)"
+            echo "SIGNING_KEY_ALIAS secret does not match keystore alias. Falling back to: ${resolved_alias}"
+          fi
+
+          echo "RESOLVED_SIGNING_KEY_ALIAS=${resolved_alias}" >> "$GITHUB_ENV"
+
       - name: Build Signed Release APK
         env:
           SIGNING_STORE_FILE: ${{ github.workspace }}/release.jks
           SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
-          SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+          SIGNING_KEY_ALIAS: ${{ env.RESOLVED_SIGNING_KEY_ALIAS }}
           SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
         run: ./gradlew assembleRelease --stacktrace
 

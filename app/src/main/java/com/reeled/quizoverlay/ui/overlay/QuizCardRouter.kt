@@ -176,7 +176,7 @@ fun QuizCardRouter(
                             when (config.cardType) {
                                 QuizCardType.TAP_CHOICE -> {
                                     if (config.payload is QuizPayload.TapChoicePayload) {
-                                        TapChoiceCard(config, sourceApp, onResultIntercept)
+                                        TapChoiceCard(config, sourceApp, soundManager, onResultIntercept)
                                     } else {
                                         InvalidPayloadGate(config.id, "tap_choice_payload_mismatch", onInvalidPayload)
                                     }
@@ -197,14 +197,14 @@ fun QuizCardRouter(
                                 }
                                 QuizCardType.FILL_BLANK -> {
                                     if (config.payload is QuizPayload.FillBlankPayload) {
-                                        FillBlankCard(config, sourceApp, onResultIntercept)
+                                        FillBlankCard(config, sourceApp, soundManager, onResultIntercept)
                                     } else {
                                         InvalidPayloadGate(config.id, "fill_blank_payload_mismatch", onInvalidPayload)
                                     }
                                 }
                                 QuizCardType.DRAW_MATCH -> {
                                     if (config.payload is QuizPayload.DrawMatchPayload) {
-                                        DrawMatchCard(config, sourceApp, soundManager, onResultIntercept)
+                                        DrawMatchCard(config, sourceApp, onResultIntercept)
                                     } else {
                                         InvalidPayloadGate(config.id, "draw_match_payload_mismatch", onInvalidPayload)
                                     }

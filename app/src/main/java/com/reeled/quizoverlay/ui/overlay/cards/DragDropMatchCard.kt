@@ -208,7 +208,7 @@ fun DragDropMatchCard(
                         DraggableChip(
                             label = draggable.label,
                             initialOffset = placement.offset,
-                            onChipPressed = { soundManager.speak(it) },
+                            onChipPressed = speakChipLabel,
                             onDropped = { center ->
                                 val distance = (center - slotCenter).getDistance()
                                 val dropTolerancePx = with(density) { 18.dp.toPx() }

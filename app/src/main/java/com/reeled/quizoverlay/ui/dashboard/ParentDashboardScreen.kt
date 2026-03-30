@@ -148,7 +148,6 @@ fun ParentDashboardScreen(
                 DashboardTab.Dashboard -> DashboardContent(uiState, modifier)
                 DashboardTab.Controls -> ControlsContent(
                     isOverlayEnabled = uiState.isOverlayEnabled,
-                    onToggleOverlay = dashboardViewModel::toggleOverlay,
                     onDisable = dashboardViewModel::showPinPrompt,
                     onFeedback = dashboardViewModel::openFeedback
                 )
@@ -210,7 +209,6 @@ private fun DashboardContent(
 @Composable
 private fun ControlsContent(
     isOverlayEnabled: Boolean,
-    onToggleOverlay: () -> Unit,
     onDisable: () -> Unit,
     onFeedback: () -> Unit
 ) {

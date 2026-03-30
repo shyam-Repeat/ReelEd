@@ -23,6 +23,7 @@ class AppPrefs(private val context: Context) {
         private val MONITORED_APPS = stringSetPreferencesKey("monitored_apps")
         private val NICKNAME = stringPreferencesKey("nickname")
         private val IS_TEST_MODE = booleanPreferencesKey("is_test_mode")
+        private val OVERLAY_ENABLED = booleanPreferencesKey("overlay_enabled")
     }
 
     val overlayEnabled: Flow<Boolean> = context.appDataStore.data.map { it[OVERLAY_ENABLED] ?: true }

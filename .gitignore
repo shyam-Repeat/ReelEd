@@ -8,3 +8,6 @@ build/
 app/build/
 local.properties
 .md
+signing.properties
+*.jks
+*.keystore

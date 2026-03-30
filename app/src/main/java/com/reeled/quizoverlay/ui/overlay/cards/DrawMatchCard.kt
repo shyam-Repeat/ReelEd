@@ -321,9 +321,3 @@ private fun expandMask(mask: BooleanArray, width: Int, height: Int, radius: Int)
     }
     return expanded
 }
-      }
-            }
-        }
-    }
-    return expanded
-}

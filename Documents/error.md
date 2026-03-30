@@ -1,13 +1,90 @@
-Task :app:checkDebugAarMetadata FAILED
+e: Error occurred in KSP, check log for detail
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/dashboard/DashboardViewModel.kt:188:13 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/dashboard/DashboardViewModel.kt:189:9 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/dashboard/DashboardViewModel.kt:190:5 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/dashboard/DashboardViewModel.kt:192:21 Name expected
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/dashboard/DashboardViewModel.kt:201:1 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/dashboard/ParentDashboardScreen.kt:399:1 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/dashboard/ParentDashboardScreen.kt:399:2 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/dashboard/ParentDashboardScreen.kt:399:3 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/dashboard/ParentDashboardScreen.kt:399:15 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/dashboard/ParentDashboardScreen.kt:399:16 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/dashboard/ParentDashboardScreen.kt:400:13 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/dashboard/ParentDashboardScreen.kt:401:9 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/dashboard/ParentDashboardScreen.kt:403:9 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/dashboard/ParentDashboardScreen.kt:403:12 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/dashboard/ParentDashboardScreen.kt:403:13 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/dashboard/ParentDashboardScreen.kt:403:20 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/dashboard/ParentDashboardScreen.kt:403:21 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/dashboard/ParentDashboardScreen.kt:403:25 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/dashboard/ParentDashboardScreen.kt:403:26 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/dashboard/ParentDashboardScreen.kt:403:33 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/dashboard/ParentDashboardScreen.kt:403:34 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/dashboard/ParentDashboardScreen.kt:403:35 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/dashboard/ParentDashboardScreen.kt:403:37 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/dashboard/ParentDashboardScreen.kt:413:9 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/dashboard/ParentDashboardScreen.kt:413:14 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/dashboard/ParentDashboardScreen.kt:413:15 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/dashboard/ParentDashboardScreen.kt:413:22 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/dashboard/ParentDashboardScreen.kt:413:23 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/dashboard/ParentDashboardScreen.kt:413:27 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/dashboard/ParentDashboardScreen.kt:413:29 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/dashboard/ParentDashboardScreen.kt:413:35 Unexpected tokens (use ';' to separate expressions on the same line)
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/dashboard/ParentDashboardScreen.kt:439:5 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/dashboard/ParentDashboardScreen.kt:440:1 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/QuizCardRouter.kt:258:1 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/QuizCardRouter.kt:258:10 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/QuizCardRouter.kt:258:12 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/QuizCardRouter.kt:258:18 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/QuizCardRouter.kt:258:20 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/QuizCardRouter.kt:261:1 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/DrawMatchCard.kt:324:7 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/DrawMatchCard.kt:325:13 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/DrawMatchCard.kt:326:9 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/DrawMatchCard.kt:327:5 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/DrawMatchCard.kt:328:5 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/DrawMatchCard.kt:328:12 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/DrawMatchCard.kt:329:1 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/FillBlankCard.kt:237:2 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/FillBlankCard.kt:237:4 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/FillBlankCard.kt:237:17 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/FillBlankCard.kt:237:18 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/FillBlankCard.kt:237:28 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/FillBlankCard.kt:237:29 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/FillBlankCard.kt:237:42 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/FillBlankCard.kt:237:43 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/FillBlankCard.kt:237:47 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/FillBlankCard.kt:238:17 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/FillBlankCard.kt:238:28 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/FillBlankCard.kt:238:30 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/FillBlankCard.kt:238:40 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/FillBlankCard.kt:238:41 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/FillBlankCard.kt:238:46 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/FillBlankCard.kt:239:17 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/FillBlankCard.kt:239:23 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/FillBlankCard.kt:239:25 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/FillBlankCard.kt:239:28 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/FillBlankCard.kt:239:29 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/FillBlankCard.kt:239:37 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/FillBlankCard.kt:239:39 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/FillBlankCard.kt:239:44 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/FillBlankCard.kt:239:45 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/FillBlankCard.kt:239:55 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/FillBlankCard.kt:239:57 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/FillBlankCard.kt:239:62 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/FillBlankCard.kt:239:67 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/FillBlankCard.kt:239:68 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/FillBlankCard.kt:239:78 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/FillBlankCard.kt:239:79 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/FillBlankCard.kt:239:80 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/FillBlankCard.kt:239:84 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/FillBlankCard.kt:239:85 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/FillBlankCard.kt:239:91 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/FillBlankCard.kt:239:93 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/FillBlankCard.kt:239:97 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/FillBlankCard.kt:240:13 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/FillBlankCard.kt:241:9 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/FillBlankCard.kt:242:5 Expecting a top level declaration
+e: file:///home/runner/work/ReelEd/ReelEd/app/src/main/java/com/reeled/quizoverlay/ui/overlay/cards/FillBlankCard.kt:243:1 Expecting a top level declaration
 
-FAILURE: Build failed with an exception.
-
-* What went wrong:
-Execution failed for task ':app:checkDebugAarMetadata'.
-> Could not resolve all files for configuration ':app:debugRuntimeClasspath'.
-   > Could not find app.rive:rive-android:8.4.3.
-     Searched in the following locations:
-       - https://dl.google.com/dl/android/maven2/app/rive/rive-android/8.4.3/rive-android-8.4.3.pom
-       - https://repo.maven.apache.org/maven2/app/rive/rive-android/8.4.3/rive-android-8.4.3.pom
-     Required by:
-         project :app
+> Task :app:kspDebugKotlin FAILED

@@ -234,10 +234,3 @@ fun LargeTactileBlank(
         )
     }
 }
- = MaterialTheme.typography.headlineSmall.copy(
-                fontWeight = FontWeight.Black,
-                color = if (isFilled) Color(0xFF0D47A1) else Color(0xFF0D47A1).copy(alpha = 0.3f)
-            )
-        )
-    }
-}

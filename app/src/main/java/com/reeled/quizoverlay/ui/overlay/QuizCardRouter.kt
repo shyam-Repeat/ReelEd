@@ -255,7 +255,3 @@ private fun InvalidPayloadGate(
         onInvalidPayload(questionId, reason)
     }
 }
-uestionId, reason) {
-        onInvalidPayload(questionId, reason)
-    }
-}

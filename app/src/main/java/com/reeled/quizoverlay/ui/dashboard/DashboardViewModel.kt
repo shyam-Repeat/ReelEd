@@ -185,17 +185,3 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
             }
     }
 }
-            )
-        }
-    }
-
-    companion object {
-        fun provideFactory(application: Application): ViewModelProvider.Factory =
-            object : ViewModelProvider.Factory {
-                @Suppress("UNCHECKED_CAST")
-                override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    return DashboardViewModel(application) as T
-                }
-            }
-    }
-}

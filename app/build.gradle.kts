@@ -1,8 +1,65 @@
+import java.util.Properties
+import java.time.Instant
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("com.google.devtools.ksp")
 }
+
+val signingProps = Properties().apply {
+    val signingFile = rootProject.file("signing.properties")
+    if (signingFile.exists()) {
+        signingFile.inputStream().use { load(it) }
+    }
+}
+
+fun readSigningValue(key: String): String? {
+    val fromProject = (project.findProperty(key) as String?)?.trim().orEmpty()
+    if (fromProject.isNotEmpty()) return fromProject
+
+    val fromEnv = System.getenv(key)?.trim().orEmpty()
+    if (fromEnv.isNotEmpty()) return fromEnv
+
+    val fromFile = signingProps.getProperty(key)?.trim().orEmpty()
+    if (fromFile.isNotEmpty()) return fromFile
+
+    return null
+}
+
+fun promptSigningValue(key: String, secret: Boolean): String? {
+    val console = System.console() ?: return null
+    return if (secret) {
+        console.readPassword("Enter %s: ", key)?.concatToString()?.trim()?.takeIf { it.isNotEmpty() }
+    } else {
+        console.readLine("Enter %s: ", key)?.trim()?.takeIf { it.isNotEmpty() }
+    }
+}
+
+val signingStoreFile = readSigningValue("SIGNING_STORE_FILE")
+    ?: promptSigningValue("SIGNING_STORE_FILE", secret = false)
+val signingStorePassword = readSigningValue("SIGNING_STORE_PASSWORD")
+    ?: promptSigningValue("SIGNING_STORE_PASSWORD", secret = true)
+val signingKeyAlias = readSigningValue("SIGNING_KEY_ALIAS")
+    ?: promptSigningValue("SIGNING_KEY_ALIAS", secret = false)
+val signingKeyPassword = readSigningValue("SIGNING_KEY_PASSWORD")
+    ?: promptSigningValue("SIGNING_KEY_PASSWORD", secret = true)
+
+val hasCompleteReleaseSigning =
+    !signingStoreFile.isNullOrBlank() &&
+        !signingStorePassword.isNullOrBlank() &&
+        !signingKeyAlias.isNullOrBlank() &&
+        !signingKeyPassword.isNullOrBlank()
+
+val releaseTaskRequested = gradle.startParameter.taskNames.any { task ->
+    val lowered = task.lowercase()
+    lowered.contains("release")
+}
+
+val autoVersionCode = (project.findProperty("VERSION_CODE") as String?)
+    ?.toIntOrNull()
+    ?: System.getenv("VERSION_CODE")?.toIntOrNull()
+    ?: Instant.now().epochSecond.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
 
 android {
     namespace = "com.reeled.quizoverlay"
@@ -12,7 +69,7 @@ android {
         applicationId = "com.reeled.quizoverlay"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
+        versionCode = autoVersionCode
         versionName = "1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -21,9 +78,23 @@ android {
         }
     }
 
+    signingConfigs {
+        if (hasCompleteReleaseSigning) {
+            create("release") {
+                storeFile = file(signingStoreFile!!)
+                storePassword = signingStorePassword
+                keyAlias = signingKeyAlias
+                keyPassword = signingKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            if (hasCompleteReleaseSigning) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -65,6 +136,24 @@ val supabaseAnonKey = (project.findProperty("SUPABASE_ANON_KEY") as String?)
 android.defaultConfig {
     buildConfigField("String", "SUPABASE_URL", "\"${supabaseUrl.escapeForBuildConfig()}\"")
     buildConfigField("String", "SUPABASE_ANON_KEY", "\"${supabaseAnonKey.escapeForBuildConfig()}\"")
+}
+
+if (releaseTaskRequested && !hasCompleteReleaseSigning) {
+    throw GradleException(
+        """
+        Missing release signing configuration.
+        Provide all of:
+        - SIGNING_STORE_FILE
+        - SIGNING_STORE_PASSWORD
+        - SIGNING_KEY_ALIAS
+        - SIGNING_KEY_PASSWORD
+
+        You can set them in one of:
+        1) ./signing.properties (recommended, local only)
+        2) environment variables
+        3) -P Gradle properties
+        """.trimIndent()
+    )
 }
 
 dependencies {

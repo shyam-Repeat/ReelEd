@@ -34,6 +34,7 @@ import androidx.compose.foundation.layout.FlowRow
 fun FillBlankCard(
     config: QuizCardConfig,
     sourceApp: String,
+    soundManager: com.reeled.quizoverlay.util.SoundManager,
     onResult: (QuizAttemptResult) -> Unit
 ) {
     val payload = config.payload as QuizPayload.FillBlankPayload
@@ -227,6 +228,13 @@ fun LargeTactileBlank(
             text = label,
             modifier = Modifier.padding(horizontal = 24.dp),
             style = MaterialTheme.typography.headlineSmall.copy(
+                fontWeight = FontWeight.Black,
+                color = if (isFilled) Color(0xFF0D47A1) else Color(0xFF0D47A1).copy(alpha = 0.3f)
+            )
+        )
+    }
+}
+ = MaterialTheme.typography.headlineSmall.copy(
                 fontWeight = FontWeight.Black,
                 color = if (isFilled) Color(0xFF0D47A1) else Color(0xFF0D47A1).copy(alpha = 0.3f)
             )

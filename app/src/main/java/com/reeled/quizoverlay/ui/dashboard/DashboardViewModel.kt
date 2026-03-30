@@ -60,6 +60,7 @@ data class DashboardUiState(
     val weekData: List<DaySummary> = emptyList(),
     val todayBySubject: List<SubjectStat> = emptyList(),
     val recentAttempts: List<AttemptPreview> = emptyList(),
+    val isOverlayEnabled: Boolean = true,
 )
 
 sealed class DashboardAction {
@@ -116,7 +117,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                 )
             }
 
-            _uiState.value = DashboardUiState(
+            _uiState.value = _uiState.value.copy(
                 todaySummary = TodaySummary(
                     shown = shown,
                     answered = answered,
@@ -170,6 +171,20 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                 shown = attempts.size,
                 correct = attempts.count { it.isCorrect && !it.dismissed },
                 isToday = idx == dayRanges.lastIndex,
+            )
+        }
+    }
+
+    companion object {
+        fun provideFactory(application: Application): ViewModelProvider.Factory =
+            object : ViewModelProvider.Factory {
+                @Suppress("UNCHECKED_CAST")
+                override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                    return DashboardViewModel(application) as T
+                }
+            }
+    }
+}
             )
         }
     }

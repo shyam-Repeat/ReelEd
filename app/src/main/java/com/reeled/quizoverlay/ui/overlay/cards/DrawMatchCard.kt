@@ -231,7 +231,7 @@ private class DrawScoreTracker(
                 onTargetDrawnCount++
             }
         }
-        stampExpandedDrawn(x, y, radius = 14)
+        stampExpandedDrawn(x, y, radius = 22)
     }
 
     fun isSuccessful(): Boolean {
@@ -316,6 +316,12 @@ private fun expandMask(mask: BooleanArray, width: Int, height: Int, radius: Int)
                         expanded[yy * width + xx] = true
                     }
                 }
+            }
+        }
+    }
+    return expanded
+}
+      }
             }
         }
     }

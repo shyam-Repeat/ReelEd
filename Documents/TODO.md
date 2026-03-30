@@ -55,6 +55,8 @@ This checklist was re-audited against the current codebase and docs (`Documents/
 - [x] Verify `TimerBar` and `OptionButton` behavior with real countdown/answer states (beyond static rendering).
 - [ ] Move hardcoded UI text to `res/values/strings.xml`.
 - [ ] Verify dependency boundaries: UI should talk to ViewModel/Repository interfaces and prefs only where intended.
+- [x] **UI Polish (NEW):** Add a blue blur/glow to the 20dp corners of the overlay to improve aesthetics.
+- [x] **Horizontal Switch UI (NEW):** Improve the UI for horizontal switches.
 
 ### 5) Audio & SFX (NEW)
 - [ ] Add the following sound files to `app/src/main/res/raw/`:
@@ -62,9 +64,19 @@ This checklist was re-audited against the current codebase and docs (`Documents/
     - `sfx_wrong.mp3` - Short buzzer/fail sound.
     - `sfx_match.mp3` - Satisfying click/pop for tile matching.
     - `sfx_train.mp3` - Steam train "Choo-Choo" or engine sound (syncs with 1.5s entry animation).
-- [ ] Implement `SoundManager.kt` using SoundPool.
-- [ ] Integrate `SoundManager` trigger calls in `TapChoiceCard`, `TapTapMatchCard`, and `TrainAnimation`.
-- [ ] Audit `AudioMuter.kt` to ensure system-wide music is silenced correctly during quiz.
+- [x] Implement `SoundManager.kt` using SoundPool.
+- [x] Integrate `SoundManager` trigger calls in `TapChoiceCard`, `TapTapMatchCard`, and `TrainAnimation`.
+- [x] **Background Muting (NEW):** Implement a "mute music" logic that silences background videos (e.g., Reels) while the overlay is active, making them feel paused.
+- [x] **TTS for Questions (NEW):** Implement TTS for all question types. Ensure it's fast and reliable.
+
+### 6) Parent Control & Manual Toggle (NEW)
+- [x] Add a master toggle in the app so parents can enable/disable the overlay manually rather than it being fully automatic.
+
+### 7) Logic Refinement (NEW)
+- [x] **DrawMatchCard Logic:** Relax the pass logic in `DrawMatchCard.kt` to make it easier for users to succeed.
+
+### 8) Supabase Cleanup (NEW)
+- [x] Debug and remove unwanted/stale data from Supabase.
 
 
 

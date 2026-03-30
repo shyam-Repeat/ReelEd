@@ -204,7 +204,7 @@ fun QuizCardRouter(
                                 }
                                 QuizCardType.DRAW_MATCH -> {
                                     if (config.payload is QuizPayload.DrawMatchPayload) {
-                                        DrawMatchCard(config, sourceApp, onResultIntercept)
+                                        DrawMatchCard(config, sourceApp, soundManager, onResultIntercept)
                                     } else {
                                         InvalidPayloadGate(config.id, "draw_match_payload_mismatch", onInvalidPayload)
                                     }
@@ -252,6 +252,10 @@ private fun InvalidPayloadGate(
     onInvalidPayload: (questionId: String, reason: String) -> Unit
 ) {
     LaunchedEffect(questionId, reason) {
+        onInvalidPayload(questionId, reason)
+    }
+}
+uestionId, reason) {
         onInvalidPayload(questionId, reason)
     }
 }

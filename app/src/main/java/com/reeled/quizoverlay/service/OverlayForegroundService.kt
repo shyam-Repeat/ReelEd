@@ -214,13 +214,26 @@ class OverlayForegroundService : Service() {
         pollingJob = serviceScope.launch {
             while (isActive) {
                 try {
-                    reconcileOverlayState()
-                    val isTestMode = appPrefs.isTestMode.first()
-                    
-                    if (isTestMode) {
-                        handleTestModePolling()
+                    val enabled = appPrefs.overlayEnabled.first()
+                    if (!enabled) {
+                        removeOverlayIfShowing()
+                        val reason = "overlay_disabled_by_parent"
+                        if (reason != lastReportedSkipReason) {
+                            lastReportedSkipReason = reason
+                            logEventSafely(
+                                eventType = "trigger_skip",
+                                payloadJson = "{\"reason\":\"${jsonSafe(reason)}\"}"
+                            )
+                        }
                     } else {
-                        handleNormalPolling()
+                        reconcileOverlayState()
+                        val isTestMode = appPrefs.isTestMode.first()
+                        
+                        if (isTestMode) {
+                            handleTestModePolling()
+                        } else {
+                            handleNormalPolling()
+                        }
                     }
                 } catch (cancelled: CancellationException) {
                     throw cancelled

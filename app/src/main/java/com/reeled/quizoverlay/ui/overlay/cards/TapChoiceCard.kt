@@ -31,6 +31,7 @@ import kotlinx.coroutines.launch
 fun TapChoiceCard(
     config: QuizCardConfig,
     sourceApp: String,
+    soundManager: com.reeled.quizoverlay.util.SoundManager,
     onResult: (QuizAttemptResult) -> Unit
 ) {
     val payload = config.payload as QuizPayload.TapChoicePayload

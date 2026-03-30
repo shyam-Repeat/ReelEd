@@ -25,6 +25,11 @@ class AppPrefs(private val context: Context) {
         private val IS_TEST_MODE = booleanPreferencesKey("is_test_mode")
     }
 
+    val overlayEnabled: Flow<Boolean> = context.appDataStore.data.map { it[OVERLAY_ENABLED] ?: true }
+    suspend fun setOverlayEnabled(enabled: Boolean) {
+        context.appDataStore.edit { it[OVERLAY_ENABLED] = enabled }
+    }
+
     val nickname: Flow<String?> = context.appDataStore.data.map { it[NICKNAME] }
     suspend fun setNickname(name: String) {
         context.appDataStore.edit { it[NICKNAME] = name }

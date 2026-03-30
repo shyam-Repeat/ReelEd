@@ -3,13 +3,19 @@ package com.reeled.quizoverlay.util
 import android.content.Context
 import android.media.AudioAttributes
 import android.media.SoundPool
+import android.speech.tts.TextToSpeech
 import com.reeled.quizoverlay.R
+import java.util.Locale
 
-class SoundManager(private val context: Context) {
+class SoundManager(private val context: Context) : TextToSpeech.OnInitListener {
     private val soundPool: SoundPool
     private val soundMap = mutableMapOf<String, Int>()
     private val loadedSoundIds = mutableSetOf<Int>()
     private val pendingPlayNames = mutableListOf<String>()
+
+    private var tts: TextToSpeech? = null
+    private var ttsReady = false
+    private var pendingSpeech: String? = null
 
     init {
         val audioAttributes = AudioAttributes.Builder()
@@ -23,7 +29,6 @@ class SoundManager(private val context: Context) {
             .build()
 
         // Preload sounds
-        // Note: These will fail until files are added to res/raw
         loadSound("correct", R.raw.sfx_correct)
         loadSound("wrong", R.raw.sfx_wrong)
         loadSound("match", R.raw.sfx_match)
@@ -33,6 +38,23 @@ class SoundManager(private val context: Context) {
             if (status == 0) {
                 loadedSoundIds.add(sampleId)
                 flushPendingPlays()
+            }
+        }
+
+        // Initialize TTS
+        tts = TextToSpeech(context.applicationContext, this)
+    }
+
+    override fun onInit(status: Int) {
+        if (status == TextToSpeech.SUCCESS) {
+            tts?.let {
+                it.language = Locale.US
+                it.setSpeechRate(1.1f) // Slightly faster as per user feedback
+                ttsReady = true
+                pendingSpeech?.let { text ->
+                    speak(text)
+                    pendingSpeech = null
+                }
             }
         }
     }
@@ -50,12 +72,26 @@ class SoundManager(private val context: Context) {
     }
 
     fun playTrain(durationMs: Int) {
-        // Keep parameter for call-site compatibility.
         playInternal("train", leftVolume = 0.7f, rightVolume = 0.7f)
+    }
+
+    fun speak(text: String) {
+        if (ttsReady) {
+            tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "quiz_tts_${text.hashCode()}")
+        } else {
+            pendingSpeech = text
+        }
+    }
+
+    fun stopAll() {
+        tts?.stop()
+        // No direct soundPool.stopAll() but we can stop active streams if needed.
     }
 
     fun release() {
         soundPool.release()
+        tts?.stop()
+        tts?.shutdown()
     }
 
     private fun playInternal(name: String, leftVolume: Float, rightVolume: Float) {

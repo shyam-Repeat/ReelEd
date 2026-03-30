@@ -76,6 +76,7 @@ fun TapTapMatchCard(
 
     fun onTileClick(tile: MatchTile) {
         if (matchedKeys.contains(tile.key)) return
+        soundManager.speak(tile.label)
         if (selectedTile == tile) {
             selectedTile = null
             return

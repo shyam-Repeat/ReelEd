@@ -147,6 +147,8 @@ fun ParentDashboardScreen(
             when (selectedTab) {
                 DashboardTab.Dashboard -> DashboardContent(uiState, modifier)
                 DashboardTab.Controls -> ControlsContent(
+                    isOverlayEnabled = uiState.isOverlayEnabled,
+                    onToggleOverlay = dashboardViewModel::toggleOverlay,
                     onDisable = dashboardViewModel::showPinPrompt,
                     onFeedback = dashboardViewModel::openFeedback
                 )
@@ -207,6 +209,8 @@ private fun DashboardContent(
 
 @Composable
 private fun ControlsContent(
+    isOverlayEnabled: Boolean,
+    onToggleOverlay: () -> Unit,
     onDisable: () -> Unit,
     onFeedback: () -> Unit
 ) {
@@ -323,7 +327,13 @@ private fun SettingsContent(
                         }
                         Switch(
                             checked = uiState.isTestModeEnabled,
-                            onCheckedChange = { viewModel.toggleTestMode() }
+                            onCheckedChange = { viewModel.toggleTestMode() },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Color.White,
+                                checkedTrackColor = com.reeled.quizoverlay.ui.theme.Primary,
+                                uncheckedThumbColor = Color.White,
+                                uncheckedTrackColor = Color.LightGray.copy(alpha = 0.5f)
+                            )
                         )
                     }
                 }
@@ -345,6 +355,48 @@ private fun SettingsContent(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text("Refresh Logs")
+            }
+        }
+
+        if (uiState.logs.isEmpty()) {
+            item {
+                Text(
+                    text = "No logs yet.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+
+        items(uiState.logs) { log ->
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f))
+            ) {
+                Column(
+                    modifier = Modifier.padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Text(
+                        text = viewModel.formatTime(log.timestamp),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                    Text(
+                        text = log.title,
+                        style = MaterialTheme.typography.titleSmall,
+                    )
+                    Text(
+                        text = log.details,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
+    }
+}
+("Refresh Logs")
             }
         }
 

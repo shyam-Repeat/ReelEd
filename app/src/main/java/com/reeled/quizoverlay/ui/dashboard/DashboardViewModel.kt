@@ -7,6 +7,9 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.reeled.quizoverlay.data.local.dao.QuizAttemptDao
 import com.reeled.quizoverlay.data.repository.QuizRepository
+import com.reeled.quizoverlay.prefs.AppPrefs
+import com.reeled.quizoverlay.prefs.TriggerPrefs
+import com.reeled.quizoverlay.service.OverlayServiceCoordinator
 import com.reeled.quizoverlay.util.TimeUtils
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,6 +17,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
@@ -60,7 +64,10 @@ data class DashboardUiState(
     val weekData: List<DaySummary> = emptyList(),
     val todayBySubject: List<SubjectStat> = emptyList(),
     val recentAttempts: List<AttemptPreview> = emptyList(),
-    val isOverlayEnabled: Boolean = true,
+    val isOverlayEnabled: Boolean = false,
+    val dailyCap: Int = TriggerPrefs.DEFAULT_DAILY_CAP,
+    val quizTimerMinutes: Int = TriggerPrefs.DEFAULT_QUIZ_TIMER_SECONDS / 60,
+    val forceQuizEnabled: Boolean = false,
 )
 
 sealed class DashboardAction {
@@ -70,6 +77,8 @@ sealed class DashboardAction {
 
 class DashboardViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = QuizRepository(application)
+    private val appPrefs = AppPrefs(application)
+    private val triggerPrefs = TriggerPrefs(application)
 
     private val _uiState = MutableStateFlow(DashboardUiState())
     val uiState: StateFlow<DashboardUiState> = _uiState.asStateFlow()
@@ -79,6 +88,30 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
 
     init {
         refreshDashboard()
+
+        viewModelScope.launch {
+            appPrefs.overlayEnabled.collect { enabled ->
+                _uiState.value = _uiState.value.copy(isOverlayEnabled = enabled)
+            }
+        }
+
+        viewModelScope.launch {
+            triggerPrefs.dailyCap.collect { cap ->
+                _uiState.value = _uiState.value.copy(dailyCap = cap)
+            }
+        }
+
+        viewModelScope.launch {
+            triggerPrefs.quizTimerSeconds.collect { seconds ->
+                _uiState.value = _uiState.value.copy(quizTimerMinutes = (seconds / 60).coerceIn(1, 5))
+            }
+        }
+
+        viewModelScope.launch {
+            triggerPrefs.forceQuizEnabled.collect { enabled ->
+                _uiState.value = _uiState.value.copy(forceQuizEnabled = enabled)
+            }
+        }
     }
 
     fun refreshDashboard() {
@@ -141,6 +174,35 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     fun openFeedback() {
         viewModelScope.launch {
             _actions.emit(DashboardAction.OpenFeedback)
+        }
+    }
+
+    fun setOverlayEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            appPrefs.setOverlayEnabled(enabled)
+            if (enabled) {
+                OverlayServiceCoordinator.startAfterOnboarding(getApplication())
+            } else {
+                OverlayServiceCoordinator.stop(getApplication())
+            }
+        }
+    }
+
+    fun setDailyCap(value: Int) {
+        viewModelScope.launch {
+            triggerPrefs.setDailyCap(value)
+        }
+    }
+
+    fun setQuizTimerMinutes(minutes: Int) {
+        viewModelScope.launch {
+            triggerPrefs.setQuizTimerSeconds(minutes.coerceIn(1, 5) * 60)
+        }
+    }
+
+    fun setForceQuizEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            triggerPrefs.setForceQuizEnabled(enabled)
         }
     }
 

@@ -165,39 +165,97 @@ data class QuizCardConfig(
         }
 
         private fun parsePayload(type: QuizCardType, json: String): QuizPayload {
-            // Use Gson or kotlinx.serialization — whichever is in your Gradle
-            // Example uses Gson:
+            val root = JSONObject(json)
             return when (type) {
                 QuizCardType.TAP_CHOICE -> {
-                    val raw = Gson().fromJson(json, TapChoiceRaw::class.java)
+                    val options = root.getJSONArray("options")
                     QuizPayload.TapChoicePayload(
-                        options = raw.options.map {
-                            ChoiceOption(it.id, it.label, it.is_correct)
+                        options = List(options.length()) { index ->
+                            val item = options.getJSONObject(index)
+                            ChoiceOption(
+                                id = item.getString("id"),
+                                label = item.getString("label"),
+                                isCorrect = item.getBoolean("is_correct"),
+                                color = item.optString("color", null)
+                            )
                         }
                     )
                 }
+
                 QuizCardType.TAP_TAP_MATCH -> {
-                    val raw = Gson().fromJson(json, TapTapRaw::class.java)
-                    QuizPayload.TapTapMatchPayload(
-                        pairs = raw.pairs.map {
-                            MatchPair(it.left_id, it.left_label, it.right_id, it.right_label)
-                        },
-                        rightOrderShuffled = raw.right_order_shuffled
-                    )
+                    val leftItems = root.getJSONArray("left_items")
+                    val rightItems = root.getJSONArray("right_items")
+                    val correctPairs = root.getJSONArray("correct_pairs")
+
+                    val rightLabelMap = buildMap {
+                        repeat(rightItems.length()) { i ->
+                            val item = rightItems.getJSONObject(i)
+                            put(item.getString("id"), item.getString("label"))
+                        }
+                    }
+                    val leftLabelMap = buildMap {
+                        repeat(leftItems.length()) { i ->
+                            val item = leftItems.getJSONObject(i)
+                            put(item.getString("id"), item.getString("label"))
+                        }
+                    }
+
+                    val pairs = List(correctPairs.length()) { index ->
+                        val pair = correctPairs.getJSONArray(index)
+                        val leftId = pair.getString(0)
+                        val rightId = pair.getString(1)
+                        MatchPair(
+                            leftId = leftId,
+                            leftLabel = leftLabelMap[leftId] ?: "",
+                            rightId = rightId,
+                            rightLabel = rightLabelMap[rightId] ?: ""
+                        )
+                    }
+
+                    val rightOrderShuffled = List(rightItems.length()) { i ->
+                        rightItems.getJSONObject(i).getString("id")
+                    }
+
+                    QuizPayload.TapTapMatchPayload(pairs, rightOrderShuffled)
                 }
+
                 QuizCardType.DRAG_DROP_MATCH -> {
-                    val raw = Gson().fromJson(json, DragDropRaw::class.java)
+                    val draggables = root.getJSONArray("draggables")
+                    val targets = root.getJSONArray("targets")
+                    val correctPairs = root.getJSONArray("correct_pairs")
+                    val correctPairMap = mutableMapOf<String, MutableList<String>>()
+
+                    repeat(correctPairs.length()) { index ->
+                        val pair = correctPairs.getJSONArray(index)
+                        val dragId = pair.getString(0)
+                        val targetId = pair.getString(1)
+                        correctPairMap.getOrPut(targetId) { mutableListOf() }.add(dragId)
+                    }
+
                     QuizPayload.DragDropPayload(
-                        chips = raw.chips.map { DragChip(it.chip_id, it.label) },
-                        slots = raw.slots.map { DropSlot(it.slot_id, it.slot_label, it.correct_chip_id) }
+                        draggables = List(draggables.length()) { index ->
+                            val item = draggables.getJSONObject(index)
+                            DragChip(item.getString("id"), item.getString("label"))
+                        },
+                        targets = List(targets.length()) { index ->
+                            val item = targets.getJSONObject(index)
+                            val id = item.getString("id")
+                            DropSlot(id, item.getString("label"), correctPairMap[id].orEmpty())
+                        }
                     )
                 }
+
                 QuizCardType.FILL_BLANK -> {
-                    val raw = Gson().fromJson(json, FillBlankRaw::class.java)
+                    val wordBank = root.getJSONArray("word_bank")
                     QuizPayload.FillBlankPayload(
-                        sentenceTemplate = raw.sentence_template,
-                        wordBank = raw.word_bank.map {
-                            WordChip(it.chip_id, it.label, it.is_correct ?: false)
+                        sentenceTemplate = root.getString("sentence_template"),
+                        wordBank = List(wordBank.length()) { index ->
+                            val item = wordBank.getJSONObject(index)
+                            WordChip(
+                                chipId = item.getString("chip_id"),
+                                label = item.getString("label"),
+                                isCorrect = item.optBoolean("is_correct", false)
+                            )
                         }
                     )
                 }
@@ -205,23 +263,6 @@ data class QuizCardConfig(
         }
     }
 }
-
-// ── Raw JSON mirror classes (snake_case matches JSON keys) ────────
-// Used only inside parsePayload — never passed to Composables
-
-private data class TapChoiceRaw(val options: List<OptionRaw>)
-private data class OptionRaw(val id: String, val label: String, val is_correct: Boolean)
-
-private data class TapTapRaw(val pairs: List<PairRaw>, val right_order_shuffled: List<String>)
-private data class PairRaw(val left_id: String, val left_label: String,
-                           val right_id: String, val right_label: String)
-
-private data class DragDropRaw(val chips: List<ChipRaw>, val slots: List<SlotRaw>)
-private data class ChipRaw(val chip_id: String, val label: String)
-private data class SlotRaw(val slot_id: String, val slot_label: String, val correct_chip_id: String)
-
-private data class FillBlankRaw(val sentence_template: String, val word_bank: List<WordRaw>)
-private data class WordRaw(val chip_id: String, val label: String, val is_correct: Boolean?)
 ```
 
 ---
@@ -564,66 +605,28 @@ Tap right item → checks pair:
 All pairs matched → auto-advance after 600ms
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
-```kotlin
-@Composable
-fun TapTapMatchCard(
-    config: QuizCardConfig,
-    sourceApp: String,
-    onResult: (QuizAttemptResult) -> Unit,
-    onDismissed: () -> Unit
-) {
-    val payload  = config.payload as QuizPayload.TapTapMatchPayload
-    val startTime = remember { System.currentTimeMillis() }
-
-    var selectedLeft  by remember { mutableStateOf<String?>(null) }
-    // matchedPairs: leftId → rightId, only confirmed correct pairs
-    var matchedPairs  by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
-
-    // Right column display order: use payload.rightOrderShuffled
-    // (pre-shuffled in Supabase — no runtime shuffle needed)
-
-    fun onRightTap(rightId: String) {
-        val leftId = selectedLeft ?: return
-        val pair   = payload.pairs.find { it.leftId == leftId } ?: return
-        if (pair.rightId == rightId) {
-            // Correct pair
-            matchedPairs = matchedPairs + (leftId to rightId)
-            selectedLeft = null
-            if (matchedPairs.size == payload.pairs.size) {
-                // All matched
-                val elapsed = System.currentTimeMillis() - startTime
-                onResult(QuizAttemptResult(
-                    questionId       = config.id,
-                    selectedOptionId = "ALL_MATCHED",
-                    isCorrect        = true,
-                    wasDismissed     = false,
-                    wasTimerExpired  = false,
-                    responseTimeMs   = elapsed,
-                    sourceApp        = sourceApp
-                ))
-            }
-        } else {
-            // Wrong — flash red on both, reset after 600ms
-            // Use coroutine inside LaunchedEffect triggered by a wrongPair state flag
-        }
-    }
-
-    // Canvas overlay draws green lines between matched pair center-points
-    // Use Modifier.onGloballyPositioned to capture item positions
-    // Use animateColorAsState for green/red transitions
-}
-```
 
 Payload JSON:
 ```json
 "payload": {
-  "pairs": [
-    { "left_id": "L1", "left_label": "Dog",  "right_id": "R3", "right_label": "Animal" },
-    { "left_id": "L2", "left_label": "Run",  "right_id": "R1", "right_label": "Move fast" },
-    { "left_id": "L3", "left_label": "Big",  "right_id": "R4", "right_label": "Large" },
-    { "left_id": "L4", "left_label": "Eat",  "right_id": "R2", "right_label": "Food" }
+  "left_items": [
+    { "id": "L1", "label": "Dog" },
+    { "id": "L2", "label": "Run" },
+    { "id": "L3", "label": "Big" },
+    { "id": "L4", "label": "Eat" }
   ],
-  "right_order_shuffled": ["R2", "R4", "R1", "R3"]
+  "right_items": [
+    { "id": "R1", "label": "Move fast" },
+    { "id": "R2", "label": "Food" },
+    { "id": "R3", "label": "Animal" },
+    { "id": "R4", "label": "Large" }
+  ],
+  "correct_pairs": [
+    ["L1", "R3"],
+    ["L2", "R1"],
+    ["L3", "R4"],
+    ["L4", "R2"]
+  ]
 }
 ```
 
@@ -655,82 +658,27 @@ All slots filled → [ Submit ] appears
 Submit → green correct / red wrong slots for 1500ms → onResult()
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
-```kotlin
-@Composable
-fun DragDropMatchCard(
-    config: QuizCardConfig,
-    sourceApp: String,
-    onResult: (QuizAttemptResult) -> Unit,
-    onDismissed: () -> Unit   // unused in strict mode — kept for uniform signature
-) {
-    val payload   = config.payload as QuizPayload.DragDropPayload
-    val startTime = remember { System.currentTimeMillis() }
-
-    // slotContents: slotId → chipId (null = empty slot)
-    var slotContents by remember {
-        mutableStateOf(payload.slots.associate { it.slotId to null as String? })
-    }
-    // chipsInPool: chipIds currently not placed in a slot
-    var chipsInPool  by remember {
-        mutableStateOf(payload.chips.map { it.chipId }.toSet())
-    }
-    var dragChipId   by remember { mutableStateOf<String?>(null) }
-    var dragOffset   by remember { mutableStateOf(Offset.Zero) }
-
-    // FIX for Issue 5: use detectDragGestures (NOT AfterLongPress)
-    // Child expects immediate drag — no 500ms hold required
-    // pointerInput modifier on each chip in the pool:
-    //
-    // .pointerInput(chipId) {
-    //     detectDragGestures(
-    //         onDragStart = { dragChipId = chipId },
-    //         onDrag      = { _, delta -> dragOffset += delta },
-    //         onDragEnd   = {
-    //             val targetSlot = hitTestSlot(dragOffset, slotBounds)
-    //             if (targetSlot != null && slotContents[targetSlot] == null) {
-    //                 slotContents = slotContents + (targetSlot to chipId)
-    //                 chipsInPool  = chipsInPool - chipId
-    //             }
-    //             dragChipId = null
-    //             dragOffset = Offset.Zero
-    //         },
-    //         onDragCancel = { dragChipId = null; dragOffset = Offset.Zero }
-    //     )
-    // }
-
-    // Eject chip: tap filled slot → chip back to pool
-    // fun onSlotTap(slotId: String) {
-    //     val chipId = slotContents[slotId] ?: return
-    //     slotContents = slotContents + (slotId to null)
-    //     chipsInPool  = chipsInPool + chipId
-    // }
-
-    // Submit: all slots filled → compare to correct_chip_ids
-    val allFilled = slotContents.values.all { it != null }
-    // Show Submit button only when allFilled == true
-    // On submit:
-    //   val isCorrect = payload.slots.all { slotContents[it.slotId] in it.correctChipIds }
-    //   flash green/red on each slot for 1500ms → onResult(...)
-
-    // Floating drag ghost: Box offset by dragOffset, shown only when dragChipId != null
-    // Z-order: drawn last (on top of everything) inside a Box layout
-}
-```
 
 Payload JSON:
 ```json
 "payload": {
-  "chips": [
-    { "chip_id": "C1", "label": "2" },
-    { "chip_id": "C2", "label": "4" },
-    { "chip_id": "C3", "label": "7" },
-    { "chip_id": "C4", "label": "9" }
+  "draggables": [
+    { "id": "D1", "label": "2" },
+    { "id": "D2", "label": "4" },
+    { "id": "D3", "label": "7" },
+    { "id": "D4", "label": "9" }
   ],
-  "slots": [
-    { "slot_id": "S1", "slot_label": "Smallest", "correct_chip_ids": ["C1"] },
-    { "slot_id": "S2", "slot_label": "2nd",       "correct_chip_ids": ["C2"] },
-    { "slot_id": "S3", "slot_label": "3rd",       "correct_chip_ids": ["C3"] },
-    { "slot_id": "S4", "slot_label": "Largest",   "correct_chip_ids": ["C4"] }
+  "targets": [
+    { "id": "T1", "label": "Smallest" },
+    { "id": "T2", "label": "2nd" },
+    { "id": "T3", "label": "3rd" },
+    { "id": "T4", "label": "Largest" }
+  ],
+  "correct_pairs": [
+    ["D1", "T1"],
+    ["D2", "T2"],
+    ["D3", "T3"],
+    ["D4", "T4"]
   ]
 }
 ```

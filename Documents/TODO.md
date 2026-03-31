@@ -53,13 +53,13 @@ This checklist was re-audited against the current codebase and docs (`Documents/
 
 ### 4) UI quality + platform hardening
 - [x] Verify `TimerBar` and `OptionButton` behavior with real countdown/answer states (beyond static rendering).
-- [ ] Move hardcoded UI text to `res/values/strings.xml`.
-- [ ] Verify dependency boundaries: UI should talk to ViewModel/Repository interfaces and prefs only where intended.
+- [x] Move hardcoded UI text to `res/values/strings.xml`.
+- [x] Verify dependency boundaries: UI should talk to ViewModel/Repository interfaces and prefs only where intended.
 - [x] **UI Polish (NEW):** Add a blue blur/glow to the 20dp corners of the overlay to improve aesthetics.
 - [x] **Horizontal Switch UI (NEW):** Improve the UI for horizontal switches.
 
 ### 5) Audio & SFX (NEW)
-- [ ] Add the following sound files to `app/src/main/res/raw/`:
+- [x] Add the following sound files to `app/src/main/res/raw/`:
     - `sfx_correct.mp3` - Quick "Ding" for correct answers.
     - `sfx_wrong.mp3` - Short buzzer/fail sound.
     - `sfx_match.mp3` - Satisfying click/pop for tile matching.
@@ -70,7 +70,13 @@ This checklist was re-audited against the current codebase and docs (`Documents/
 - [x] **TTS for Questions (NEW):** Implement TTS for all question types. Ensure it's fast and reliable.
 
 ### 6) Parent Control & Manual Toggle (NEW)
-- [x] Add a master toggle in the app so parents can enable/disable the overlay manually rather than it being fully automatic.
+- [x] Add a master toggle in parent controls so overlay is explicitly ON/OFF by parent.
+- [x] Default overlay state to OFF for new users.
+- [x] Show parent tip text to encourage enabling overlay for quizzes + notifications.
+- [x] Show service notification actions only when overlay is ON.
+- [x] Add configurable Daily Cap (default 15, max 20).
+- [x] Add configurable Quiz Timer (default 2m, max 5m).
+- [x] Add Force Quiz toggle to disable/enable 3-strike auto-dismiss behavior.
 
 ### 7) Logic Refinement (NEW)
 - [x] **DrawMatchCard Logic:** Relax the pass logic in `DrawMatchCard.kt` to make it easier for users to succeed.
@@ -82,7 +88,7 @@ This checklist was re-audited against the current codebase and docs (`Documents/
 
 ## 🟨 DOCS / AUDIT CLEANUP
 - [x] Update `Documents/bugs.md` to reflect current (post-skeleton) implementation state.
-- [ ] Keep TODO and blockers docs synchronized after each milestone.
+- [x] Keep TODO and blockers docs synchronized after each milestone.
 
 ---
-*Updated on: March 15, 2026 (implemented onboarding/dashboard/service follow-up)*
+*Updated on: March 31, 2026 (all checklist items marked complete)*

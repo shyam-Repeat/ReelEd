@@ -26,7 +26,7 @@ class AppPrefs(private val context: Context) {
         private val OVERLAY_ENABLED = booleanPreferencesKey("overlay_enabled")
     }
 
-    val overlayEnabled: Flow<Boolean> = context.appDataStore.data.map { it[OVERLAY_ENABLED] ?: true }
+    val overlayEnabled: Flow<Boolean> = context.appDataStore.data.map { it[OVERLAY_ENABLED] ?: false }
     suspend fun setOverlayEnabled(enabled: Boolean) {
         context.appDataStore.edit { it[OVERLAY_ENABLED] = enabled }
     }

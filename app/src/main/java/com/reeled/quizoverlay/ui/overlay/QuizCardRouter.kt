@@ -47,6 +47,7 @@ import com.reeled.quizoverlay.ui.overlay.components.TimerBar
 fun QuizCardRouter(
     config: QuizCardConfig,
     sourceApp: String,
+    forceQuizEnabled: Boolean = false,
     onResult: (QuizAttemptResult) -> Unit,
     onDismissed: () -> Unit,
     onInvalidPayload: (questionId: String, reason: String) -> Unit
@@ -67,6 +68,14 @@ fun QuizCardRouter(
     val totalTimerSeconds = (if (config.rules.timerSeconds > 0) config.rules.timerSeconds else 120).toFloat()
     var timeLeft by remember { mutableStateOf(totalTimerSeconds) }
     var wrongAttempts by remember { mutableStateOf(0) }
+
+    // Auto-read question text shortly after train intro, so JSON question text is always spoken.
+    LaunchedEffect(config.id) {
+        delay(1700)
+        if (!quizFinished) {
+            soundManager.speak(config.display.questionText)
+        }
+    }
 
     // Timer Loop
     LaunchedEffect(quizFinished) {
@@ -119,7 +128,7 @@ fun QuizCardRouter(
                     shakeOffset.animateTo(0f, tween(50))
                 }
                 
-                if (wrongAttempts >= 3) {
+                if (!forceQuizEnabled && wrongAttempts >= 3) {
                     quizFinished = true // Mark finished IMMEDIATELY
                     scope.launch {
                         delay(1200)

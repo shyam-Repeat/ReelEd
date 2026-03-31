@@ -18,6 +18,7 @@ class TriggerEngine(
     suspend fun checkAndFire(monitoredApps: Set<String>): TriggerDecision {
         val now = System.currentTimeMillis()
         val state = prefs.getTriggerState()
+        val dailyCap = prefs.getDailyCap()
 
         if (state.parentPauseActive) {
             if (now < state.parentPauseExpiryMs) {
@@ -47,7 +48,7 @@ class TriggerEngine(
             return skip("app_paused (${remaining}s)", foregroundPackage)
         }
 
-        if (state.quizzesShownToday >= TriggerConfig.MAX_DAILY) {
+        if (state.quizzesShownToday >= dailyCap) {
             return skip("daily_cap_reached", foregroundPackage)
         }
 
@@ -70,7 +71,7 @@ class TriggerEngine(
         }
 
         val interruptScore = videoPlaybackDetector.getInterruptScore(monitoredApps)
-        val remainingQuota = TriggerConfig.MAX_DAILY - state.quizzesShownToday
+        val remainingQuota = dailyCap - state.quizzesShownToday
         if (interruptScore.isPoor && remainingQuota > 1) {
             return skip("poor_interrupt_moment", foregroundPackage)
         }

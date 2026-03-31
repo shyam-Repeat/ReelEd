@@ -16,7 +16,9 @@ object OverlayServiceCoordinator {
         val appContext = context.applicationContext
         scope.launch {
             val appPrefs = AppPrefs(appContext)
-            if (appPrefs.onboardingComplete.first()) {
+            val onboardingComplete = appPrefs.onboardingComplete.first()
+            val overlayEnabled = appPrefs.overlayEnabled.first()
+            if (onboardingComplete && overlayEnabled) {
                 ContextCompat.startForegroundService(
                     appContext,
                     OverlayForegroundService.startIntent(appContext)
@@ -27,9 +29,21 @@ object OverlayServiceCoordinator {
 
     fun startAfterOnboarding(context: Context) {
         val appContext = context.applicationContext
-        ContextCompat.startForegroundService(
-            appContext,
-            OverlayForegroundService.startIntent(appContext)
-        )
+        scope.launch {
+            val appPrefs = AppPrefs(appContext)
+            val onboardingComplete = appPrefs.onboardingComplete.first()
+            val overlayEnabled = appPrefs.overlayEnabled.first()
+            if (onboardingComplete && overlayEnabled) {
+                ContextCompat.startForegroundService(
+                    appContext,
+                    OverlayForegroundService.startIntent(appContext)
+                )
+            }
+        }
+    }
+
+    fun stop(context: Context) {
+        val appContext = context.applicationContext
+        appContext.startService(OverlayForegroundService.stopIntent(appContext))
     }
 }

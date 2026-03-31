@@ -42,8 +42,9 @@ class ServiceWatchdogWorker(
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         try {
-            val isEnabled = appPrefs.onboardingComplete.first()
-            if (!isEnabled) return@withContext Result.success()
+            val onboardingComplete = appPrefs.onboardingComplete.first()
+            val overlayEnabled = appPrefs.overlayEnabled.first()
+            if (!onboardingComplete || !overlayEnabled) return@withContext Result.success()
 
             if (!isServiceRunning(OverlayForegroundService::class.java)) {
                 OverlayServiceCoordinator.startAfterOnboarding(applicationContext)

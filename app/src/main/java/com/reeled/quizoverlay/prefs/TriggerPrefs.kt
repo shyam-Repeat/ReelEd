@@ -14,6 +14,13 @@ private val Context.triggerDataStore by preferencesDataStore(name = "trigger_pre
 class TriggerPrefs(private val context: Context) {
 
     companion object {
+        const val DEFAULT_DAILY_CAP = 15
+        const val MIN_DAILY_CAP = 1
+        const val MAX_DAILY_CAP = 20
+        const val DEFAULT_QUIZ_TIMER_SECONDS = 120
+        const val MIN_QUIZ_TIMER_SECONDS = 60
+        const val MAX_QUIZ_TIMER_SECONDS = 300
+
         private val PAUSE_ACTIVE = booleanPreferencesKey("pause_active")
         private val PAUSE_EXPIRY = longPreferencesKey("pause_expiry")
         private val APP_PAUSE_ENTRIES = stringSetPreferencesKey("app_pause_entries")
@@ -27,6 +34,9 @@ class TriggerPrefs(private val context: Context) {
         private val LAST_FOREGROUND_APP = stringPreferencesKey("last_foreground_app")
         private val LAST_SKIP_REASON = stringPreferencesKey("last_skip_reason")
         private val DAILY_CAP_DAY_START = longPreferencesKey("daily_cap_day_start")
+        private val DAILY_CAP = intPreferencesKey("daily_cap")
+        private val QUIZ_TIMER_SECONDS = intPreferencesKey("quiz_timer_seconds")
+        private val FORCE_QUIZ_ENABLED = booleanPreferencesKey("force_quiz_enabled")
     }
 
     suspend fun getTriggerState(): TriggerState {
@@ -54,6 +64,46 @@ class TriggerPrefs(private val context: Context) {
     val lastForegroundApp: Flow<String?> = context.triggerDataStore.data.map { it[LAST_FOREGROUND_APP] }
     
     val sessionStartTime: Flow<Long> = context.triggerDataStore.data.map { it[SESSION_START_TIME] ?: 0L }
+
+    val dailyCap: Flow<Int> = context.triggerDataStore.data.map {
+        (it[DAILY_CAP] ?: DEFAULT_DAILY_CAP).coerceIn(MIN_DAILY_CAP, MAX_DAILY_CAP)
+    }
+
+    suspend fun getDailyCap(): Int =
+        (context.triggerDataStore.data.first()[DAILY_CAP] ?: DEFAULT_DAILY_CAP)
+            .coerceIn(MIN_DAILY_CAP, MAX_DAILY_CAP)
+
+    suspend fun setDailyCap(value: Int) {
+        context.triggerDataStore.edit { prefs ->
+            prefs[DAILY_CAP] = value.coerceIn(MIN_DAILY_CAP, MAX_DAILY_CAP)
+        }
+    }
+
+    val quizTimerSeconds: Flow<Int> = context.triggerDataStore.data.map {
+        (it[QUIZ_TIMER_SECONDS] ?: DEFAULT_QUIZ_TIMER_SECONDS)
+            .coerceIn(MIN_QUIZ_TIMER_SECONDS, MAX_QUIZ_TIMER_SECONDS)
+    }
+
+    suspend fun getQuizTimerSeconds(): Int =
+        (context.triggerDataStore.data.first()[QUIZ_TIMER_SECONDS] ?: DEFAULT_QUIZ_TIMER_SECONDS)
+            .coerceIn(MIN_QUIZ_TIMER_SECONDS, MAX_QUIZ_TIMER_SECONDS)
+
+    suspend fun setQuizTimerSeconds(value: Int) {
+        context.triggerDataStore.edit { prefs ->
+            prefs[QUIZ_TIMER_SECONDS] =
+                value.coerceIn(MIN_QUIZ_TIMER_SECONDS, MAX_QUIZ_TIMER_SECONDS)
+        }
+    }
+
+    val forceQuizEnabled: Flow<Boolean> = context.triggerDataStore.data.map {
+        it[FORCE_QUIZ_ENABLED] ?: false
+    }
+
+    suspend fun setForceQuizEnabled(enabled: Boolean) {
+        context.triggerDataStore.edit { prefs ->
+            prefs[FORCE_QUIZ_ENABLED] = enabled
+        }
+    }
 
     suspend fun setOverlayActive(active: Boolean) {
         context.triggerDataStore.edit { it[OVERLAY_ACTIVE] = active }

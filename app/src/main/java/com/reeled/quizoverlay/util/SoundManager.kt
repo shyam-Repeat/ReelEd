@@ -2,8 +2,12 @@ package com.reeled.quizoverlay.util
 
 import android.content.Context
 import android.media.AudioAttributes
+import android.media.MediaPlayer
 import android.media.SoundPool
+import android.os.Handler
+import android.os.Looper
 import android.speech.tts.TextToSpeech
+import android.speech.tts.UtteranceProgressListener
 import com.reeled.quizoverlay.R
 import java.util.Locale
 
@@ -16,6 +20,9 @@ class SoundManager(private val context: Context) : TextToSpeech.OnInitListener {
     private var tts: TextToSpeech? = null
     private var ttsReady = false
     private var pendingSpeech: String? = null
+    private var backgroundPlayer: MediaPlayer? = null
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private var pendingBackgroundStart: Runnable? = null
 
     init {
         val audioAttributes = AudioAttributes.Builder()
@@ -50,6 +57,17 @@ class SoundManager(private val context: Context) : TextToSpeech.OnInitListener {
             tts?.let {
                 it.language = Locale.US
                 it.setSpeechRate(1.1f) // Slightly faster as per user feedback
+                it.setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                        .build()
+                )
+                it.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+                    override fun onStart(utteranceId: String?) = Unit
+                    override fun onDone(utteranceId: String?) = Unit
+                    override fun onError(utteranceId: String?) = Unit
+                })
                 ttsReady = true
                 pendingSpeech?.let { text ->
                     speak(text)
@@ -73,9 +91,11 @@ class SoundManager(private val context: Context) : TextToSpeech.OnInitListener {
 
     fun playTrain(durationMs: Int) {
         playInternal("train", leftVolume = 0.7f, rightVolume = 0.7f)
+        scheduleBackgroundAfterTrain(durationMs)
     }
 
     fun speak(text: String) {
+        if (text.isBlank()) return
         if (ttsReady) {
             tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "quiz_tts_${text.hashCode()}")
         } else {
@@ -85,10 +105,12 @@ class SoundManager(private val context: Context) : TextToSpeech.OnInitListener {
 
     fun stopAll() {
         tts?.stop()
+        stopBackgroundMusic()
         // No direct soundPool.stopAll() but we can stop active streams if needed.
     }
 
     fun release() {
+        stopBackgroundMusic(releasePlayer = true)
         soundPool.release()
         tts?.stop()
         tts?.shutdown()
@@ -115,5 +137,59 @@ class SoundManager(private val context: Context) : TextToSpeech.OnInitListener {
                 iterator.remove()
             }
         }
+    }
+
+    private fun scheduleBackgroundAfterTrain(delayMs: Int) {
+        pendingBackgroundStart?.let { mainHandler.removeCallbacks(it) }
+        val runnable = Runnable { startBackgroundMusic() }
+        pendingBackgroundStart = runnable
+        mainHandler.postDelayed(runnable, delayMs.toLong().coerceAtLeast(0L))
+    }
+
+    private fun startBackgroundMusic() {
+        val player = backgroundPlayer ?: createBackgroundPlayer() ?: return
+        try {
+            if (!player.isPlaying) {
+                player.start()
+            }
+        } catch (_: Exception) {
+        }
+    }
+
+    private fun stopBackgroundMusic(releasePlayer: Boolean = false) {
+        pendingBackgroundStart?.let { mainHandler.removeCallbacks(it) }
+        pendingBackgroundStart = null
+
+        val player = backgroundPlayer ?: return
+        try {
+            if (player.isPlaying) {
+                player.pause()
+            }
+            player.seekTo(0)
+        } catch (_: Exception) {
+        }
+
+        if (releasePlayer) {
+            try {
+                player.release()
+            } catch (_: Exception) {
+            }
+            backgroundPlayer = null
+        }
+    }
+
+    private fun createBackgroundPlayer(): MediaPlayer? {
+        return try {
+            MediaPlayer.create(context.applicationContext, R.raw.background)?.apply {
+                isLooping = true
+                setVolume(BACKGROUND_VOLUME, BACKGROUND_VOLUME)
+            }.also { backgroundPlayer = it }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    companion object {
+        private const val BACKGROUND_VOLUME = 0.12f
     }
 }

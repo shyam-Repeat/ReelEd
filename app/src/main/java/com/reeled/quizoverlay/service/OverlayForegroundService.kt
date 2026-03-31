@@ -44,9 +44,11 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 
 class OverlayForegroundService : Service() {
@@ -100,6 +102,8 @@ class OverlayForegroundService : Service() {
     private var lastReportedSkipReason: String? = null
     private var lastTestModeQuizTime: Long = 0
     private var lastNotificationPaused: Boolean? = null
+    private var configuredQuizTimerSeconds: Int = TriggerPrefs.DEFAULT_QUIZ_TIMER_SECONDS
+    private var configuredForceQuizEnabled: Boolean = false
 
     override fun onCreate() {
         super.onCreate()
@@ -131,6 +135,13 @@ class OverlayForegroundService : Service() {
             } catch (_: Exception) {
                 // Keep service startup resilient.
             }
+        }
+
+        serviceScope.launch {
+            triggerPrefs.quizTimerSeconds.collect { configuredQuizTimerSeconds = it }
+        }
+        serviceScope.launch {
+            triggerPrefs.forceQuizEnabled.collect { configuredForceQuizEnabled = it }
         }
     }
 
@@ -176,8 +187,14 @@ class OverlayForegroundService : Service() {
             }
         }
 
+        val overlayEnabled = runBlocking { appPrefs.overlayEnabled.first() }
+        if (!overlayEnabled) {
+            stopForegroundService()
+            return START_NOT_STICKY
+        }
+
         sessionActive = true
-        startForeground(NOTIF_ID, buildNotification(paused = false))
+        startForeground(NOTIF_ID, buildNotification(paused = false, overlayEnabled = true))
         serviceScope.launch { refreshNotificationPauseState() }
         syncAudioState()
 
@@ -216,7 +233,6 @@ class OverlayForegroundService : Service() {
                 try {
                     val enabled = appPrefs.overlayEnabled.first()
                     if (!enabled) {
-                        removeOverlayIfShowing()
                         val reason = "overlay_disabled_by_parent"
                         if (reason != lastReportedSkipReason) {
                             lastReportedSkipReason = reason
@@ -225,6 +241,9 @@ class OverlayForegroundService : Service() {
                                 payloadJson = "{\"reason\":\"${jsonSafe(reason)}\"}"
                             )
                         }
+                        removeOverlayIfShowing()
+                        stopForegroundService()
+                        return@launch
                     } else {
                         reconcileOverlayState()
                         val isTestMode = appPrefs.isTestMode.first()
@@ -476,6 +495,10 @@ class OverlayForegroundService : Service() {
         }
 
         val params = buildWindowParams(strictMode = question.strictMode)
+        val effectiveTimerSeconds = configuredQuizTimerSeconds
+        val effectiveConfig = config.copy(
+            rules = config.rules.copy(timerSeconds = effectiveTimerSeconds)
+        )
 
         val viewLifecycleOwner = OverlayLifecycleOwner().also { it.onCreate() }
 
@@ -491,8 +514,9 @@ class OverlayForegroundService : Service() {
                             .padding(20.dp)
                     ) {
                         QuizCardRouter(
-                            config = config,
+                            config = effectiveConfig,
                             sourceApp = sourceApp,
+                            forceQuizEnabled = configuredForceQuizEnabled,
                             onResult = { result -> onQuizResult(result) },
                             onDismissed = { onQuizDismissed(question, sourceApp) },
                             onInvalidPayload = { questionId, reason ->
@@ -527,7 +551,7 @@ class OverlayForegroundService : Service() {
         currentOverlaySourceApp = sourceApp
         currentOverlayQuestionId = question.id
         overlayShownAtMs = System.currentTimeMillis()
-        overlayTimeoutMs = ((if (question.timerSeconds > 0) question.timerSeconds else 120) * 1000L)
+        overlayTimeoutMs = effectiveTimerSeconds * 1000L
         overlayForegroundMismatchSinceMs = 0L
         overlayView = composeView
         serviceScope.launch(Dispatchers.IO) {
@@ -735,7 +759,7 @@ class OverlayForegroundService : Service() {
         }
     }
 
-    private fun buildNotification(paused: Boolean): Notification {
+    private fun buildNotification(paused: Boolean, overlayEnabled: Boolean): Notification {
         val pauseIntent = Intent(this, PinActivity::class.java).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_HISTORY)
         }
@@ -766,16 +790,29 @@ class OverlayForegroundService : Service() {
             PendingIntent.FLAG_IMMUTABLE
         )
 
-        return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle(if (paused) "Learning mode paused" else "Learning mode active")
-            .setContentText(if (paused) "Quiz overlay paused for one or more apps" else "Quiz overlay is running")
+        val builder = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle(
+                if (!overlayEnabled) "Learning mode off"
+                else if (paused) "Learning mode paused"
+                else "Learning mode active"
+            )
+            .setContentText(
+                if (!overlayEnabled) "Enable quiz overlay from parent controls"
+                else if (paused) "Quiz overlay paused for one or more apps"
+                else "Quiz overlay is running"
+            )
             .setSmallIcon(R.drawable.ic_brain)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true)
-            .addAction(0, "Pause Quizzes", pausePendingIntent)
-            .addAction(0, "Resume All", resumePendingIntent)
-            .addAction(0, "Extend", extendPendingIntent)
-            .build()
+
+        if (overlayEnabled) {
+            builder
+                .addAction(0, "Pause Quizzes", pausePendingIntent)
+                .addAction(0, "Resume All", resumePendingIntent)
+                .addAction(0, "Extend", extendPendingIntent)
+        }
+
+        return builder.build()
     }
 
     private fun createNotificationChannel() {
@@ -816,9 +853,10 @@ class OverlayForegroundService : Service() {
         value.replace("\\", "\\\\").replace("\"", "\\\"")
 
     private suspend fun refreshNotificationPauseState() {
+        if (!appPrefs.overlayEnabled.first()) return
         val paused = isPauseActiveNow()
         if (lastNotificationPaused == paused) return
-        val notification = buildNotification(paused = paused)
+        val notification = buildNotification(paused = paused, overlayEnabled = true)
         val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         nm.notify(NOTIF_ID, notification)
         lastNotificationPaused = paused

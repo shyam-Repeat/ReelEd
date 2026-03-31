@@ -20,14 +20,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.reeled.quizoverlay.prefs.PinPrefs
-import com.reeled.quizoverlay.service.OverlayForegroundService
-import com.reeled.quizoverlay.ui.devmode.DevLogItem
 import com.reeled.quizoverlay.ui.devmode.DevModeUiState
 import com.reeled.quizoverlay.ui.devmode.DevModeViewModel
-import com.reeled.quizoverlay.ui.pin.PinGateDialog
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 
 sealed class DashboardTab(val title: String, val icon: ImageVector) {
@@ -46,18 +40,8 @@ fun ParentDashboardScreen(
     val uiState by dashboardViewModel.uiState.collectAsState()
     val devUiState by devModeViewModel.uiState.collectAsState()
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    val pinPrefs = remember { PinPrefs(context) }
 
     var selectedTab by remember { mutableStateOf<DashboardTab>(DashboardTab.Dashboard) }
-
-    var showPinDialog by remember { mutableStateOf(false) }
-    val pinHash by pinPrefs.pinHash.collectAsState(initial = null)
-    val lockoutUntil by pinPrefs.lockoutUntil.collectAsState(initial = 0L)
-    
-    val currentTime = System.currentTimeMillis()
-    val isLocked = lockoutUntil > currentTime
-    val lockoutTimeRemaining = if (isLocked) lockoutUntil - currentTime else 0L
 
     LaunchedEffect(selectedTab) {
         if (selectedTab != DashboardTab.Dashboard) return@LaunchedEffect
@@ -70,9 +54,7 @@ fun ParentDashboardScreen(
     LaunchedEffect(dashboardViewModel) {
         dashboardViewModel.actions.collect { action ->
             when (action) {
-                DashboardAction.ShowPinPrompt -> {
-                    showPinDialog = true
-                }
+                DashboardAction.ShowPinPrompt -> Unit
                 DashboardAction.OpenFeedback -> {
                     val intent = Intent(Intent.ACTION_SENDTO).apply {
                         data = Uri.parse("mailto:support@reeled.app")
@@ -148,7 +130,13 @@ fun ParentDashboardScreen(
                 DashboardTab.Dashboard -> DashboardContent(uiState, modifier)
                 DashboardTab.Controls -> ControlsContent(
                     isOverlayEnabled = uiState.isOverlayEnabled,
-                    onDisable = dashboardViewModel::showPinPrompt,
+                    dailyCap = uiState.dailyCap,
+                    quizTimerMinutes = uiState.quizTimerMinutes,
+                    forceQuizEnabled = uiState.forceQuizEnabled,
+                    onOverlayToggle = dashboardViewModel::setOverlayEnabled,
+                    onDailyCapChange = dashboardViewModel::setDailyCap,
+                    onQuizTimerMinutesChange = dashboardViewModel::setQuizTimerMinutes,
+                    onForceQuizToggle = dashboardViewModel::setForceQuizEnabled,
                     onFeedback = dashboardViewModel::openFeedback
                 )
                 DashboardTab.Settings -> SettingsContent(
@@ -157,34 +145,6 @@ fun ParentDashboardScreen(
                 )
             }
         }
-    }
-
-    if (showPinDialog) {
-        PinGateDialog(
-            title = "Disable Overlay",
-            subtitle = "Enter PIN to stop the service",
-            storedPinHash = pinHash ?: "",
-            isLocked = isLocked,
-            lockoutTimeRemaining = lockoutTimeRemaining,
-            onPinCorrect = {
-                scope.launch {
-                    pinPrefs.resetFailedAttempts()
-                    showPinDialog = false
-                    context.stopService(Intent(context, OverlayForegroundService::class.java))
-                    Toast.makeText(context, "Overlay Disabled", Toast.LENGTH_SHORT).show()
-                }
-            },
-            onPinIncorrect = {
-                scope.launch {
-                    pinPrefs.incrementFailedAttempts()
-                    val attempts = pinPrefs.failedAttempts.first()
-                    if (attempts >= 3) {
-                        pinPrefs.setLockout(System.currentTimeMillis() + 60_000)
-                    }
-                }
-            },
-            onDismiss = { showPinDialog = false }
-        )
     }
 }
 
@@ -209,7 +169,13 @@ private fun DashboardContent(
 @Composable
 private fun ControlsContent(
     isOverlayEnabled: Boolean,
-    onDisable: () -> Unit,
+    dailyCap: Int,
+    quizTimerMinutes: Int,
+    forceQuizEnabled: Boolean,
+    onOverlayToggle: (Boolean) -> Unit,
+    onDailyCapChange: (Int) -> Unit,
+    onQuizTimerMinutesChange: (Int) -> Unit,
+    onForceQuizToggle: (Boolean) -> Unit,
     onFeedback: () -> Unit
 ) {
     Column(
@@ -231,23 +197,123 @@ private fun ControlsContent(
             Column(modifier = Modifier.padding(16.dp)) {
                 Text("Overlay Management", style = MaterialTheme.typography.titleMedium)
                 Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            "Enable Quiz Overlay",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            "Turn this ON before handing device to child. Quizzes and notification run only while this is ON.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = isOverlayEnabled,
+                        onCheckedChange = onOverlayToggle,
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = com.reeled.quizoverlay.ui.theme.Primary
+                        )
+                    )
+                }
+                if (!isOverlayEnabled) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        "Tip: Enable to start quiz interruptions and learning notification.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+        }
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text("Daily Cap", style = MaterialTheme.typography.titleMedium)
+                Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    "Temporarily stop the quiz overlay. You will need to re-enable it from the app settings or restart the app.",
+                    "Max quizzes allowed per day. Default 15, configurable up to 20.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Spacer(modifier = Modifier.height(16.dp))
-                Button(
-                    onClick = onDisable,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = com.reeled.quizoverlay.ui.theme.Primary,
-                    ),
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    "$dailyCap quizzes/day",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Slider(
+                    value = dailyCap.toFloat(),
+                    onValueChange = { onDailyCapChange(it.toInt()) },
+                    valueRange = 15f..20f,
+                    steps = 4
+                )
+            }
+        }
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text("Quiz Timer", style = MaterialTheme.typography.titleMedium)
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    "Quiz timeout duration. Default 2 minutes, configurable up to 5 minutes.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    "$quizTimerMinutes minutes",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Slider(
+                    value = quizTimerMinutes.toFloat(),
+                    onValueChange = { onQuizTimerMinutesChange(it.toInt()) },
+                    valueRange = 1f..5f,
+                    steps = 3
+                )
+            }
+        }
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("DISABLE OVERLAY", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Force Quiz", style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            "ON: do not auto-dismiss after 3 wrong attempts. OFF: keep current 3-wrong dismiss logic.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = forceQuizEnabled,
+                        onCheckedChange = onForceQuizToggle,
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = com.reeled.quizoverlay.ui.theme.Primary
+                        )
+                    )
                 }
             }
         }

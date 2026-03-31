@@ -79,8 +79,9 @@ class ServiceRestartReceiver : BroadcastReceiver() {
             try {
                 val appPrefs = AppPrefs(context)
                 val onboardingComplete = appPrefs.onboardingComplete.first()
+                val overlayEnabled = appPrefs.overlayEnabled.first()
 
-                if (onboardingComplete) {
+                if (onboardingComplete && overlayEnabled) {
                     OverlayServiceCoordinator.startAfterOnboarding(context)
                 }
             } finally {

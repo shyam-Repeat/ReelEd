@@ -4,8 +4,10 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material3.*
@@ -70,11 +72,11 @@ fun AppSelectionScreen(
                 verticalAlignment = Alignment.Bottom
             ) {
                 Text("Setup Progress", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-                Text("6 of 9", color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Medium, fontSize = 14.sp)
+                Text("6 of 8", color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Medium, fontSize = 14.sp)
             }
             Spacer(modifier = Modifier.height(12.dp))
             LinearProgressIndicator(
-                progress = { 6f / 9f },
+                progress = { 0.75f },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(8.dp),
@@ -88,6 +90,7 @@ fun AppSelectionScreen(
             modifier = Modifier
                 .weight(1f)
                 .padding(24.dp)
+                .verticalScroll(rememberScrollState())
         ) {
             Text("Choose apps to detect", fontSize = 24.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(8.dp))

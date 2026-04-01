@@ -2,8 +2,10 @@ package com.reeled.quizoverlay.ui.onboarding
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.Celebration
@@ -68,7 +70,7 @@ fun PermissionNotifScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                repeat(9) { index ->
+                repeat(8) { index ->
                     val isActive = index == 6
                     Box(
                         modifier = Modifier
@@ -83,7 +85,7 @@ fun PermissionNotifScreen(
             }
             Spacer(modifier = Modifier.height(12.dp))
             Text(
-                "Step 7 of 9",
+                "Step 7 of 8",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 letterSpacing = 1.sp,
@@ -96,9 +98,10 @@ fun PermissionNotifScreen(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .padding(24.dp),
+                .padding(24.dp)
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Top
         ) {
             // Illustration
             Box(

@@ -82,11 +82,11 @@ fun BatteryOptScreen(
                 verticalAlignment = Alignment.Bottom
             ) {
                 Text("Setup Progress", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp, fontWeight = FontWeight.Medium)
-                Text("Step 8 of 9", color = Primary, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                Text("Step 8 of 8", color = Primary, fontSize = 14.sp, fontWeight = FontWeight.Bold)
             }
             Spacer(modifier = Modifier.height(8.dp))
             LinearProgressIndicator(
-                progress = { 8f / 9f },
+                progress = { 1f },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(2.dp),

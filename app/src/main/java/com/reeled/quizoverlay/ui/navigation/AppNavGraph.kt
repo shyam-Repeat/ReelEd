@@ -98,6 +98,15 @@ fun AppNavGraph(
         return Screen.Success.route
     }
 
+    suspend fun navigateToNextOnboardingStep() {
+        val destination = nextOnboardingRoute()
+        if (navController.currentDestination?.route != destination) {
+            navController.navigate(destination) {
+                launchSingleTop = true
+            }
+        }
+    }
+
     NavHost(
         navController = navController,
         startDestination = startDestination,
@@ -134,7 +143,7 @@ fun AppNavGraph(
                 onPinSet = { pin ->
                     onboardingViewModel.onPinSet(pin)
                     scope.launch {
-                        navController.navigate(nextOnboardingRoute())
+                        navigateToNextOnboardingStep()
                     }
                 },
                 onBack = { navController.popBackStack() }
@@ -146,7 +155,7 @@ fun AppNavGraph(
                 onNext = {
                     scope.launch {
                         if (PermissionChecker.hasOverlayPermission(context)) {
-                            navController.navigate(nextOnboardingRoute())
+                            navigateToNextOnboardingStep()
                         }
                     }
                 },
@@ -170,7 +179,7 @@ fun AppNavGraph(
                 onNext = {
                     scope.launch {
                         if (PermissionChecker.hasUsageStatsPermission(context)) {
-                            navController.navigate(nextOnboardingRoute())
+                            navigateToNextOnboardingStep()
                         }
                     }
                 },
@@ -192,7 +201,7 @@ fun AppNavGraph(
             AppSelectionScreen(
                 onNext = {
                     scope.launch {
-                        navController.navigate(nextOnboardingRoute())
+                        navigateToNextOnboardingStep()
                     }
                 },
                 onBack = { navController.popBackStack() },
@@ -207,7 +216,7 @@ fun AppNavGraph(
             PermissionNotifScreen(
                 onNext = {
                     scope.launch {
-                        navController.navigate(nextOnboardingRoute())
+                        navigateToNextOnboardingStep()
                     }
                 },
                 onBack = { navController.popBackStack() },
@@ -229,7 +238,7 @@ fun AppNavGraph(
                 onNext = {
                     scope.launch {
                         if (PermissionChecker.isIgnoringBatteryOptimizations(context)) {
-                            navController.navigate(nextOnboardingRoute())
+                            navigateToNextOnboardingStep()
                         }
                     }
                 },

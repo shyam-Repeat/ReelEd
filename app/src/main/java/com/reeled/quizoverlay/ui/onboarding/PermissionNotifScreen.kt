@@ -104,7 +104,7 @@ fun PermissionNotifScreen(
             verticalArrangement = Arrangement.Top
         ) {
             Column(
-                modifier = Modifier.verticalScroll(rememberScrollState()),
+                modifier = Modifier,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
             // Illustration

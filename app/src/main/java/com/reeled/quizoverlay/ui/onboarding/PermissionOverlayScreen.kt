@@ -108,7 +108,7 @@ fun PermissionOverlayScreen(
                 color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
             ) {
-                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                Column {
                     // Mockup Area
                     Box(
                         modifier = Modifier

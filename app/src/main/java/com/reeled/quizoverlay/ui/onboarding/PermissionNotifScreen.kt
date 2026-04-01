@@ -2,8 +2,10 @@ package com.reeled.quizoverlay.ui.onboarding
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.Celebration
@@ -98,8 +100,12 @@ fun PermissionNotifScreen(
                 .fillMaxWidth()
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Top
         ) {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
             // Illustration
             Box(
                 modifier = Modifier
@@ -208,6 +214,7 @@ fun PermissionNotifScreen(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Allow Notifications", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 }
+            }
             }
         }
 

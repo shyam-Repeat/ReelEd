@@ -4,7 +4,9 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.AutoStories
@@ -102,8 +104,10 @@ fun PermissionUsageScreen(
             modifier = Modifier
                 .weight(1f)
                 .padding(horizontal = 24.dp),
+            verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
             // Illustration
             Box(
                 modifier = Modifier
@@ -205,6 +209,7 @@ fun PermissionUsageScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
+            }
         }
 
         // Bottom Nav

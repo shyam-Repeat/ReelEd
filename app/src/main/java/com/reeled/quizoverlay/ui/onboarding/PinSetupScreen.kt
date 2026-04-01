@@ -8,8 +8,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.Backspace
@@ -125,91 +127,98 @@ fun PinSetupScreen(
             )
         }
 
-        // Content
         Column(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .padding(horizontal = 32.dp)
-                .offset(x = shakeOffset.value.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Surface(
-                color = Primary.copy(alpha = 0.1f),
-                shape = RoundedCornerShape(24.dp),
-                border = BorderStroke(4.dp, Primary.copy(alpha = 0.2f)),
-                modifier = Modifier.size(80.dp)
+            // Content
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 32.dp)
+                    .offset(x = shakeOffset.value.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        Icons.Outlined.EnhancedEncryption,
-                        contentDescription = null,
-                        tint = Primary,
-                        modifier = Modifier.size(40.dp)
-                    )
+                Surface(
+                    color = Primary.copy(alpha = 0.1f),
+                    shape = RoundedCornerShape(24.dp),
+                    border = BorderStroke(4.dp, Primary.copy(alpha = 0.2f)),
+                    modifier = Modifier.size(80.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            Icons.Outlined.EnhancedEncryption,
+                            contentDescription = null,
+                            tint = Primary,
+                            modifier = Modifier.size(40.dp)
+                        )
+                    }
                 }
-            }
-            Spacer(modifier = Modifier.height(24.dp))
-            Text(title, fontSize = 24.sp, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                subtitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(title, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
 
-            Spacer(modifier = Modifier.height(48.dp))
+                Spacer(modifier = Modifier.height(48.dp))
 
-            // PIN Dots
-            Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-                repeat(4) { index ->
-                    val isFilled = index < currentPin.length
-                    Box(
-                        modifier = Modifier
-                            .size(20.dp)
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(if (isFilled) Primary else Color.Transparent)
-                            .border(
-                                2.dp,
-                                if (isFilled) Primary else Primary.copy(alpha = 0.3f),
-                                RoundedCornerShape(6.dp)
-                            )
-                    )
-                }
-            }
-        }
-
-        // Keypad
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            val keyRows = listOf(
-                listOf("1" to KeyOrange, "2" to KeyGreen, "3" to KeyPurple),
-                listOf("4" to KeyPink, "5" to Primary, "6" to KeyOrange),
-                listOf("7" to KeyGreen, "8" to KeyPurple, "9" to KeyPink)
-            )
-
-            keyRows.forEach { row ->
-                Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-                    row.forEach { (digit, color) ->
-                        KeypadButton(digit, color) { handleInput(digit) }
+                // PIN Dots
+                Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+                    repeat(4) { index ->
+                        val isFilled = index < currentPin.length
+                        Box(
+                            modifier = Modifier
+                                .size(20.dp)
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(if (isFilled) Primary else Color.Transparent)
+                                .border(
+                                    2.dp,
+                                    if (isFilled) Primary else Primary.copy(alpha = 0.3f),
+                                    RoundedCornerShape(6.dp)
+                                )
+                        )
                     }
                 }
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-                Box(modifier = Modifier.size(64.dp))
-                KeypadButton("0", MaterialTheme.colorScheme.surfaceVariant) { handleInput("0") }
-                IconButton(
-                    onClick = { handleBackspace() },
-                    modifier = Modifier.size(64.dp)
-                ) {
-                    Icon(Icons.AutoMirrored.Outlined.Backspace, contentDescription = "Delete", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(32.dp))
+
+            // Keypad
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 24.dp, bottom = 32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                val keyRows = listOf(
+                    listOf("1" to KeyOrange, "2" to KeyGreen, "3" to KeyPurple),
+                    listOf("4" to KeyPink, "5" to Primary, "6" to KeyOrange),
+                    listOf("7" to KeyGreen, "8" to KeyPurple, "9" to KeyPink)
+                )
+
+                keyRows.forEach { row ->
+                    Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+                        row.forEach { (digit, color) ->
+                            KeypadButton(digit, color) { handleInput(digit) }
+                        }
+                    }
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+                    Box(modifier = Modifier.size(64.dp))
+                    KeypadButton("0", MaterialTheme.colorScheme.surfaceVariant) { handleInput("0") }
+                    IconButton(
+                        onClick = { handleBackspace() },
+                        modifier = Modifier.size(64.dp)
+                    ) {
+                        Icon(Icons.AutoMirrored.Outlined.Backspace, contentDescription = "Delete", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(32.dp))
+                    }
                 }
             }
         }

@@ -4,7 +4,9 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material3.*
@@ -96,7 +98,8 @@ fun PermissionOverlayScreen(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .padding(24.dp),
+                .padding(24.dp)
+                .verticalScroll(rememberScrollState()),
             contentAlignment = Alignment.Center
         ) {
             Surface(
@@ -105,12 +108,12 @@ fun PermissionOverlayScreen(
                 color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
             ) {
-                Column {
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                     // Mockup Area
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .weight(0.6f)
+                            .height(260.dp)
                             .background(
                                 brush = Brush.linearGradient(
                                     colors = listOf(Color(0xFFE0F2FE), Color(0xFFFAE8FF), Color(0xFFFCE7F3))
@@ -164,8 +167,7 @@ fun PermissionOverlayScreen(
                     // Content Area
                     Column(
                         modifier = Modifier
-                            .padding(24.dp)
-                            .weight(0.4f),
+                            .padding(24.dp),
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text("Enable Overlay", fontSize = 20.sp, fontWeight = FontWeight.Bold)

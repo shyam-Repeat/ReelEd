@@ -98,7 +98,8 @@ fun PermissionOverlayScreen(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .padding(24.dp),
+                .padding(24.dp)
+                .verticalScroll(rememberScrollState()),
             contentAlignment = Alignment.Center
         ) {
             Surface(

@@ -103,6 +103,10 @@ fun PermissionNotifScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
         ) {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
             // Illustration
             Box(
                 modifier = Modifier
@@ -211,6 +215,7 @@ fun PermissionNotifScreen(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Allow Notifications", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 }
+            }
             }
         }
 

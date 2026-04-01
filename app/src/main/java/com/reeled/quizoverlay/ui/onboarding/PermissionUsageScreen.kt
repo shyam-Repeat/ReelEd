@@ -103,11 +103,11 @@ fun PermissionUsageScreen(
         Column(
             modifier = Modifier
                 .weight(1f)
-                .padding(horizontal = 24.dp)
-                .verticalScroll(rememberScrollState()),
+                .padding(horizontal = 24.dp),
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
             // Illustration
             Box(
                 modifier = Modifier
@@ -209,6 +209,7 @@ fun PermissionUsageScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
+            }
         }
 
         // Bottom Nav

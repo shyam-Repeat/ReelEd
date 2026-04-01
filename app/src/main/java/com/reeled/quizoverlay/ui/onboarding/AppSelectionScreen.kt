@@ -72,11 +72,11 @@ fun AppSelectionScreen(
                 verticalAlignment = Alignment.Bottom
             ) {
                 Text("Setup Progress", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-                Text("6 of 9", color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Medium, fontSize = 14.sp)
+                Text("6 of 8", color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Medium, fontSize = 14.sp)
             }
             Spacer(modifier = Modifier.height(12.dp))
             LinearProgressIndicator(
-                progress = { 6f / 9f },
+                progress = { 0.75f },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(8.dp),

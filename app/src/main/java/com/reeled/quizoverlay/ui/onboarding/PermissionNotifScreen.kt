@@ -70,7 +70,7 @@ fun PermissionNotifScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                repeat(9) { index ->
+                repeat(8) { index ->
                     val isActive = index == 6
                     Box(
                         modifier = Modifier
@@ -85,7 +85,7 @@ fun PermissionNotifScreen(
             }
             Spacer(modifier = Modifier.height(12.dp))
             Text(
-                "Step 7 of 9",
+                "Step 7 of 8",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 letterSpacing = 1.sp,
@@ -98,7 +98,8 @@ fun PermissionNotifScreen(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .padding(24.dp),
+                .padding(24.dp)
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
         ) {

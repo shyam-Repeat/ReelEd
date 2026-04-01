@@ -68,7 +68,7 @@ fun PermissionUsageScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)
             ) {
-                repeat(9) { index ->
+                repeat(8) { index ->
                     val isActive = index == 4
                     Box(
                         modifier = Modifier

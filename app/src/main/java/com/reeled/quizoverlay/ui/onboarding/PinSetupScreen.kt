@@ -113,7 +113,7 @@ fun PinSetupScreen(
                 verticalAlignment = Alignment.Bottom
             ) {
                 Text("Step 3 of 8", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                Text("37.5%", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+                Text("3 / 8", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
             }
             Spacer(modifier = Modifier.height(8.dp))
             LinearProgressIndicator(

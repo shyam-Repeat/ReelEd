@@ -8,14 +8,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.lifecycleScope
-import com.reeled.quizoverlay.prefs.PinPrefs
-import com.reeled.quizoverlay.prefs.TriggerPrefs
-import com.reeled.quizoverlay.service.OverlayForegroundService
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.reeled.quizoverlay.R
 import com.reeled.quizoverlay.ui.theme.ReelEdTheme
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 
 class PinActivity : ComponentActivity() {
 
@@ -23,62 +20,42 @@ class PinActivity : ComponentActivity() {
         const val EXTRA_SOURCE_APP = "extra_source_app"
     }
 
-    private val pinPrefs by lazy { PinPrefs(this) }
-    private val triggerPrefs by lazy { TriggerPrefs(this) }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
         setContent {
             ReelEdTheme {
+                val pinViewModel: PinViewModel = viewModel(
+                    factory = PinViewModel.provideFactory(application)
+                )
+                val uiState by pinViewModel.uiState.collectAsState()
                 var step by remember { mutableStateOf(PinStep.ENTRY) }
-                val pinHash by pinPrefs.pinHash.collectAsState(initial = null)
-                val lockoutUntil by pinPrefs.lockoutUntil.collectAsState(initial = 0L)
                 
                 val currentTime = System.currentTimeMillis()
-                val isLocked = lockoutUntil > currentTime
-                val lockoutTimeRemaining = if (isLocked) lockoutUntil - currentTime else 0L
+                val isLocked = uiState.lockoutUntil > currentTime
+                val lockoutTimeRemaining = if (isLocked) uiState.lockoutUntil - currentTime else 0L
 
                 if (step == PinStep.ENTRY) {
                     PinGateDialog(
-                        storedPinHash = pinHash ?: "",
+                        title = stringResource(R.string.pin_gate_title),
+                        subtitle = stringResource(R.string.pin_gate_subtitle),
+                        storedPinHash = uiState.pinHash ?: "",
                         isLocked = isLocked,
                         lockoutTimeRemaining = lockoutTimeRemaining,
                         onPinCorrect = {
-                            lifecycleScope.launch {
-                                pinPrefs.resetFailedAttempts()
-                                step = PinStep.DURATION_SELECTION
-                            }
+                            pinViewModel.onPinCorrect()
+                            step = PinStep.DURATION_SELECTION
                         },
-                        onPinIncorrect = {
-                            lifecycleScope.launch {
-                                pinPrefs.incrementFailedAttempts()
-                                val attempts = pinPrefs.failedAttempts.first()
-                                if (attempts >= 3) {
-                                    pinPrefs.setLockout(System.currentTimeMillis() + 60_000)
-                                }
-                            }
-                        },
+                        onPinIncorrect = pinViewModel::onPinIncorrect,
                         onDismiss = { finish() }
                     )
                 } else {
                     PauseDurationSelector(
                         onDurationSelected = { minutes ->
-                            lifecycleScope.launch {
-                                val expiry = System.currentTimeMillis() + (minutes * 60 * 1000)
-                                val sourceApp = intent.getStringExtra(EXTRA_SOURCE_APP)
-                                if (!sourceApp.isNullOrBlank()) {
-                                    triggerPrefs.setAppPause(sourceApp, expiry)
-                                    startService(
-                                        OverlayForegroundService.startIntent(this@PinActivity).apply {
-                                            action = OverlayForegroundService.ACTION_SET_APP_PAUSE
-                                            putExtra(OverlayForegroundService.EXTRA_SOURCE_APP, sourceApp)
-                                            putExtra(OverlayForegroundService.EXTRA_PAUSE_EXPIRY_MS, expiry)
-                                        }
-                                    )
-                                } else {
-                                    triggerPrefs.setPause(true, expiry)
-                                }
+                            pinViewModel.applyPause(
+                                sourceApp = intent.getStringExtra(EXTRA_SOURCE_APP),
+                                minutes = minutes
+                            ) {
                                 finish()
                             }
                         },
@@ -109,15 +86,15 @@ fun PauseDurationSelector(
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = "Select Pause Duration",
+                text = stringResource(R.string.pause_duration_title),
                 style = MaterialTheme.typography.headlineMedium
             )
             Spacer(modifier = Modifier.height(32.dp))
             
             val durations = listOf(
-                "30 Minutes" to 30L,
-                "1 Hour" to 60L,
-                "2 Hours" to 120L
+                stringResource(R.string.pause_duration_30m) to 30L,
+                stringResource(R.string.pause_duration_1h) to 60L,
+                stringResource(R.string.pause_duration_2h) to 120L
             )
 
             durations.forEach { (label, minutes) ->
@@ -132,7 +109,7 @@ fun PauseDurationSelector(
 
             Spacer(modifier = Modifier.height(16.dp))
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.common_cancel))
             }
         }
     }

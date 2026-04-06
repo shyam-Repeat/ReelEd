@@ -20,12 +20,14 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import com.reeled.quizoverlay.R
 import com.reeled.quizoverlay.ui.theme.Primary
 import com.reeled.quizoverlay.util.PermissionChecker
 
@@ -85,7 +87,7 @@ fun PermissionNotifScreen(
             }
             Spacer(modifier = Modifier.height(12.dp))
             Text(
-                "Step 7 of 8",
+                stringResource(R.string.permission_notif_step_label),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 letterSpacing = 1.sp,
@@ -182,10 +184,10 @@ fun PermissionNotifScreen(
 
             Spacer(modifier = Modifier.height(48.dp))
 
-            Text("Stay Active", fontSize = 32.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.permission_notif_stay_active), fontSize = 32.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                "Required to keep the learning service running reliably.",
+                stringResource(R.string.permission_notif_body),
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 16.sp,
@@ -201,7 +203,7 @@ fun PermissionNotifScreen(
                     modifier = Modifier.fillMaxWidth().height(64.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Text("Permission Granted", color = Color(0xFF1B5E20), fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                        Text(stringResource(R.string.permission_granted), color = Color(0xFF1B5E20), fontWeight = FontWeight.Bold, fontSize = 18.sp)
                     }
                 }
             } else {
@@ -213,7 +215,7 @@ fun PermissionNotifScreen(
                 ) {
                     Icon(Icons.Outlined.Notifications, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Allow Notifications", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.permission_allow_notifications), fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 }
             }
             }
@@ -234,7 +236,7 @@ fun PermissionNotifScreen(
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant, contentColor = MaterialTheme.colorScheme.onSurface)
                 ) {
-                    Text("Back", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.common_back), fontWeight = FontWeight.Bold)
                 }
                 Button(
                     onClick = onNext,
@@ -245,7 +247,10 @@ fun PermissionNotifScreen(
                         contentColor = if (isGranted) Color.White else MaterialTheme.colorScheme.onSurface
                     )
                 ) {
-                    Text(if (isGranted) "Next" else "Skip", fontWeight = FontWeight.Bold)
+                    Text(
+                        if (isGranted) stringResource(R.string.common_next) else stringResource(R.string.common_skip),
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }

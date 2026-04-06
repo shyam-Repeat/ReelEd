@@ -16,10 +16,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.reeled.quizoverlay.R
 import com.reeled.quizoverlay.model.QuizAttemptResult
 import com.reeled.quizoverlay.model.QuizCardConfig
 import com.reeled.quizoverlay.model.QuizPayload
@@ -161,7 +163,12 @@ fun FillBlankCard(
                     shape = RoundedCornerShape(32.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E88E5))
                 ) {
-                    Text("Check Answer", fontWeight = FontWeight.Black, fontSize = 20.sp, color = Color.White)
+                    Text(
+                        stringResource(R.string.fill_blank_check_answer),
+                        fontWeight = FontWeight.Black,
+                        fontSize = 20.sp,
+                        color = Color.White
+                    )
                 }
             }
 
@@ -169,7 +176,14 @@ fun FillBlankCard(
                 val selected = payload.wordBank.find { it.chipId == blankFilledChipId }
                 val isCorrect = selected?.isCorrect == true
                 val feedbackColor = if (isCorrect) Color(0xFF4CAF50) else Color(0xFFE53935)
-                val feedbackText = if (isCorrect) "Awesome! Correct!" else "Nice try! Correct: ${payload.wordBank.find { it.isCorrect }?.label}"
+                val feedbackText = if (isCorrect) {
+                    stringResource(R.string.fill_blank_feedback_correct)
+                } else {
+                    stringResource(
+                        R.string.fill_blank_feedback_wrong,
+                        payload.wordBank.find { it.isCorrect }?.label.orEmpty()
+                    )
+                }
                 
                 Box(
                     modifier = Modifier

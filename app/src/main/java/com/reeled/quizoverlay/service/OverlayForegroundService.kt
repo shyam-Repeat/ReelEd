@@ -33,6 +33,7 @@ import com.reeled.quizoverlay.trigger.TriggerDecision
 import com.reeled.quizoverlay.trigger.TriggerEngine
 import com.reeled.quizoverlay.trigger.VideoPlaybackDetector
 import com.reeled.quizoverlay.ui.overlay.QuizCardRouter
+import com.reeled.quizoverlay.ui.overlay.components.OverlayAmbientBackground
 import com.reeled.quizoverlay.ui.pin.PinActivity
 import com.reeled.quizoverlay.ui.theme.ReelEdTheme
 import com.reeled.quizoverlay.util.AudioMuter
@@ -508,27 +509,30 @@ class OverlayForegroundService : Service() {
 
             setContent {
                 ReelEdTheme {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(20.dp)
-                    ) {
-                        QuizCardRouter(
-                            config = effectiveConfig,
-                            sourceApp = sourceApp,
-                            forceQuizEnabled = configuredForceQuizEnabled,
-                            onResult = { result -> onQuizResult(result) },
-                            onDismissed = { onQuizDismissed(question, sourceApp) },
-                            onInvalidPayload = { questionId, reason ->
-                                continueAfterInvalidQuestion(
-                                    invalidQuestionId = questionId,
-                                    sourceApp = sourceApp,
-                                    skippedInvalidQuestionIds = skippedInvalidQuestionIds,
-                                    reason = reason,
-                                    incrementShownForNext = true
-                                )
-                            }
-                        )
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        OverlayAmbientBackground()
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(20.dp)
+                        ) {
+                            QuizCardRouter(
+                                config = effectiveConfig,
+                                sourceApp = sourceApp,
+                                forceQuizEnabled = configuredForceQuizEnabled,
+                                onResult = { result -> onQuizResult(result) },
+                                onDismissed = { onQuizDismissed(question, sourceApp) },
+                                onInvalidPayload = { questionId, reason ->
+                                    continueAfterInvalidQuestion(
+                                        invalidQuestionId = questionId,
+                                        sourceApp = sourceApp,
+                                        skippedInvalidQuestionIds = skippedInvalidQuestionIds,
+                                        reason = reason,
+                                        incrementShownForNext = true
+                                    )
+                                }
+                            )
+                        }
                     }
                 }
             }

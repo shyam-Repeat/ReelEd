@@ -179,7 +179,7 @@ fun DrawMatchCard(
 
                 if (submittedSuccess) {
                     Text(
-                        text = "✓",
+                        text = stringResource(R.string.quiz_result_correct_symbol),
                         fontSize = 120.sp,
                         color = Color(0xFF4CAF50),
                         fontWeight = FontWeight.Black,

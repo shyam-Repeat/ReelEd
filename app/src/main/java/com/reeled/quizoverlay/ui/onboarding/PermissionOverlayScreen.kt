@@ -18,12 +18,14 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import com.reeled.quizoverlay.R
 import com.reeled.quizoverlay.ui.theme.Primary
 import com.reeled.quizoverlay.util.PermissionChecker
 
@@ -63,10 +65,10 @@ fun PermissionOverlayScreen(
     ) {
         // Header
         CenterAlignedTopAppBar(
-            title = { Text("Permissions", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
+            title = { Text(stringResource(R.string.permission_overlay_title), fontWeight = FontWeight.Bold, fontSize = 18.sp) },
             navigationIcon = {
                 IconButton(onClick = onBack) {
-                    Icon(Icons.Default.ArrowBackIosNew, contentDescription = "Back", modifier = Modifier.size(20.dp))
+                    Icon(Icons.Default.ArrowBackIosNew, contentDescription = stringResource(R.string.common_back), modifier = Modifier.size(20.dp))
                 }
             }
         )
@@ -78,8 +80,8 @@ fun PermissionOverlayScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Bottom
             ) {
-                Text("Setup Progress", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-                Text("4 of 8", color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Medium, fontSize = 14.sp)
+                Text(stringResource(R.string.setup_progress), fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                Text(stringResource(R.string.permission_overlay_progress_counter), color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Medium, fontSize = 14.sp)
             }
             Spacer(modifier = Modifier.height(12.dp))
             LinearProgressIndicator(
@@ -170,10 +172,10 @@ fun PermissionOverlayScreen(
                             .padding(24.dp),
                         verticalArrangement = Arrangement.Center
                     ) {
-                        Text("Enable Overlay", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.permission_overlay_enable_title), fontSize = 20.sp, fontWeight = FontWeight.Bold)
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            "Required to show quizzes over Instagram and YouTube. This allows the educational content to appear seamlessly while you browse.",
+                            stringResource(R.string.permission_overlay_enable_body),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             lineHeight = 18.sp
@@ -186,7 +188,7 @@ fun PermissionOverlayScreen(
                                 modifier = Modifier.fillMaxWidth().height(48.dp)
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
-                                    Text("Permission Granted", color = Color(0xFF1B5E20), fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.permission_granted), color = Color(0xFF1B5E20), fontWeight = FontWeight.Bold)
                                 }
                             }
                         } else {
@@ -196,7 +198,7 @@ fun PermissionOverlayScreen(
                                 shape = RoundedCornerShape(12.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = Primary)
                             ) {
-                                Text("Open Settings", fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.permission_open_settings), fontWeight = FontWeight.Bold)
                             }
                         }
                     }
@@ -220,7 +222,7 @@ fun PermissionOverlayScreen(
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant, contentColor = MaterialTheme.colorScheme.onSurface)
                 ) {
-                    Text("Back", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.common_back), fontWeight = FontWeight.Bold)
                 }
                 Button(
                     onClick = onNext,
@@ -229,7 +231,7 @@ fun PermissionOverlayScreen(
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Primary)
                 ) {
-                    Text("Next", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.common_next), fontWeight = FontWeight.Bold)
                 }
             }
         }

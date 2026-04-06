@@ -10,7 +10,6 @@ import android.provider.Settings
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -18,7 +17,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.reeled.quizoverlay.prefs.AppPrefs
 import com.reeled.quizoverlay.ui.dashboard.DashboardViewModel
 import com.reeled.quizoverlay.ui.dashboard.ParentDashboardScreen
 import com.reeled.quizoverlay.ui.devmode.DevModeScreen
@@ -60,7 +58,6 @@ fun AppNavGraph(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val appPrefs = remember { AppPrefs(context) }
     val scope = rememberCoroutineScope()
     val application = context.applicationContext as Application
 
@@ -73,6 +70,8 @@ fun AppNavGraph(
     val devModeViewModel: DevModeViewModel = viewModel(
         factory = DevModeViewModel.provideFactory(application)
     )
+    val onboardingComplete by onboardingViewModel.onboardingComplete.collectAsState(initial = false)
+    val monitoredApps by onboardingViewModel.monitoredApps.collectAsState(initial = emptySet())
 
     fun launchIntent(intent: Intent) {
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -82,7 +81,7 @@ fun AppNavGraph(
     suspend fun nextOnboardingRoute(): String {
         if (!PermissionChecker.hasOverlayPermission(context)) return Screen.PermissionOverlay.route
         if (!PermissionChecker.hasUsageStatsPermission(context)) return Screen.PermissionUsage.route
-        if (appPrefs.monitoredApps.first().isEmpty()) return Screen.AppSelection.route
+        if (monitoredApps.isEmpty()) return Screen.AppSelection.route
         val notificationsEnabled = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             PermissionChecker.hasNotificationPermission(context)
         } else {
@@ -115,8 +114,7 @@ fun AppNavGraph(
         composable(Screen.Loading.route) {
             LoadingScreen(onLoadingComplete = {
                 scope.launch {
-                    val isComplete = appPrefs.onboardingComplete.first()
-                    val destination = if (isComplete) Screen.ParentDashboard.route else Screen.Welcome.route
+                    val destination = if (onboardingComplete) Screen.ParentDashboard.route else Screen.Welcome.route
                     navController.navigate(destination) {
                         popUpTo(Screen.Loading.route) { inclusive = true }
                     }
@@ -197,7 +195,6 @@ fun AppNavGraph(
         }
 
         composable(Screen.AppSelection.route) {
-            val monitoredApps by appPrefs.monitoredApps.collectAsState(initial = emptySet())
             AppSelectionScreen(
                 onNext = {
                     scope.launch {
@@ -206,9 +203,7 @@ fun AppNavGraph(
                 },
                 onBack = { navController.popBackStack() },
                 initialMonitoredApps = monitoredApps,
-                onSaveSelection = { apps ->
-                    scope.launch { appPrefs.setMonitoredApps(apps) }
-                }
+                onSaveSelection = onboardingViewModel::saveMonitoredApps
             )
         }
 

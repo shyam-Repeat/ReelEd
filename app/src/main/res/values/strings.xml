@@ -1,21 +1,129 @@
 <resources>
     <string name="app_name">ReelEd</string>
-    
+
     <!-- Quiz General -->
     <string name="quiz_instruction_default">Tap the correct answer</string>
     <string name="quiz_matching_instruction">Find the matching pairs</string>
-    
+    <string name="quiz_result_correct_symbol">✓</string>
+    <string name="fill_blank_check_answer">Check Answer</string>
+    <string name="fill_blank_feedback_correct">Awesome! Correct!</string>
+    <string name="fill_blank_feedback_wrong">Nice try! Correct: %1$s</string>
+
     <!-- Onboarding -->
     <string name="welcome_title">Welcome to ReelEd</string>
     <string name="welcome_desc">Transform social media time into learning moments.</string>
     <string name="setup_pin">Setup Parent PIN</string>
     <string name="permissions_required">Permissions Required</string>
-    
+    <string name="top_bar_help">Help</string>
+    <string name="welcome_headline">Turn scrolling into learning.</string>
+    <string name="welcome_body">ReelEd shows quick educational quizzes while your child browses social media.</string>
+    <string name="welcome_start_setup">Start Setup</string>
+    <string name="welcome_step_label">Step 1 of 8: Introduction</string>
+    <string name="consent_title">Parental Consent</string>
+    <string name="common_back">Back</string>
+    <string name="consent_step_label">Step 2: Security</string>
+    <string name="consent_progress_counter">2 / 8</string>
+    <string name="consent_privacy_title">Privacy First</string>
+    <string name="consent_privacy_body">We prioritize your child\'s privacy. No PII (Personally Identifiable Information) is collected. We only track quiz performance anonymously to provide a better learning experience.</string>
+    <string name="consent_display_name_label">Display Name / Nickname</string>
+    <string name="consent_display_name_placeholder">Enter a name (e.g., Parent)</string>
+    <string name="consent_checkbox_text">I am the parent/guardian and I consent to the privacy policy.</string>
+    <string name="consent_security_note">Your data is encrypted and stored securely using industry-best practices.</string>
+    <string name="common_next">Next</string>
+    <string name="pin_setup_title">Security Setup</string>
+    <string name="pin_setup_step_label">Step 3 of 8</string>
+    <string name="pin_setup_progress_counter">3 / 8</string>
+    <string name="pin_create_title">Create Parental PIN</string>
+    <string name="pin_confirm_title">Confirm Parental PIN</string>
+    <string name="pin_setup_subtitle">Set a 4-digit code to protect settings and restricted content.</string>
+    <string name="pin_key_delete">Delete</string>
+    <string name="permission_overlay_title">Permissions</string>
+    <string name="setup_progress">Setup Progress</string>
+    <string name="permission_overlay_progress_counter">4 of 8</string>
+    <string name="permission_overlay_enable_title">Enable Overlay</string>
+    <string name="permission_overlay_enable_body">Required to show quizzes over Instagram and YouTube. This allows the educational content to appear seamlessly while you browse.</string>
+    <string name="permission_granted">Permission Granted</string>
+    <string name="permission_open_settings">Open Settings</string>
+    <string name="permission_usage_step_label">Step 5 of 8</string>
+    <string name="permission_usage_progress_counter">5 / 8</string>
+    <string name="permission_usage_title">Usage Access</string>
+    <string name="permission_usage_instagram_detected">Instagram detected</string>
+    <string name="permission_usage_youtube_detected">YouTube detected</string>
+    <string name="permission_usage_detect_title">Detect Active Apps</string>
+    <string name="permission_usage_detect_body">Allows ReelEd to know when to show a quiz by detecting your active learning apps.</string>
+    <string name="permission_usage_grant">Grant Access</string>
+    <string name="permission_usage_local_note">Your data is processed locally and never leaves your device.</string>
+    <string name="app_selection_title">Detect Apps</string>
+    <string name="app_selection_progress_counter">6 of 8</string>
+    <string name="app_selection_choose_title">Choose apps to detect</string>
+    <string name="app_selection_choose_body">Pick social apps that should trigger monitoring and quiz overlays.</string>
+    <string name="permission_notif_step_label">Step 7 of 8</string>
+    <string name="permission_notif_stay_active">Stay Active</string>
+    <string name="permission_notif_body">Required to keep the learning service running reliably.</string>
+    <string name="permission_allow_notifications">Allow Notifications</string>
+    <string name="common_skip">Skip</string>
+    <string name="battery_title">Battery Optimization</string>
+    <string name="battery_step_label">Step 8 of 8</string>
+    <string name="battery_ignore_title">Ignore Battery Limits</string>
+    <string name="battery_ignore_body">Ensures the app isn\'t killed by the system for seamless background operation and real-time updates.</string>
+    <string name="battery_disabled">Optimization Disabled</string>
+    <string name="battery_keep_active">Keep App Active</string>
+    <string name="battery_keep_active_body">Allow background processing anytime</string>
+    <string name="battery_disable_action">Disable Optimization</string>
+    <string name="battery_footer_note">This setting helps maintain a stable connection for critical features like sync and notifications.</string>
+    <string name="battery_next_step">Next Step</string>
+    <string name="success_title">Ready to Learn!</string>
+    <string name="success_body">Your safe environment is ready. The following apps will be available for use:</string>
+    <string name="success_all_set">You\'re All Set!</string>
+    <string name="success_configured_body">Child mode is now fully configured with your selected restrictions and time limits.</string>
+    <string name="success_enter_child_mode">Enter Child Mode</string>
+    <string name="success_go_to_dashboard">Go to Parent Dashboard</string>
+    <string name="status_active">Active</string>
+
     <!-- Dashboard -->
     <string name="parent_dashboard">Parent Dashboard</string>
     <string name="today_progress">Today\'s Progress</string>
     <string name="subject_breakdown">Subject Breakdown</string>
-    
-    <!-- Card Specific -->
-    <string name="match_correct_symbol">✓</string>
+    <string name="dashboard_tab_dashboard">Dashboard</string>
+    <string name="dashboard_tab_controls">Controls</string>
+    <string name="dashboard_tab_settings">Settings</string>
+    <string name="dashboard_parent_title">Parent</string>
+    <string name="dashboard_welcome_back">Welcome back</string>
+    <string name="dashboard_feedback">Feedback</string>
+    <string name="dashboard_no_email_app">No email app available</string>
+    <string name="controls_title">Service Controls</string>
+    <string name="controls_overlay_title">Overlay Management</string>
+    <string name="controls_overlay_enable">Enable Quiz Overlay</string>
+    <string name="controls_overlay_help">Turn this ON before handing device to child. Quizzes and notification run only while this is ON.</string>
+    <string name="controls_overlay_tip">Tip: Enable to start quiz interruptions and learning notification.</string>
+    <string name="controls_daily_cap_title">Daily Cap</string>
+    <string name="controls_daily_cap_help">Max quizzes allowed per day. Default 15, configurable up to 20.</string>
+    <string name="controls_daily_cap_value">%1$d quizzes/day</string>
+    <string name="controls_quiz_timer_title">Quiz Timer</string>
+    <string name="controls_quiz_timer_help">Quiz timeout duration. Default 2 minutes, configurable up to 5 minutes.</string>
+    <string name="controls_quiz_timer_value">%1$d minutes</string>
+    <string name="controls_force_quiz_title">Force Quiz</string>
+    <string name="controls_force_quiz_help">ON: do not auto-dismiss after 3 wrong attempts. OFF: keep current 3-wrong dismiss logic.</string>
+    <string name="controls_support_title">Support</string>
+    <string name="controls_support_body">Found a bug or have a suggestion? We\'d love to hear from you!</string>
+    <string name="controls_send_feedback">SEND FEEDBACK</string>
+    <string name="settings_title">System Settings</string>
+    <string name="devmode_title">Dev Mode &amp; Test Tools</string>
+    <string name="devmode_test_mode">Test Mode</string>
+    <string name="devmode_test_mode_help">Shows quiz every 30s, ignores trigger logic</string>
+    <string name="devmode_logs_title">Developer Logs</string>
+    <string name="devmode_refresh_logs">Refresh Logs</string>
+    <string name="devmode_no_logs">No logs yet.</string>
+    <string name="devmode_no_logs_help">No logs yet. Use the app for a minute, then tap Refresh Logs.</string>
+    <string name="devmode_entries">%1$d entries</string>
+
+    <!-- PIN -->
+    <string name="pin_gate_title">Parent PIN required</string>
+    <string name="pin_gate_subtitle">Verify your identity</string>
+    <string name="pin_gate_locked">Locked. Try again in %1$ds</string>
+    <string name="common_cancel">Cancel</string>
+    <string name="pause_duration_title">Select Pause Duration</string>
+    <string name="pause_duration_30m">30 Minutes</string>
+    <string name="pause_duration_1h">1 Hour</string>
+    <string name="pause_duration_2h">2 Hours</string>
 </resources>

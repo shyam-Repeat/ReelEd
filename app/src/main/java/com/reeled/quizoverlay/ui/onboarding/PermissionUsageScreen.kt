@@ -20,12 +20,14 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import com.reeled.quizoverlay.R
 import com.reeled.quizoverlay.ui.theme.Primary
 import com.reeled.quizoverlay.util.PermissionChecker
 
@@ -70,13 +72,13 @@ fun PermissionUsageScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    "Step 5 of 8",
+                    stringResource(R.string.permission_usage_step_label),
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp,
                     color = Primary
                 )
                 Text(
-                    "5 / 8",
+                    stringResource(R.string.permission_usage_progress_counter),
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -104,10 +106,10 @@ fun PermissionUsageScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = onBack) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
                 }
                 Text(
-                    "Usage Access",
+                    stringResource(R.string.permission_usage_title),
                     modifier = Modifier.weight(1f),
                     textAlign = TextAlign.Center,
                     fontWeight = FontWeight.Bold,
@@ -171,7 +173,7 @@ fun PermissionUsageScreen(
                 ) {
                     Row(modifier = Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Icon(Icons.Outlined.CheckCircle, contentDescription = null, tint = Color(0xFF4CAF50), modifier = Modifier.size(16.dp))
-                        Text("Instagram detected", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.permission_usage_instagram_detected), fontSize = 10.sp, fontWeight = FontWeight.Bold)
                     }
                 }
 
@@ -182,17 +184,17 @@ fun PermissionUsageScreen(
                 ) {
                     Row(modifier = Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Icon(Icons.Outlined.School, contentDescription = null, tint = Primary, modifier = Modifier.size(16.dp))
-                        Text("YouTube detected", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.permission_usage_youtube_detected), fontSize = 10.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
 
             Spacer(modifier = Modifier.height(40.dp))
 
-            Text("Detect Active Apps", fontSize = 28.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.permission_usage_detect_title), fontSize = 28.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                "Allows ReelEd to know when to show a quiz by detecting your active learning apps.",
+                stringResource(R.string.permission_usage_detect_body),
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 lineHeight = 24.sp
@@ -207,7 +209,7 @@ fun PermissionUsageScreen(
                     modifier = Modifier.fillMaxWidth().height(56.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Text("Permission Granted", color = Color(0xFF1B5E20), fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.permission_granted), color = Color(0xFF1B5E20), fontWeight = FontWeight.Bold)
                     }
                 }
             } else {
@@ -217,12 +219,12 @@ fun PermissionUsageScreen(
                     shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Primary)
                 ) {
-                    Text("Grant Access", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                    Text(stringResource(R.string.permission_usage_grant), fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
                 }
             }
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                "Your data is processed locally and never leaves your device.",
+                stringResource(R.string.permission_usage_local_note),
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -244,7 +246,7 @@ fun PermissionUsageScreen(
                     modifier = Modifier.weight(1f).height(48.dp),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text("Back")
+                    Text(stringResource(R.string.common_back))
                 }
                 Button(
                     onClick = onNext,
@@ -253,7 +255,7 @@ fun PermissionUsageScreen(
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Primary)
                 ) {
-                    Text("Next")
+                    Text(stringResource(R.string.common_next))
                 }
             }
         }

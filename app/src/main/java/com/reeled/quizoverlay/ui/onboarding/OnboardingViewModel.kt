@@ -10,6 +10,7 @@ import com.reeled.quizoverlay.prefs.AppPrefs
 import com.reeled.quizoverlay.prefs.PinPrefs
 import com.reeled.quizoverlay.service.OverlayServiceCoordinator
 import com.reeled.quizoverlay.util.PinHasher
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -17,6 +18,8 @@ class OnboardingViewModel(application: Application) : AndroidViewModel(applicati
     private val appPrefs = AppPrefs(application)
     private val pinPrefs = PinPrefs(application)
     private val repository = QuizRepository(application)
+    val onboardingComplete: Flow<Boolean> = appPrefs.onboardingComplete
+    val monitoredApps: Flow<Set<String>> = appPrefs.monitoredApps
 
     fun onConsentAccepted(nickname: String) {
         viewModelScope.launch {
@@ -34,6 +37,12 @@ class OnboardingViewModel(application: Application) : AndroidViewModel(applicati
             val pinHash = PinHasher.hash(pin)
             pinPrefs.savePinHash(pinHash)
             appPrefs.setPinSet(true)
+        }
+    }
+
+    fun saveMonitoredApps(apps: Set<String>) {
+        viewModelScope.launch {
+            appPrefs.setMonitoredApps(apps)
         }
     }
 

@@ -21,6 +21,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.Switch
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.res.stringResource
+import com.reeled.quizoverlay.R
 
 @Composable
 fun DevModeScreen(
@@ -36,7 +38,7 @@ fun DevModeScreen(
     ) {
         item {
             Text(
-                text = "Dev Mode & Test Tools",
+                text = stringResource(R.string.devmode_title),
                 style = MaterialTheme.typography.headlineSmall,
             )
         }
@@ -54,11 +56,11 @@ fun DevModeScreen(
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Test Mode",
+                                text = stringResource(R.string.devmode_test_mode),
                                 style = MaterialTheme.typography.titleMedium
                             )
                             Text(
-                                text = "Shows quiz every 30s, ignores trigger logic",
+                                text = stringResource(R.string.devmode_test_mode_help),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -77,13 +79,13 @@ fun DevModeScreen(
                 onClick = viewModel::refreshLogs,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text("Refresh Logs")
+                Text(stringResource(R.string.devmode_refresh_logs))
             }
         }
 
         item {
             Text(
-                text = "Entries: ${uiState.logs.size}",
+                text = stringResource(R.string.devmode_entries, uiState.logs.size),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -92,7 +94,7 @@ fun DevModeScreen(
         if (uiState.logs.isEmpty()) {
             item {
                 Text(
-                    text = "No logs yet. Use the app for a minute, then tap Refresh Logs.",
+                    text = stringResource(R.string.devmode_no_logs_help),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

@@ -17,10 +17,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.reeled.quizoverlay.R
 import com.reeled.quizoverlay.ui.theme.Primary
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -42,10 +44,10 @@ fun ConsentScreen(
     ) {
         // Header
         CenterAlignedTopAppBar(
-            title = { Text("Parental Consent", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
+            title = { Text(stringResource(R.string.consent_title), fontWeight = FontWeight.Bold, fontSize = 18.sp) },
             navigationIcon = {
                 IconButton(onClick = onBack) {
-                    Icon(Icons.Default.ChevronLeft, contentDescription = "Back")
+                    Icon(Icons.Default.ChevronLeft, contentDescription = stringResource(R.string.common_back))
                 }
             }
         )
@@ -57,8 +59,8 @@ fun ConsentScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Bottom
             ) {
-                Text("Step 2: Security", color = Primary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                Text("2 / 8", color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text(stringResource(R.string.consent_step_label), color = Primary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text(stringResource(R.string.consent_progress_counter), color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold, fontSize = 12.sp)
             }
             Spacer(modifier = Modifier.height(8.dp))
             LinearProgressIndicator(
@@ -97,10 +99,10 @@ fun ConsentScreen(
                         }
                     }
                     Spacer(modifier = Modifier.height(20.dp))
-                    Text("Privacy First", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.consent_privacy_title), fontSize = 24.sp, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = "We prioritize your child's privacy. No PII (Personally Identifiable Information) is collected. We only track quiz performance anonymously to provide a better learning experience.",
+                        text = stringResource(R.string.consent_privacy_body),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         lineHeight = 22.sp
@@ -114,8 +116,8 @@ fun ConsentScreen(
             OutlinedTextField(
                 value = username,
                 onValueChange = { username = it },
-                label = { Text("Display Name / Nickname") },
-                placeholder = { Text("Enter a name (e.g., Parent)") },
+                label = { Text(stringResource(R.string.consent_display_name_label)) },
+                placeholder = { Text(stringResource(R.string.consent_display_name_placeholder)) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 singleLine = true,
@@ -155,7 +157,7 @@ fun ConsentScreen(
                         colors = CheckboxDefaults.colors(checkedColor = Primary)
                     )
                     Text(
-                        text = "I am the parent/guardian and I consent to the privacy policy.",
+                        text = stringResource(R.string.consent_checkbox_text),
                         fontSize = 15.sp,
                         fontWeight = FontWeight.SemiBold,
                         lineHeight = 20.sp
@@ -175,7 +177,7 @@ fun ConsentScreen(
             ) {
                 Icon(Icons.Outlined.Verified, contentDescription = null, tint = Primary, modifier = Modifier.size(20.dp))
                 Text(
-                    "Your data is encrypted and stored securely using industry-best practices.",
+                    stringResource(R.string.consent_security_note),
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = FontWeight.Medium
@@ -199,14 +201,14 @@ fun ConsentScreen(
                     shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Primary)
                 ) {
-                    Text("Next", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.common_next), fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 }
                 Spacer(modifier = Modifier.height(12.dp))
                 TextButton(
                     onClick = onBack,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Back", color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.common_back), color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold)
                 }
             }
         }

@@ -10,18 +10,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.reeled.quizoverlay.R
 import com.reeled.quizoverlay.util.PinHasher
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
 fun PinGateDialog(
-    title: String = "Parent PIN required",
-    subtitle: String = "Verify your identity",
+    title: String,
+    subtitle: String,
     storedPinHash: String,
     isLocked: Boolean = false,
     lockoutTimeRemaining: Long = 0L,
@@ -64,7 +66,11 @@ fun PinGateDialog(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = if (isLocked) "Locked. Try again in ${lockoutTimeRemaining / 1000}s" else subtitle,
+                    text = if (isLocked) {
+                        stringResource(R.string.pin_gate_locked, lockoutTimeRemaining / 1000)
+                    } else {
+                        subtitle
+                    },
                     style = MaterialTheme.typography.bodyMedium,
                     color = if (isLocked) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -131,7 +137,7 @@ fun PinGateDialog(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 TextButton(onClick = onDismiss) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.common_cancel))
                 }
             }
         }

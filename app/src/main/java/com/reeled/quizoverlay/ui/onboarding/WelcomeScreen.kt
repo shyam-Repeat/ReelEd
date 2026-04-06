@@ -15,10 +15,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.reeled.quizoverlay.R
 import com.reeled.quizoverlay.ui.theme.Primary
 
 @Composable
@@ -63,7 +65,7 @@ fun WelcomeScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Turn scrolling into learning.",
+                text = stringResource(R.string.welcome_headline),
                 style = MaterialTheme.typography.headlineLarge.copy(
                     fontWeight = FontWeight.Bold,
                     fontSize = 32.sp,
@@ -73,7 +75,7 @@ fun WelcomeScreen(
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "ReelEd shows quick educational quizzes while your child browses social media.",
+                text = stringResource(R.string.welcome_body),
                 style = MaterialTheme.typography.bodyLarge,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -98,13 +100,13 @@ fun WelcomeScreen(
                     shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Primary)
                 ) {
-                    Text("Start Setup", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.welcome_start_setup), fontSize = 18.sp, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.width(8.dp))
                     Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
                 }
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "Step 1 of 8: Introduction",
+                    text = stringResource(R.string.welcome_step_label),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -127,9 +129,9 @@ fun TopOnboardingBar(step: Int) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(modifier = Modifier.size(24.dp)) // Spacer
-            Text("ReelEd", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+            Text(stringResource(R.string.app_name), fontWeight = FontWeight.Bold, fontSize = 18.sp)
             TextButton(onClick = { /* Help */ }) {
-                Text("Help", color = Primary, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.top_bar_help), color = Primary, fontWeight = FontWeight.SemiBold)
             }
         }
         Spacer(modifier = Modifier.height(8.dp))

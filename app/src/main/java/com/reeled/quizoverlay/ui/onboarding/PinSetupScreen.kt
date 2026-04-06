@@ -22,10 +22,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.reeled.quizoverlay.R
 import com.reeled.quizoverlay.ui.theme.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -42,8 +44,12 @@ fun PinSetupScreen(
     val shakeOffset = remember { Animatable(0f) }
 
     val currentPin = if (step == PinSetupStep.CREATE) firstPin else secondPin
-    val title = if (step == PinSetupStep.CREATE) "Create Parental PIN" else "Confirm Parental PIN"
-    val subtitle = "Set a 4-digit code to protect settings and restricted content."
+    val title = if (step == PinSetupStep.CREATE) {
+        stringResource(R.string.pin_create_title)
+    } else {
+        stringResource(R.string.pin_confirm_title)
+    }
+    val subtitle = stringResource(R.string.pin_setup_subtitle)
 
     fun handleInput(digit: String) {
         if (currentPin.length < 4) {
@@ -93,10 +99,10 @@ fun PinSetupScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
             }
             Text(
-                "Security Setup",
+                stringResource(R.string.pin_setup_title),
                 modifier = Modifier.weight(1f),
                 textAlign = TextAlign.Center,
                 fontWeight = FontWeight.Bold,
@@ -112,8 +118,8 @@ fun PinSetupScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Bottom
             ) {
-                Text("Step 3 of 8", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                Text("3 / 8", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+                Text(stringResource(R.string.pin_setup_step_label), fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Text(stringResource(R.string.pin_setup_progress_counter), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
             }
             Spacer(modifier = Modifier.height(8.dp))
             LinearProgressIndicator(
@@ -217,7 +223,7 @@ fun PinSetupScreen(
                         onClick = { handleBackspace() },
                         modifier = Modifier.size(64.dp)
                     ) {
-                        Icon(Icons.AutoMirrored.Outlined.Backspace, contentDescription = "Delete", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(32.dp))
+                        Icon(Icons.AutoMirrored.Outlined.Backspace, contentDescription = stringResource(R.string.pin_key_delete), tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(32.dp))
                     }
                 }
             }

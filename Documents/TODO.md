@@ -52,19 +52,19 @@ This checklist was re-audited against the current codebase and docs (`Documents/
 - [x] Implement pause/resume/extend notification action handling in service command routing.
 
 ### 4) UI quality + platform hardening
-- [x] Verify `TimerBar` and `OptionButton` behavior with real countdown/answer states (beyond static rendering).
-- [x] Move hardcoded UI text to `res/values/strings.xml`.
-- [x] Verify dependency boundaries: UI should talk to ViewModel/Repository interfaces and prefs only where intended.
-- [x] **UI Polish (NEW):** Add a blue blur/glow to the 20dp corners of the overlay to improve aesthetics.
-- [x] **Horizontal Switch UI (NEW):** Improve the UI for horizontal switches.
+- [x] Verify `TimerBar` behavior with real countdown state (wired in overlay runtime).
+- [ ] Verify `OptionButton` behavior with real answer states (component exists but is not used by current quiz flow).
+- [ ] Move remaining hardcoded UI text to `res/values/strings.xml`.
+- [ ] Verify and tighten dependency boundaries: some UI/navigation code still accesses prefs directly.
+- [x] **UI Polish (NEW):** Add a blue blur/glow to the overlay corners to improve aesthetics.
+- [ ] **Horizontal Switch UI (NEW):** Further improve/standardize switch UI across screens (dashboard is styled, but some screens still use default `Switch`).
 
 ### 5) Audio & SFX (NEW)
 - [x] Add the following sound files to `app/src/main/res/raw/`:
     - `sfx_correct.mp3` - Quick "Ding" for correct answers.
     - `sfx_wrong.mp3` - Short buzzer/fail sound.
     - `sfx_match.mp3` - Satisfying click/pop for tile matching.
-    - `sfx_train.mp3` - Steam train "Choo-Choo" or engine sound (syncs with 1.5s entry animation).
-- [x] Implement `SoundManager.kt` using SoundPool.
+    - `sfx_train.mp3` - Steam train "Choo-Choo" or engine sound (syncs with 1.5s entry animation).- [x] Implement `SoundManager.kt` using SoundPool.
 - [x] Integrate `SoundManager` trigger calls in `TapChoiceCard`, `TapTapMatchCard`, and `TrainAnimation`.
 - [x] **Background Muting (NEW):** Implement a "mute music" logic that silences background videos (e.g., Reels) while the overlay is active, making them feel paused.
 - [x] **TTS for Questions (NEW):** Implement TTS for all question types. Ensure it's fast and reliable.
@@ -91,4 +91,4 @@ This checklist was re-audited against the current codebase and docs (`Documents/
 - [x] Keep TODO and blockers docs synchronized after each milestone.
 
 ---
-*Updated on: March 31, 2026 (all checklist items marked complete)*
+*Updated on: April 6, 2026 (re-audited against current code; section 4 has remaining items, section 7 remains complete)*

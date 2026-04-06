@@ -15,9 +15,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.reeled.quizoverlay.R
 import com.reeled.quizoverlay.ui.theme.Primary
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,10 +58,10 @@ fun AppSelectionScreen(
     ) {
         // Header
         CenterAlignedTopAppBar(
-            title = { Text("Detect Apps", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
+            title = { Text(stringResource(R.string.app_selection_title), fontWeight = FontWeight.Bold, fontSize = 18.sp) },
             navigationIcon = {
                 IconButton(onClick = onBack) {
-                    Icon(Icons.Default.ArrowBackIosNew, contentDescription = "Back", modifier = Modifier.size(20.dp))
+                    Icon(Icons.Default.ArrowBackIosNew, contentDescription = stringResource(R.string.common_back), modifier = Modifier.size(20.dp))
                 }
             }
         )
@@ -71,8 +73,8 @@ fun AppSelectionScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Bottom
             ) {
-                Text("Setup Progress", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-                Text("6 of 8", color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Medium, fontSize = 14.sp)
+                Text(stringResource(R.string.setup_progress), fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                Text(stringResource(R.string.app_selection_progress_counter), color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Medium, fontSize = 14.sp)
             }
             Spacer(modifier = Modifier.height(12.dp))
             LinearProgressIndicator(
@@ -92,10 +94,10 @@ fun AppSelectionScreen(
                 .padding(24.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            Text("Choose apps to detect", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.app_selection_choose_title), fontSize = 24.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                "Pick social apps that should trigger monitoring and quiz overlays.",
+                stringResource(R.string.app_selection_choose_body),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 lineHeight = 22.sp
@@ -163,7 +165,7 @@ fun AppSelectionScreen(
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant, contentColor = MaterialTheme.colorScheme.onSurface)
                 ) {
-                    Text("Back", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.common_back), fontWeight = FontWeight.Bold)
                 }
                 Button(
                     onClick = onNext,
@@ -172,7 +174,7 @@ fun AppSelectionScreen(
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Primary)
                 ) {
-                    Text("Next", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.common_next), fontWeight = FontWeight.Bold)
                 }
             }
         }

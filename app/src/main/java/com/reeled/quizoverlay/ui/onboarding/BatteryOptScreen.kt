@@ -21,12 +21,14 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import com.reeled.quizoverlay.R
 import com.reeled.quizoverlay.ui.theme.Primary
 import com.reeled.quizoverlay.util.PermissionChecker
 
@@ -66,10 +68,10 @@ fun BatteryOptScreen(
     ) {
         // Top App Bar
         CenterAlignedTopAppBar(
-            title = { Text("Battery Optimization", fontWeight = FontWeight.SemiBold, fontSize = 18.sp) },
+            title = { Text(stringResource(R.string.battery_title), fontWeight = FontWeight.SemiBold, fontSize = 18.sp) },
             navigationIcon = {
                 IconButton(onClick = onBack) {
-                    Icon(Icons.Default.ArrowBackIosNew, contentDescription = "Back", modifier = Modifier.size(20.dp))
+                    Icon(Icons.Default.ArrowBackIosNew, contentDescription = stringResource(R.string.common_back), modifier = Modifier.size(20.dp))
                 }
             }
         )
@@ -81,8 +83,8 @@ fun BatteryOptScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Bottom
             ) {
-                Text("Setup Progress", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp, fontWeight = FontWeight.Medium)
-                Text("Step 8 of 8", color = Primary, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.setup_progress), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                Text(stringResource(R.string.battery_step_label), color = Primary, fontSize = 14.sp, fontWeight = FontWeight.Bold)
             }
             Spacer(modifier = Modifier.height(8.dp))
             LinearProgressIndicator(
@@ -160,10 +162,10 @@ fun BatteryOptScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            Text("Ignore Battery Limits", fontSize = 28.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.battery_ignore_title), fontSize = 28.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(12.dp))
             Text(
-                "Ensures the app isn't killed by the system for seamless background operation and real-time updates.",
+                stringResource(R.string.battery_ignore_body),
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 lineHeight = 24.sp
@@ -179,7 +181,7 @@ fun BatteryOptScreen(
                     modifier = Modifier.fillMaxWidth().height(64.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Text("Optimization Disabled", color = Color(0xFF1B5E20), fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                        Text(stringResource(R.string.battery_disabled), color = Color(0xFF1B5E20), fontWeight = FontWeight.Bold, fontSize = 18.sp)
                     }
                 }
             } else {
@@ -198,8 +200,8 @@ fun BatteryOptScreen(
                                 }
                             }
                             Column {
-                                Text("Keep App Active", fontWeight = FontWeight.Bold)
-                                Text("Allow background processing anytime", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(stringResource(R.string.battery_keep_active), fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.battery_keep_active_body), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                         Spacer(modifier = Modifier.height(24.dp))
@@ -209,7 +211,7 @@ fun BatteryOptScreen(
                             shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = Primary)
                         ) {
-                            Text("Disable Optimization", fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.battery_disable_action), fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -217,7 +219,7 @@ fun BatteryOptScreen(
             
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                "This setting helps maintain a stable connection for critical features like sync and notifications.",
+                stringResource(R.string.battery_footer_note),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -239,7 +241,7 @@ fun BatteryOptScreen(
                     modifier = Modifier.weight(1f).height(48.dp),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text("Back")
+                    Text(stringResource(R.string.common_back))
                 }
                 Button(
                     onClick = onNext,
@@ -248,7 +250,7 @@ fun BatteryOptScreen(
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Primary)
                 ) {
-                    Text("Next Step")
+                    Text(stringResource(R.string.battery_next_step))
                 }
             }
         }

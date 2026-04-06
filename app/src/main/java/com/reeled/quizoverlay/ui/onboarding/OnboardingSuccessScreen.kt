@@ -14,10 +14,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.reeled.quizoverlay.R
 import com.reeled.quizoverlay.ui.theme.Primary
 
 import androidx.compose.foundation.rememberScrollState
@@ -56,10 +58,10 @@ fun OnboardingSuccessScreen(
         }
         
         Spacer(modifier = Modifier.height(24.dp))
-        Text("Ready to Learn!", fontSize = 32.sp, fontWeight = FontWeight.Bold)
+        Text(stringResource(R.string.success_title), fontSize = 32.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(12.dp))
         Text(
-            "Your safe environment is ready. The following apps will be available for use:",
+            stringResource(R.string.success_body),
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -100,10 +102,10 @@ fun OnboardingSuccessScreen(
         }
 
         Spacer(modifier = Modifier.height(24.dp))
-        Text("🎉 You're All Set!", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        Text(stringResource(R.string.success_all_set), fontSize = 20.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            "Child mode is now fully configured with your selected restrictions and time limits.",
+            stringResource(R.string.success_configured_body),
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -126,7 +128,7 @@ fun OnboardingSuccessScreen(
             ) {
                 Icon(Icons.Outlined.RocketLaunch, contentDescription = null)
                 Spacer(modifier = Modifier.width(12.dp))
-                Text("Enter Child Mode", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.success_enter_child_mode), fontSize = 18.sp, fontWeight = FontWeight.Bold)
             }
 
             OutlinedButton(
@@ -137,7 +139,7 @@ fun OnboardingSuccessScreen(
                 shape = RoundedCornerShape(16.dp),
                 border = androidx.compose.foundation.BorderStroke(2.dp, Primary)
             ) {
-                Text("Go to Parent Dashboard", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Primary)
+                Text(stringResource(R.string.success_go_to_dashboard), fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Primary)
             }
         }
     }
@@ -166,7 +168,7 @@ fun AppStatusCard(name: String, color: Color, modifier: Modifier = Modifier) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
                 Column {
                     Text(name, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                    Text("Active", fontSize = 10.sp, color = Primary, fontWeight = FontWeight.Medium)
+                    Text(stringResource(R.string.status_active), fontSize = 10.sp, color = Primary, fontWeight = FontWeight.Medium)
                 }
                 Icon(Icons.Outlined.CheckCircle, contentDescription = null, tint = Primary, modifier = Modifier.size(16.dp))
             }

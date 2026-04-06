@@ -17,17 +17,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.reeled.quizoverlay.R
 import com.reeled.quizoverlay.ui.devmode.DevModeUiState
 import com.reeled.quizoverlay.ui.devmode.DevModeViewModel
 import kotlinx.coroutines.delay
 
-sealed class DashboardTab(val title: String, val icon: ImageVector) {
-    object Dashboard : DashboardTab("Dashboard", Icons.Default.Home)
-    object Controls : DashboardTab("Controls", Icons.Default.Build)
-    object Settings : DashboardTab("Settings", Icons.Default.Settings)
+sealed class DashboardTab(val titleRes: Int, val icon: ImageVector) {
+    object Dashboard : DashboardTab(R.string.dashboard_tab_dashboard, Icons.Default.Home)
+    object Controls : DashboardTab(R.string.dashboard_tab_controls, Icons.Default.Build)
+    object Settings : DashboardTab(R.string.dashboard_tab_settings, Icons.Default.Settings)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -64,7 +66,7 @@ fun ParentDashboardScreen(
                     if (canOpen) {
                         context.startActivity(intent)
                     } else {
-                        Toast.makeText(context, "No email app available", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.dashboard_no_email_app), Toast.LENGTH_SHORT).show()
                     }
                 }
             }
@@ -77,12 +79,12 @@ fun ParentDashboardScreen(
                 title = { 
                     Column {
                         Text(
-                            "Parent", 
+                            stringResource(R.string.dashboard_parent_title),
                             fontWeight = FontWeight.ExtraBold,
                             style = MaterialTheme.typography.titleMedium
                         )
                         Text(
-                            "Welcome back",
+                            stringResource(R.string.dashboard_welcome_back),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -99,7 +101,7 @@ fun ParentDashboardScreen(
                     ) {
                         Icon(Icons.Default.Send, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(Modifier.width(4.dp))
-                        Text("Feedback", fontSize = 12.sp)
+                        Text(stringResource(R.string.dashboard_feedback), fontSize = 12.sp)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -115,8 +117,8 @@ fun ParentDashboardScreen(
                 val tabs = listOf(DashboardTab.Dashboard, DashboardTab.Controls, DashboardTab.Settings)
                 tabs.forEach { tab ->
                     NavigationBarItem(
-                        icon = { Icon(tab.icon, contentDescription = tab.title) },
-                        label = { Text(tab.title) },
+                        icon = { Icon(tab.icon, contentDescription = stringResource(tab.titleRes)) },
+                        label = { Text(stringResource(tab.titleRes)) },
                         selected = selectedTab == tab,
                         onClick = { selectedTab = tab }
                     )
@@ -187,7 +189,7 @@ private fun ControlsContent(
     ) {
         item {
             Text(
-                "Service Controls",
+                stringResource(R.string.controls_title),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
@@ -199,7 +201,7 @@ private fun ControlsContent(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text("Overlay Management", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.controls_overlay_title), style = MaterialTheme.typography.titleMedium)
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -208,12 +210,12 @@ private fun ControlsContent(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            "Enable Quiz Overlay",
+                            stringResource(R.string.controls_overlay_enable),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.SemiBold
                         )
                         Text(
-                            "Turn this ON before handing device to child. Quizzes and notification run only while this is ON.",
+                            stringResource(R.string.controls_overlay_help),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -230,7 +232,7 @@ private fun ControlsContent(
                 if (!isOverlayEnabled) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        "Tip: Enable to start quiz interruptions and learning notification.",
+                        stringResource(R.string.controls_overlay_tip),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -245,16 +247,16 @@ private fun ControlsContent(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text("Daily Cap", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.controls_daily_cap_title), style = MaterialTheme.typography.titleMedium)
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    "Max quizzes allowed per day. Default 15, configurable up to 20.",
+                    stringResource(R.string.controls_daily_cap_help),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
-                    "$dailyCap quizzes/day",
+                    stringResource(R.string.controls_daily_cap_value, dailyCap),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -274,16 +276,16 @@ private fun ControlsContent(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text("Quiz Timer", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.controls_quiz_timer_title), style = MaterialTheme.typography.titleMedium)
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    "Quiz timeout duration. Default 2 minutes, configurable up to 5 minutes.",
+                    stringResource(R.string.controls_quiz_timer_help),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
-                    "$quizTimerMinutes minutes",
+                    stringResource(R.string.controls_quiz_timer_value, quizTimerMinutes),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -309,9 +311,9 @@ private fun ControlsContent(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("Force Quiz", style = MaterialTheme.typography.titleMedium)
+                        Text(stringResource(R.string.controls_force_quiz_title), style = MaterialTheme.typography.titleMedium)
                         Text(
-                            "ON: do not auto-dismiss after 3 wrong attempts. OFF: keep current 3-wrong dismiss logic.",
+                            stringResource(R.string.controls_force_quiz_help),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -335,10 +337,10 @@ private fun ControlsContent(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text("Support", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.controls_support_title), style = MaterialTheme.typography.titleMedium)
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    "Found a bug or have a suggestion? We'd love to hear from you!",
+                    stringResource(R.string.controls_support_body),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -351,7 +353,7 @@ private fun ControlsContent(
                     shape = RoundedCornerShape(16.dp),
                     border = BorderStroke(1.dp, com.reeled.quizoverlay.ui.theme.Primary.copy(alpha = 0.5f))
                 ) {
-                    Text("SEND FEEDBACK", color = com.reeled.quizoverlay.ui.theme.Primary, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.controls_send_feedback), color = com.reeled.quizoverlay.ui.theme.Primary, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
@@ -371,7 +373,7 @@ private fun SettingsContent(
     ) {
         item {
             Text(
-                text = "System Settings",
+                text = stringResource(R.string.settings_title),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
@@ -393,11 +395,11 @@ private fun SettingsContent(
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Test Mode",
+                                text = stringResource(R.string.devmode_test_mode),
                                 style = MaterialTheme.typography.titleMedium
                             )
                             Text(
-                                text = "Shows quiz every 30s, ignores trigger logic",
+                                text = stringResource(R.string.devmode_test_mode_help),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -420,7 +422,7 @@ private fun SettingsContent(
         item {
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Developer Logs",
+                text = stringResource(R.string.devmode_logs_title),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
@@ -431,14 +433,14 @@ private fun SettingsContent(
                 onClick = viewModel::refreshLogs,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text("Refresh Logs")
+                Text(stringResource(R.string.devmode_refresh_logs))
             }
         }
 
         if (uiState.logs.isEmpty()) {
             item {
                 Text(
-                    text = "No logs yet.",
+                    text = stringResource(R.string.devmode_no_logs),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

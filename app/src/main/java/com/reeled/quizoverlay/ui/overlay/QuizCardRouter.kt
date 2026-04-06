@@ -3,12 +3,17 @@ package com.reeled.quizoverlay.ui.overlay
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.weight
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -149,90 +154,116 @@ fun QuizCardRouter(
             color = Color.White // Solid white for the main card area
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
-                // Background Circles are already inside ModernQuizBackground Canvas
-                
-                Column(modifier = Modifier.fillMaxSize()) {
-                    // Timer bar
-                    if (totalTimerSeconds > 0) {
-                        TimerBar(
-                            progress = timeLeft / totalTimerSeconds,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 40.dp, vertical = 12.dp)
-                        )
-                    }
+                BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                    val layoutMode = resolveQuizLayoutMode(maxWidth, maxHeight)
+                    val isHorizontal = layoutMode != QuizLayoutMode.Vertical
+                    val mascotSize = if (isHorizontal) 108.dp else 160.dp
+                    val timerPadding = if (isHorizontal) 24.dp else 40.dp
+                    val bodyPaddingTop = if (isHorizontal) 8.dp else 0.dp
 
-                    // Top Section: Train
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(0.25f)
-                            .padding(horizontal = 12.dp, vertical = 8.dp)
-                    ) {
-                        TrainAnimation(
-                            modifier = Modifier.fillMaxSize(),
-                            onStart = { soundManager.playTrain(1500) }
-                        )
-                    }
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        if (totalTimerSeconds > 0) {
+                            TimerBar(
+                                progress = timeLeft / totalTimerSeconds,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = timerPadding, vertical = 12.dp)
+                            )
+                        }
 
-                    // Bottom Section: Quiz Card
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(0.75f)
-                    ) {
-                        Box(modifier = Modifier.fillMaxSize()) {
-                            when (config.cardType) {
-                                QuizCardType.TAP_CHOICE -> {
-                                    if (config.payload is QuizPayload.TapChoicePayload) {
-                                        TapChoiceCard(config, sourceApp, soundManager, onResultIntercept)
-                                    } else {
-                                        InvalidPayloadGate(config.id, "tap_choice_payload_mismatch", onInvalidPayload)
+                        if (isHorizontal) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f)
+                                    .padding(start = 12.dp, end = 12.dp, bottom = 8.dp, top = bodyPaddingTop)
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .weight(if (layoutMode == QuizLayoutMode.HorizontalWide) 0.30f else 0.36f)
+                                        .fillMaxSize(),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(mascotSize)
+                                            .padding(top = 4.dp)
+                                    ) {
+                                        RightMascot(modifier = Modifier.fillMaxSize())
+                                    }
+                                    Spacer(modifier = Modifier.weight(0.08f))
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .weight(0.92f)
+                                            .padding(horizontal = 4.dp)
+                                    ) {
+                                        TrainAnimation(
+                                            modifier = Modifier.fillMaxSize(),
+                                            onStart = { soundManager.playTrain(1500) }
+                                        )
                                     }
                                 }
-                                QuizCardType.TAP_TAP_MATCH -> {
-                                    if (config.payload is QuizPayload.TapTapMatchPayload) {
-                                        TapTapMatchCard(config, sourceApp, soundManager, onResultIntercept)
-                                    } else {
-                                        InvalidPayloadGate(config.id, "tap_tap_match_payload_mismatch", onInvalidPayload)
-                                    }
+
+                                Spacer(modifier = Modifier.width(10.dp))
+
+                                Box(
+                                    modifier = Modifier
+                                        .weight(if (layoutMode == QuizLayoutMode.HorizontalWide) 0.70f else 0.64f)
+                                        .fillMaxSize()
+                                ) {
+                                    QuizCardContent(
+                                        config = config,
+                                        sourceApp = sourceApp,
+                                        soundManager = soundManager,
+                                        layoutMode = layoutMode,
+                                        onResultIntercept = onResultIntercept,
+                                        onInvalidPayload = onInvalidPayload
+                                    )
                                 }
-                                QuizCardType.DRAG_DROP_MATCH -> {
-                                    if (config.payload is QuizPayload.DragDropPayload) {
-                                        DragDropMatchCard(config, sourceApp, onResultIntercept)
-                                    } else {
-                                        InvalidPayloadGate(config.id, "drag_drop_payload_mismatch", onInvalidPayload)
-                                    }
-                                }
-                                QuizCardType.FILL_BLANK -> {
-                                    if (config.payload is QuizPayload.FillBlankPayload) {
-                                        FillBlankCard(config, sourceApp, soundManager, onResultIntercept)
-                                    } else {
-                                        InvalidPayloadGate(config.id, "fill_blank_payload_mismatch", onInvalidPayload)
-                                    }
-                                }
-                                QuizCardType.DRAW_MATCH -> {
-                                    if (config.payload is QuizPayload.DrawMatchPayload) {
-                                        DrawMatchCard(config, sourceApp, onResultIntercept)
-                                    } else {
-                                        InvalidPayloadGate(config.id, "draw_match_payload_mismatch", onInvalidPayload)
-                                    }
-                                }
+                            }
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(0.25f)
+                                    .padding(horizontal = 12.dp, vertical = 8.dp)
+                            ) {
+                                TrainAnimation(
+                                    modifier = Modifier.fillMaxSize(),
+                                    onStart = { soundManager.playTrain(1500) }
+                                )
+                            }
+
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(0.75f)
+                            ) {
+                                QuizCardContent(
+                                    config = config,
+                                    sourceApp = sourceApp,
+                                    soundManager = soundManager,
+                                    layoutMode = layoutMode,
+                                    onResultIntercept = onResultIntercept,
+                                    onInvalidPayload = onInvalidPayload
+                                )
                             }
                         }
                     }
-                }
 
-                // Repositioned Mascot: Top-Right, larger, anchored
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(top = 80.dp, end = 12.dp)
-                        .size(160.dp)
-                ) {
-                    RightMascot(
-                        modifier = Modifier.fillMaxSize()
-                    )
+                    if (!isHorizontal) {
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(top = 80.dp, end = 12.dp)
+                                .size(mascotSize)
+                        ) {
+                            RightMascot(
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+                    }
                 }
 
                 if (showConfetti) {
@@ -249,6 +280,56 @@ fun QuizCardRouter(
                         .align(Alignment.BottomStart)
                         .padding(start = 14.dp, bottom = 14.dp)
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun QuizCardContent(
+    config: QuizCardConfig,
+    sourceApp: String,
+    soundManager: SoundManager,
+    layoutMode: QuizLayoutMode,
+    onResultIntercept: (QuizAttemptResult) -> Unit,
+    onInvalidPayload: (questionId: String, reason: String) -> Unit
+) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        when (config.cardType) {
+            QuizCardType.TAP_CHOICE -> {
+                if (config.payload is QuizPayload.TapChoicePayload) {
+                    TapChoiceCard(config, sourceApp, soundManager, layoutMode, onResultIntercept)
+                } else {
+                    InvalidPayloadGate(config.id, "tap_choice_payload_mismatch", onInvalidPayload)
+                }
+            }
+            QuizCardType.TAP_TAP_MATCH -> {
+                if (config.payload is QuizPayload.TapTapMatchPayload) {
+                    TapTapMatchCard(config, sourceApp, soundManager, layoutMode, onResultIntercept)
+                } else {
+                    InvalidPayloadGate(config.id, "tap_tap_match_payload_mismatch", onInvalidPayload)
+                }
+            }
+            QuizCardType.DRAG_DROP_MATCH -> {
+                if (config.payload is QuizPayload.DragDropPayload) {
+                    DragDropMatchCard(config, sourceApp, layoutMode, onResultIntercept)
+                } else {
+                    InvalidPayloadGate(config.id, "drag_drop_payload_mismatch", onInvalidPayload)
+                }
+            }
+            QuizCardType.FILL_BLANK -> {
+                if (config.payload is QuizPayload.FillBlankPayload) {
+                    FillBlankCard(config, sourceApp, soundManager, layoutMode, onResultIntercept)
+                } else {
+                    InvalidPayloadGate(config.id, "fill_blank_payload_mismatch", onInvalidPayload)
+                }
+            }
+            QuizCardType.DRAW_MATCH -> {
+                if (config.payload is QuizPayload.DrawMatchPayload) {
+                    DrawMatchCard(config, sourceApp, layoutMode, onResultIntercept)
+                } else {
+                    InvalidPayloadGate(config.id, "draw_match_payload_mismatch", onInvalidPayload)
+                }
             }
         }
     }

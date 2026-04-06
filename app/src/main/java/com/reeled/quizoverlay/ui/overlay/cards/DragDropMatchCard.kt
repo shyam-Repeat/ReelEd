@@ -11,11 +11,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
@@ -47,6 +51,7 @@ import com.reeled.quizoverlay.model.QuizAttemptResult
 import com.reeled.quizoverlay.model.QuizCardConfig
 import com.reeled.quizoverlay.model.QuizPayload
 import com.reeled.quizoverlay.model.payload.DragChip
+import com.reeled.quizoverlay.ui.overlay.QuizLayoutMode
 import com.reeled.quizoverlay.ui.overlay.components.ChipItem
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -65,6 +70,7 @@ private data class ChipPlacement(
 fun DragDropMatchCard(
     config: QuizCardConfig,
     sourceApp: String,
+    layoutMode: QuizLayoutMode,
     onResult: (QuizAttemptResult) -> Unit
 ) {
     val payload = config.payload as? QuizPayload.DragDropPayload ?: return
@@ -79,7 +85,6 @@ fun DragDropMatchCard(
 
     var matchedChipId by remember { mutableStateOf<String?>(null) }
     var evaluated by remember { mutableStateOf(false) }
-    var slotCenter by remember { mutableStateOf(Offset.Zero) }
     val slotSize = 116.dp
     var ttsReady by remember { mutableStateOf(false) }
     val textToSpeech = remember {
@@ -109,14 +114,22 @@ fun DragDropMatchCard(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
+    val isHorizontal = layoutMode != QuizLayoutMode.Vertical
+
+    if (isHorizontal) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(18.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+                modifier = Modifier
+                    .weight(0.34f)
+                    .fillMaxHeight(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
                     text = config.display.questionText,
@@ -135,127 +148,228 @@ fun DragDropMatchCard(
                 )
             }
 
-            BoxWithConstraints(
+            DragDropPlayArea(
+                draggables = draggables,
+                matchedChipId = matchedChipId,
+                evaluated = evaluated,
+                targetSlot = targetSlot,
+                slotSize = slotSize,
+                density = density,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .padding(horizontal = 10.dp, vertical = 8.dp)
-            ) {
-                val areaWidth = with(density) { maxWidth.toPx() }
-                val areaHeight = with(density) { maxHeight.toPx() }
-                val slotRadiusPx = with(density) { (slotSize / 2).toPx() }
-                val chipSpacingPx = with(density) { 84.dp.toPx() }
-                val chipMarginPx = with(density) { 40.dp.toPx() }
-                val placements = remember(draggables, areaWidth, areaHeight) {
-                    buildChipPlacements(
-                        draggables = draggables,
-                        areaWidth = areaWidth,
-                        areaHeight = areaHeight,
-                        centerClearancePx = slotRadiusPx + chipSpacingPx,
-                        chipSpacingPx = chipSpacingPx,
-                        edgeMarginPx = chipMarginPx
-                    )
-                }
-
-                Box(
-                    modifier = Modifier
-                        .size(slotSize)
-                        .align(Alignment.Center)
-                        .onGloballyPositioned {
-                            val pos = it.positionInParent()
-                            slotCenter = Offset(pos.x + it.size.width / 2f, pos.y + it.size.height / 2f)
+                    .weight(0.66f)
+                    .fillMaxHeight(),
+                onChipDropped = { draggableId ->
+                    if (draggableId in targetSlot.correctChipIds) {
+                        matchedChipId = draggableId
+                        if (!evaluated) {
+                            evaluated = true
+                            scope.launch {
+                                delay(350)
+                                onResult(
+                                    QuizAttemptResult(
+                                        questionId = config.id,
+                                        selectedOptionId = draggableId,
+                                        isCorrect = true,
+                                        wasDismissed = false,
+                                        wasTimerExpired = false,
+                                        responseTimeMs = System.currentTimeMillis() - startTime,
+                                        sourceApp = sourceApp
+                                    )
+                                )
+                            }
                         }
-                        .clip(CircleShape)
-                        .background(if (matchedChipId != null) Color(0xFFC8E6C9) else Color(0x1A0D47A1))
-                        .border(
-                            width = 4.dp,
-                            color = if (matchedChipId != null) Color(0xFF4CAF50) else Color(0xFFBBDEFB).copy(alpha = 0.65f),
-                            shape = CircleShape
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    val centerLabel = if (matchedChipId != null) {
-                        draggables.find { it.chipId == matchedChipId }?.label.orEmpty()
+                        true
                     } else {
-                        draggables.find { it.chipId in targetSlot.correctChipIds }?.label ?: "?"
+                        onResult(
+                            QuizAttemptResult(
+                                questionId = config.id,
+                                selectedOptionId = draggableId,
+                                isCorrect = false,
+                                wasDismissed = false,
+                                wasTimerExpired = false,
+                                responseTimeMs = System.currentTimeMillis() - startTime,
+                                sourceApp = sourceApp
+                            )
+                        )
+                        false
                     }
-
+                },
+                speakChipLabel = speakChipLabel
+            )
+        }
+    } else {
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+                ) {
                     Text(
-                        text = centerLabel,
-                        fontSize = 40.sp,
+                        text = config.display.questionText,
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = Color(0xFF0D47A1),
                         fontWeight = FontWeight.Black,
-                        color = if (matchedChipId != null) Color(0xFF2E7D32) else Color(0x22000000),
+                        textAlign = TextAlign.Center
+                    )
+                    Text(
+                        text = config.display.instructionLabel,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color(0xFF1565C0),
+                        fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.widthIn(max = 88.dp)
+                        modifier = Modifier.padding(top = 6.dp)
                     )
                 }
 
-                if (matchedChipId != null && evaluated) {
-                    Text(
-                        text = "✓ Correct Match!",
-                        color = Color(0xFF4CAF50),
-                        fontWeight = FontWeight.Black,
-                        fontSize = 20.sp,
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .offset(y = (slotSize / 2) + 28.dp)
-                    )
-                }
-
-                draggables.forEach { draggable ->
-                    val placement = placements.firstOrNull { it.chipId == draggable.chipId } ?: return@forEach
-                    if (draggable.chipId != matchedChipId) {
-                        DraggableChip(
-                            label = draggable.label,
-                            initialOffset = placement.offset,
-                            onChipPressed = speakChipLabel,
-                            onDropped = { center ->
-                                val distance = (center - slotCenter).getDistance()
-                                val dropTolerancePx = with(density) { 18.dp.toPx() }
-                                
-                                if (distance <= slotRadiusPx + dropTolerancePx) {
-                                    if (draggable.chipId in targetSlot.correctChipIds) {
-                                        matchedChipId = draggable.chipId
-                                        if (!evaluated) {
-                                            evaluated = true
-                                            scope.launch {
-                                                delay(350)
-                                                onResult(
-                                                    QuizAttemptResult(
-                                                        questionId = config.id,
-                                                        selectedOptionId = draggable.chipId,
-                                                        isCorrect = true,
-                                                        wasDismissed = false,
-                                                        wasTimerExpired = false,
-                                                        responseTimeMs = System.currentTimeMillis() - startTime,
-                                                        sourceApp = sourceApp
-                                                    )
-                                                )
-                                            }
-                                        }
-                                        true
-                                    } else {
-                                        // WRONG DROP detected
-                                        onResult(
-                                            QuizAttemptResult(
-                                                questionId = config.id,
-                                                selectedOptionId = draggable.chipId,
-                                                isCorrect = false,
-                                                wasDismissed = false,
-                                                wasTimerExpired = false,
-                                                responseTimeMs = System.currentTimeMillis() - startTime,
-                                                sourceApp = sourceApp
-                                            )
+                DragDropPlayArea(
+                    draggables = draggables,
+                    matchedChipId = matchedChipId,
+                    evaluated = evaluated,
+                    targetSlot = targetSlot,
+                    slotSize = slotSize,
+                    density = density,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .padding(horizontal = 10.dp, vertical = 8.dp),
+                    onChipDropped = { draggableId ->
+                        if (draggableId in targetSlot.correctChipIds) {
+                            matchedChipId = draggableId
+                            if (!evaluated) {
+                                evaluated = true
+                                scope.launch {
+                                    delay(350)
+                                    onResult(
+                                        QuizAttemptResult(
+                                            questionId = config.id,
+                                            selectedOptionId = draggableId,
+                                            isCorrect = true,
+                                            wasDismissed = false,
+                                            wasTimerExpired = false,
+                                            responseTimeMs = System.currentTimeMillis() - startTime,
+                                            sourceApp = sourceApp
                                         )
-                                        false // Return to original position
-                                    }
-                                } else {
-                                    false
+                                    )
                                 }
                             }
-                        )
-                    }
+                            true
+                        } else {
+                            onResult(
+                                QuizAttemptResult(
+                                    questionId = config.id,
+                                    selectedOptionId = draggableId,
+                                    isCorrect = false,
+                                    wasDismissed = false,
+                                    wasTimerExpired = false,
+                                    responseTimeMs = System.currentTimeMillis() - startTime,
+                                    sourceApp = sourceApp
+                                )
+                            )
+                            false
+                        }
+                    },
+                    speakChipLabel = speakChipLabel
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun DragDropPlayArea(
+    draggables: List<DragChip>,
+    matchedChipId: String?,
+    evaluated: Boolean,
+    targetSlot: com.reeled.quizoverlay.model.payload.DropSlot,
+    slotSize: androidx.compose.ui.unit.Dp,
+    density: androidx.compose.ui.unit.Density,
+    modifier: Modifier = Modifier,
+    onChipDropped: (String) -> Boolean,
+    speakChipLabel: (String) -> Unit
+) {
+    BoxWithConstraints(modifier = modifier) {
+        var slotCenter by remember { mutableStateOf(Offset.Zero) }
+        val areaWidth = with(density) { maxWidth.toPx() }
+        val areaHeight = with(density) { maxHeight.toPx() }
+        val slotRadiusPx = with(density) { (slotSize / 2).toPx() }
+        val chipSpacingPx = with(density) { 84.dp.toPx() }
+        val chipMarginPx = with(density) { 40.dp.toPx() }
+        val placements = remember(draggables, areaWidth, areaHeight) {
+            buildChipPlacements(
+                draggables = draggables,
+                areaWidth = areaWidth,
+                areaHeight = areaHeight,
+                centerClearancePx = slotRadiusPx + chipSpacingPx,
+                chipSpacingPx = chipSpacingPx,
+                edgeMarginPx = chipMarginPx
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .size(slotSize)
+                .align(Alignment.Center)
+                .onGloballyPositioned {
+                    val pos = it.positionInParent()
+                    slotCenter = Offset(pos.x + it.size.width / 2f, pos.y + it.size.height / 2f)
                 }
+                .clip(CircleShape)
+                .background(if (matchedChipId != null) Color(0xFFC8E6C9) else Color(0x1A0D47A1))
+                .border(
+                    width = 4.dp,
+                    color = if (matchedChipId != null) Color(0xFF4CAF50) else Color(0xFFBBDEFB).copy(alpha = 0.65f),
+                    shape = CircleShape
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            val centerLabel = if (matchedChipId != null) {
+                draggables.find { it.chipId == matchedChipId }?.label.orEmpty()
+            } else {
+                draggables.find { it.chipId in targetSlot.correctChipIds }?.label ?: "?"
+            }
+
+            Text(
+                text = centerLabel,
+                fontSize = 40.sp,
+                fontWeight = FontWeight.Black,
+                color = if (matchedChipId != null) Color(0xFF2E7D32) else Color(0x22000000),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.widthIn(max = 88.dp)
+            )
+        }
+
+        if (matchedChipId != null && evaluated) {
+            Text(
+                text = "✓ Correct Match!",
+                color = Color(0xFF4CAF50),
+                fontWeight = FontWeight.Black,
+                fontSize = 20.sp,
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .offset(y = (slotSize / 2) + 28.dp)
+            )
+        }
+
+        draggables.forEach { draggable ->
+            val placement = placements.firstOrNull { it.chipId == draggable.chipId } ?: return@forEach
+            if (draggable.chipId != matchedChipId) {
+                DraggableChip(
+                    label = draggable.label,
+                    initialOffset = placement.offset,
+                    onChipPressed = speakChipLabel,
+                    onDropped = { center ->
+                        val distance = (center - slotCenter).getDistance()
+                        val dropTolerancePx = with(density) { 18.dp.toPx() }
+                        if (distance <= slotRadiusPx + dropTolerancePx) {
+                            onChipDropped(draggable.chipId)
+                        } else {
+                            false
+                        }
+                    }
+                )
             }
         }
     }

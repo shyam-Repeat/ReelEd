@@ -10,9 +10,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -36,11 +39,13 @@ import com.reeled.quizoverlay.R
 import com.reeled.quizoverlay.model.QuizAttemptResult
 import com.reeled.quizoverlay.model.QuizCardConfig
 import com.reeled.quizoverlay.model.QuizPayload
+import com.reeled.quizoverlay.ui.overlay.QuizLayoutMode
 
 @Composable
 fun DrawMatchCard(
     config: QuizCardConfig,
     sourceApp: String,
+    layoutMode: QuizLayoutMode,
     onResult: (QuizAttemptResult) -> Unit
 ) {
     val payload = config.payload as QuizPayload.DrawMatchPayload
@@ -50,142 +55,231 @@ fun DrawMatchCard(
     val drawnPath = remember { Path() }
     var pathVersion by remember { mutableIntStateOf(0) }
     var submittedSuccess by remember { mutableStateOf(false) }
-    var lastPoint by remember { mutableStateOf<Offset?>(null) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(bottom = 20.dp, start = 16.dp, end = 16.dp),
-        verticalArrangement = Arrangement.Top,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        val instruction = config.display.instructionLabel.ifBlank {
-            stringResource(R.string.quiz_instruction_default)
-        }
+    val instruction = config.display.instructionLabel.ifBlank {
+        stringResource(R.string.quiz_instruction_default)
+    }
+    val isHorizontal = layoutMode != QuizLayoutMode.Vertical
 
-        // 3. UI Consistency: Instruction Section (Matches TapChoiceCard pattern)
-        Box(
+    if (isHorizontal) {
+        Row(
             modifier = Modifier
-                .weight(0.35f)
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp),
-            contentAlignment = Alignment.Center
+                .fillMaxSize()
+                .padding(bottom = 20.dp, start = 16.dp, end = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(18.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(
+                modifier = Modifier
+                    .weight(0.34f)
+                    .fillMaxHeight(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = config.display.questionText,
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = Color(0xFF333333),
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
                 Text(
                     text = instruction,
                     style = MaterialTheme.typography.bodyLarge,
                     color = Color(0xFF666666),
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(top = 10.dp)
                 )
             }
-        }
 
-        // 4. Drawing Area (Matches weight pattern of other cards)
-        Box(
-            modifier = Modifier
-                .weight(0.65f)
-                .fillMaxWidth(),
-            contentAlignment = Alignment.Center
-        ) {
-            BoxWithConstraints(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                val canvasWidthPx = with(density) { maxWidth.toPx().toInt().coerceAtLeast(1) }
-                val canvasHeightPx = with(density) { maxHeight.toPx().toInt().coerceAtLeast(1) }
-                val tolerancePx = with(density) { 22.dp.toPx().toInt() }
-
-                val scoreTracker = remember(payload.text, canvasWidthPx, canvasHeightPx, tolerancePx) {
-                    DrawScoreTracker(
-                        text = payload.text,
-                        width = canvasWidthPx,
-                        height = canvasHeightPx,
-                        tolerancePx = tolerancePx
-                    )
-                }
-
-                val backgroundFontSize = minOf(maxWidth, maxHeight) * 0.58f
-
-                Text(
-                    text = payload.text,
-                    style = MaterialTheme.typography.displayLarge,
-                    fontSize = with(density) { backgroundFontSize.toSp() },
-                    fontWeight = FontWeight.Black,
-                    color = Color(0xFFE9E9E9),
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.widthIn(max = maxWidth)
-                )
-
-                Canvas(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .pointerInput(submittedSuccess, scoreTracker) {
-                            if (submittedSuccess) return@pointerInput
-                            detectDragGestures(
-                                onDragStart = { offset ->
-                                    lastPoint = offset
-                                    drawnPath.moveTo(offset.x, offset.y)
-                                    scoreTracker.markPoint(offset.x.toInt(), offset.y.toInt())
-                                    pathVersion++
-                                },
-                                onDrag = { change, _ ->
-                                    change.consume()
-                                    val previous = lastPoint
-                                    val current = change.position
-                                    drawnPath.lineTo(current.x, current.y)
-                                    if (previous != null) {
-                                        scoreTracker.markSegment(previous, current)
-                                    } else {
-                                        scoreTracker.markPoint(current.x.toInt(), current.y.toInt())
-                                    }
-                                    lastPoint = current
-                                    pathVersion++
-                                },
-                                onDragEnd = {
-                                    lastPoint = null
-                                    val isAccurate = scoreTracker.isSuccessful()
-                                    if (isAccurate && !submittedSuccess) {
-                                        submittedSuccess = true
-                                        onResult(
-                                            QuizAttemptResult(
-                                                questionId = config.id,
-                                                selectedOptionId = "DRAW_SUCCESS",
-                                                isCorrect = true,
-                                                wasDismissed = false,
-                                                wasTimerExpired = false,
-                                                responseTimeMs = System.currentTimeMillis() - startTime,
-                                                sourceApp = sourceApp
-                                            )
-                                        )
-                                    }
-                                }
-                            )
-                        }
-                ) {
-                    @Suppress("UNUSED_EXPRESSION")
-                    pathVersion
-
-                    drawPath(
-                        path = drawnPath,
-                        color = Color(0xFF378ADD),
-                        style = Stroke(
-                            width = 20.dp.toPx(),
-                            cap = StrokeCap.Round,
-                            join = StrokeJoin.Round
+            DrawCanvasArea(
+                payloadText = payload.text,
+                density = density,
+                submittedSuccess = submittedSuccess,
+                drawnPath = drawnPath,
+                pathVersion = pathVersion,
+                modifier = Modifier
+                    .weight(0.66f)
+                    .fillMaxHeight(),
+                onPathVersionChange = { pathVersion++ },
+                onSuccess = {
+                    submittedSuccess = true
+                    onResult(
+                        QuizAttemptResult(
+                            questionId = config.id,
+                            selectedOptionId = "DRAW_SUCCESS",
+                            isCorrect = true,
+                            wasDismissed = false,
+                            wasTimerExpired = false,
+                            responseTimeMs = System.currentTimeMillis() - startTime,
+                            sourceApp = sourceApp
                         )
                     )
                 }
-
-                if (submittedSuccess) {
+            )
+        }
+    } else {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(bottom = 20.dp, start = 16.dp, end = 16.dp),
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Box(
+                modifier = Modifier
+                    .weight(0.35f)
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = stringResource(R.string.quiz_result_correct_symbol),
-                        fontSize = 120.sp,
-                        color = Color(0xFF4CAF50),
-                        fontWeight = FontWeight.Black,
-                        modifier = Modifier.align(Alignment.Center)
+                        text = config.display.questionText,
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = Color(0xFF333333),
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
+                    )
+                    Text(
+                        text = instruction,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Color(0xFF666666),
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(top = 10.dp)
                     )
                 }
+            }
+
+            DrawCanvasArea(
+                payloadText = payload.text,
+                density = density,
+                submittedSuccess = submittedSuccess,
+                drawnPath = drawnPath,
+                pathVersion = pathVersion,
+                modifier = Modifier
+                    .weight(0.65f)
+                    .fillMaxWidth(),
+                onPathVersionChange = { pathVersion++ },
+                onSuccess = {
+                    submittedSuccess = true
+                    onResult(
+                        QuizAttemptResult(
+                            questionId = config.id,
+                            selectedOptionId = "DRAW_SUCCESS",
+                            isCorrect = true,
+                            wasDismissed = false,
+                            wasTimerExpired = false,
+                            responseTimeMs = System.currentTimeMillis() - startTime,
+                            sourceApp = sourceApp
+                        )
+                    )
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun DrawCanvasArea(
+    payloadText: String,
+    density: androidx.compose.ui.unit.Density,
+    submittedSuccess: Boolean,
+    drawnPath: Path,
+    pathVersion: Int,
+    modifier: Modifier = Modifier,
+    onPathVersionChange: () -> Unit,
+    onSuccess: () -> Unit
+) {
+    Box(
+        modifier = modifier,
+        contentAlignment = Alignment.Center
+    ) {
+        BoxWithConstraints(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            val canvasWidthPx = with(density) { maxWidth.toPx().toInt().coerceAtLeast(1) }
+            val canvasHeightPx = with(density) { maxHeight.toPx().toInt().coerceAtLeast(1) }
+            val tolerancePx = with(density) { 22.dp.toPx().toInt() }
+
+            val scoreTracker = remember(payloadText, canvasWidthPx, canvasHeightPx, tolerancePx) {
+                DrawScoreTracker(
+                    text = payloadText,
+                    width = canvasWidthPx,
+                    height = canvasHeightPx,
+                    tolerancePx = tolerancePx
+                )
+            }
+
+            val backgroundFontSize = minOf(maxWidth, maxHeight) * 0.58f
+
+            Text(
+                text = payloadText,
+                style = MaterialTheme.typography.displayLarge,
+                fontSize = with(density) { backgroundFontSize.toSp() },
+                fontWeight = FontWeight.Black,
+                color = Color(0xFFE9E9E9),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.widthIn(max = maxWidth)
+            )
+
+            Canvas(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .pointerInput(submittedSuccess, scoreTracker) {
+                        if (submittedSuccess) return@pointerInput
+                        var gestureLastPoint: Offset? = null
+                        detectDragGestures(
+                            onDragStart = { offset ->
+                                gestureLastPoint = offset
+                                drawnPath.moveTo(offset.x, offset.y)
+                                scoreTracker.markPoint(offset.x.toInt(), offset.y.toInt())
+                                onPathVersionChange()
+                            },
+                            onDrag = { change, _ ->
+                                change.consume()
+                                val current = change.position
+                                drawnPath.lineTo(current.x, current.y)
+                                if (gestureLastPoint != null) {
+                                    scoreTracker.markSegment(gestureLastPoint!!, current)
+                                } else {
+                                    scoreTracker.markPoint(current.x.toInt(), current.y.toInt())
+                                }
+                                gestureLastPoint = current
+                                onPathVersionChange()
+                            },
+                            onDragEnd = {
+                                gestureLastPoint = null
+                                if (scoreTracker.isSuccessful() && !submittedSuccess) {
+                                    onSuccess()
+                                }
+                            }
+                        )
+                    }
+            ) {
+                @Suppress("UNUSED_EXPRESSION")
+                pathVersion
+
+                drawPath(
+                    path = drawnPath,
+                    color = Color(0xFF378ADD),
+                    style = Stroke(
+                        width = 20.dp.toPx(),
+                        cap = StrokeCap.Round,
+                        join = StrokeJoin.Round
+                    )
+                )
+            }
+
+            if (submittedSuccess) {
+                Text(
+                    text = stringResource(R.string.quiz_result_correct_symbol),
+                    fontSize = 120.sp,
+                    color = Color(0xFF4CAF50),
+                    fontWeight = FontWeight.Black,
+                    modifier = Modifier.align(Alignment.Center)
+                )
             }
         }
     }

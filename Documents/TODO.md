@@ -54,6 +54,27 @@ This checklist was re-audited against the current codebase and docs (`Documents/
 ### 4) UI quality + platform hardening
 - [x] Verify `TimerBar` behavior with real countdown state (wired in overlay runtime).
 - [ ] Verify `OptionButton` behavior with real answer states (component exists but is not used by current quiz flow).
+- [ ] **Quiz Layout Adaptation (NEW):** Refactor quiz overlay layouts for portrait and landscape using Compose adaptive layouts, not XML resource qualifiers.
+    - [ ] Define a shared quiz layout mode for Compose (`Vertical`, `HorizontalCompact`, `HorizontalWide`) using `BoxWithConstraints` or width/height ratio.
+    - [ ] Refactor `QuizCardRouter` to replace fixed portrait-first weights with adaptive placement for timer, train, mascot, parent button, and quiz body.
+    - [ ] Refactor `TapChoiceCard`:
+        - [ ] Portrait: question/instruction on top, answers stacked vertically.
+        - [ ] Landscape: question/instruction on one side, answers in a compact 2x2 or adaptive grid on the other.
+    - [ ] After `TapChoiceCard` refactor, verify no overlap in portrait and landscape between timer, mascot, train, parent button, and answer buttons.
+    - [ ] Refactor `TapTapMatchCard`:
+        - [ ] Portrait: top/bottom matching rows.
+        - [ ] Landscape: left/right matching columns.
+    - [ ] After `TapTapMatchCard` refactor, verify no overlap in portrait and landscape between timer, mascot, train, parent button, and match tiles.
+    - [ ] Refactor remaining quiz cards one at a time for the same adaptive layout model:
+        - [ ] `FillBlankCard`
+        - [ ] `DragDropMatchCard`
+        - [ ] `DrawMatchCard`
+    - [ ] After each remaining card refactor, immediately verify portrait/landscape spacing and interactive-area safety before moving to the next card.
+    - [ ] Add concrete Compose previews for each card:
+        - [ ] Portrait phone
+        - [ ] Landscape phone
+        - [ ] Wide / short screen case
+    - [ ] Leave compile/runtime validation to manual device testing after UI refactors are complete.
 - [ ] Move remaining hardcoded UI text to `res/values/strings.xml`.
 - [ ] Verify and tighten dependency boundaries: some UI/navigation code still accesses prefs directly.
 - [x] **UI Polish (NEW):** Add a blue blur/glow to the overlay corners to improve aesthetics.

@@ -23,6 +23,7 @@ import com.reeled.quizoverlay.R
 import com.reeled.quizoverlay.model.QuizAttemptResult
 import com.reeled.quizoverlay.model.QuizCardConfig
 import com.reeled.quizoverlay.model.QuizPayload
+import com.reeled.quizoverlay.ui.overlay.QuizLayoutMode
 import com.reeled.quizoverlay.util.SoundManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -32,6 +33,7 @@ fun TapTapMatchCard(
     config: QuizCardConfig,
     sourceApp: String,
     soundManager: SoundManager,
+    layoutMode: QuizLayoutMode,
     onResult: (QuizAttemptResult) -> Unit
 ) {
     val payload = config.payload as QuizPayload.TapTapMatchPayload
@@ -129,58 +131,119 @@ fun TapTapMatchCard(
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(bottom = 12.dp, start = 14.dp, end = 14.dp, top = 8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = config.display.questionText,
-            style = MaterialTheme.typography.headlineSmall,
-            color = Color(0xFF333333),
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center
-        )
+    val instruction = config.display.instructionLabel.ifBlank {
+        stringResource(R.string.quiz_matching_instruction)
+    }
+    val isHorizontal = layoutMode != QuizLayoutMode.Vertical
 
-        val instruction = config.display.instructionLabel.ifBlank {
-            stringResource(R.string.quiz_matching_instruction)
+    if (isHorizontal) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(bottom = 12.dp, start = 14.dp, end = 14.dp, top = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(
+                modifier = Modifier
+                    .weight(0.34f)
+                    .fillMaxHeight(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = config.display.questionText,
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = Color(0xFF333333),
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = instruction,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = Color(0xFF666666),
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            Row(
+                modifier = Modifier
+                    .weight(0.66f)
+                    .fillMaxHeight(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                MatchTileColumn(
+                    tiles = leftTiles,
+                    matchedKeys = matchedKeys,
+                    selectedTile = selectedTile,
+                    pairColors = pairColors,
+                    modifier = Modifier.weight(1f),
+                    onTileClick = ::onTileClick
+                )
+
+                MatchTileColumn(
+                    tiles = rightTiles,
+                    matchedKeys = matchedKeys,
+                    selectedTile = selectedTile,
+                    pairColors = pairColors,
+                    modifier = Modifier.weight(1f),
+                    onTileClick = ::onTileClick
+                )
+            }
         }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = instruction,
-            style = MaterialTheme.typography.bodyLarge,
-            color = Color(0xFF666666),
-            textAlign = TextAlign.Center
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
+    } else {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .fillMaxSize()
+                .padding(bottom = 12.dp, start = 14.dp, end = 14.dp, top = 8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            MatchTileRow(
-                tiles = leftTiles,
-                matchedKeys = matchedKeys,
-                selectedTile = selectedTile,
-                pairColors = pairColors,
-                modifier = Modifier.weight(1f),
-                onTileClick = ::onTileClick
+            Text(
+                text = config.display.questionText,
+                style = MaterialTheme.typography.headlineSmall,
+                color = Color(0xFF333333),
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
             )
 
-            MatchTileRow(
-                tiles = rightTiles,
-                matchedKeys = matchedKeys,
-                selectedTile = selectedTile,
-                pairColors = pairColors,
-                modifier = Modifier.weight(1f),
-                onTileClick = ::onTileClick
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = instruction,
+                style = MaterialTheme.typography.bodyLarge,
+                color = Color(0xFF666666),
+                textAlign = TextAlign.Center
             )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                MatchTileRow(
+                    tiles = leftTiles,
+                    matchedKeys = matchedKeys,
+                    selectedTile = selectedTile,
+                    pairColors = pairColors,
+                    modifier = Modifier.weight(1f),
+                    onTileClick = ::onTileClick
+                )
+
+                MatchTileRow(
+                    tiles = rightTiles,
+                    matchedKeys = matchedKeys,
+                    selectedTile = selectedTile,
+                    pairColors = pairColors,
+                    modifier = Modifier.weight(1f),
+                    onTileClick = ::onTileClick
+                )
+            }
         }
     }
 }
@@ -212,6 +275,39 @@ private fun MatchTileRow(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight(),
+                onClick = { onTileClick(tile) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun MatchTileColumn(
+    tiles: List<MatchTile>,
+    matchedKeys: Set<String>,
+    selectedTile: MatchTile?,
+    pairColors: List<Color>,
+    modifier: Modifier = Modifier,
+    onTileClick: (MatchTile) -> Unit
+) {
+    Column(
+        modifier = modifier.fillMaxHeight(),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        tiles.forEach { tile ->
+            val isMatched = matchedKeys.contains(tile.key)
+            val isSelected = selectedTile?.key == tile.key
+            val baseColor = pairColors[tile.pairIndex % pairColors.size]
+
+            MatchGridTile(
+                label = tile.label,
+                baseColor = baseColor,
+                isMatched = isMatched,
+                isSelected = isSelected,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
                 onClick = { onTileClick(tile) }
             )
         }

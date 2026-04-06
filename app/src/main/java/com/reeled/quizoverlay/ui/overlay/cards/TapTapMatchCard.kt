@@ -228,7 +228,7 @@ fun MatchGridTile(
     onClick: () -> Unit
 ) {
     val alpha by animateFloatAsState(if (isMatched) 0.5f else 1f)
-    val checkSymbol = stringResource(R.string.match_correct_symbol)
+    val checkSymbol = stringResource(R.string.quiz_result_correct_symbol)
 
     Box(
         modifier = modifier

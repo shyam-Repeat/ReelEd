@@ -18,16 +18,12 @@ class AudioMuter(private val context: Context) {
     fun mute() {
         if (isCurrentlyMuted) return
         try {
-            // 1. Request transient audio focus to signal other apps to pause
+            // 1. Request transient exclusive audio focus to signal other apps to pause hard
             requestAudioFocus()
 
-            // 2. Mute the music stream as a fallback
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_MUTE, 0)
-            } else {
-                @Suppress("DEPRECATION")
-                audioManager.setStreamMute(AudioManager.STREAM_MUSIC, true)
-            }
+            // Removed STREAM_MUSIC mute as it also mutes our own SoundManager/TTS.
+            // Exclusive focus ownership should pause foreground video apps like YouTube.
+
             isCurrentlyMuted = true
         } catch (e: Exception) {
             // Log error
@@ -37,15 +33,7 @@ class AudioMuter(private val context: Context) {
     fun restore() {
         if (!isCurrentlyMuted) return
         try {
-            // 1. Unmute the music stream
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_UNMUTE, 0)
-            } else {
-                @Suppress("DEPRECATION")
-                audioManager.setStreamMute(AudioManager.STREAM_MUSIC, false)
-            }
-
-            // 2. Abandon audio focus to let other apps resume
+            // 1. Abandon audio focus to let other apps resume
             abandonAudioFocus()
 
             isCurrentlyMuted = false
@@ -61,7 +49,7 @@ class AudioMuter(private val context: Context) {
                 .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
                 .build()
             
-            focusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
+            focusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE)
                 .setAudioAttributes(playbackAttributes)
                 .setAcceptsDelayedFocusGain(true)
                 .setOnAudioFocusChangeListener(focusChangeListener)
@@ -73,7 +61,7 @@ class AudioMuter(private val context: Context) {
             audioManager.requestAudioFocus(
                 focusChangeListener,
                 AudioManager.STREAM_MUSIC,
-                AudioManager.AUDIOFOCUS_GAIN_TRANSIENT
+                AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE
             )
         }
     }

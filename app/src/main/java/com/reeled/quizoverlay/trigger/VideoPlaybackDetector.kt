@@ -19,10 +19,9 @@ class VideoPlaybackDetector(
 
         val score = when {
             !isTargetForeground -> 0
-            !isAudioActive && ringerMode == AudioManager.RINGER_MODE_NORMAL -> 3
-            !isAudioActive -> 2
-            isAudioActive && ringerMode == AudioManager.RINGER_MODE_NORMAL -> 1
-            else -> 0
+            !isAudioActive -> 0 // Only trigger when audio is active (video playing)
+            ringerMode == AudioManager.RINGER_MODE_NORMAL -> 3
+            else -> 2
         }
 
         return InterruptScore(

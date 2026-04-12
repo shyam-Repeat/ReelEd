@@ -81,9 +81,11 @@ private fun FillBlankLandscapePreview() {
 @Composable
 private fun DragDropLandscapePreview() {
     PreviewTheme {
+        val context = LocalContext.current
         DragDropMatchCard(
             config = previewDragDropConfig(),
             sourceApp = "Preview",
+            soundManager = SoundManager(context),
             layoutMode = QuizLayoutMode.HorizontalCompact,
             onResult = {}
         )

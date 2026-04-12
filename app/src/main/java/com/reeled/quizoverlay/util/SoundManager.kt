@@ -4,6 +4,7 @@ import android.content.Context
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.media.SoundPool
+import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.speech.tts.TextToSpeech
@@ -23,6 +24,9 @@ class SoundManager(private val context: Context) : TextToSpeech.OnInitListener {
     private var backgroundPlayer: MediaPlayer? = null
     private val mainHandler = Handler(Looper.getMainLooper())
     private var pendingBackgroundStart: Runnable? = null
+    private val speechParams = Bundle().apply {
+        putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, 1.0f)
+    }
 
     init {
         val audioAttributes = AudioAttributes.Builder()
@@ -59,7 +63,7 @@ class SoundManager(private val context: Context) : TextToSpeech.OnInitListener {
                 it.setSpeechRate(1.1f) // Slightly faster as per user feedback
                 it.setAudioAttributes(
                     AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY)
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
                         .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
                         .build()
                 )
@@ -97,7 +101,12 @@ class SoundManager(private val context: Context) : TextToSpeech.OnInitListener {
     fun speak(text: String) {
         if (text.isBlank()) return
         if (ttsReady) {
-            tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "quiz_tts_${text.hashCode()}")
+            tts?.speak(
+                text,
+                TextToSpeech.QUEUE_FLUSH,
+                speechParams,
+                "quiz_tts_${text.hashCode()}"
+            )
         } else {
             pendingSpeech = text
         }

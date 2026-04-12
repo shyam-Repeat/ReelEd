@@ -1,6 +1,4 @@
 package com.reeled.quizoverlay.ui.overlay.cards
-
-import android.speech.tts.TextToSpeech
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.spring
@@ -24,8 +22,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,7 +35,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -52,9 +47,9 @@ import com.reeled.quizoverlay.model.QuizPayload
 import com.reeled.quizoverlay.model.payload.DragChip
 import com.reeled.quizoverlay.ui.overlay.QuizLayoutMode
 import com.reeled.quizoverlay.ui.overlay.components.ChipItem
+import com.reeled.quizoverlay.util.SoundManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.util.Locale
 import kotlin.math.max
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
@@ -69,6 +64,7 @@ private data class ChipPlacement(
 fun DragDropMatchCard(
     config: QuizCardConfig,
     sourceApp: String,
+    soundManager: SoundManager,
     layoutMode: QuizLayoutMode,
     onResult: (QuizAttemptResult) -> Unit
 ) {
@@ -76,7 +72,6 @@ fun DragDropMatchCard(
     val scope = rememberCoroutineScope()
     val startTime = remember { System.currentTimeMillis() }
     val density = LocalDensity.current
-    val context = LocalContext.current
 
     // Supabase payload uses `draggables` + `targets` (+ `correct_pairs` parsed in QuizCardConfig).
     val targetSlot = payload.targets.firstOrNull() ?: return
@@ -85,33 +80,7 @@ fun DragDropMatchCard(
     var matchedChipId by remember { mutableStateOf<String?>(null) }
     var evaluated by remember { mutableStateOf(false) }
     val slotSize = 116.dp
-    var ttsReady by remember { mutableStateOf(false) }
-    val textToSpeech = remember {
-        TextToSpeech(context.applicationContext) { status ->
-            ttsReady = status == TextToSpeech.SUCCESS
-        }
-    }
-
-    LaunchedEffect(textToSpeech, ttsReady) {
-        if (ttsReady) {
-            textToSpeech.language = Locale.US
-        }
-    }
-
-    DisposableEffect(textToSpeech) {
-        onDispose {
-            textToSpeech.stop()
-            textToSpeech.shutdown()
-        }
-    }
-
-    val speakChipLabel: (String) -> Unit = remember(textToSpeech, ttsReady) {
-        { label ->
-            if (ttsReady) {
-                textToSpeech.speak(label, TextToSpeech.QUEUE_FLUSH, null, "drag-chip-$label")
-            }
-        }
-    }
+    val speakChipLabel: (String) -> Unit = remember(soundManager) { { label -> soundManager.speak(label) } }
 
     val isHorizontal = layoutMode != QuizLayoutMode.Vertical
 

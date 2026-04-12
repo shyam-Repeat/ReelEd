@@ -311,7 +311,7 @@ private fun QuizCardContent(
             }
             QuizCardType.DRAG_DROP_MATCH -> {
                 if (config.payload is QuizPayload.DragDropPayload) {
-                    DragDropMatchCard(config, sourceApp, layoutMode, onResultIntercept)
+                    DragDropMatchCard(config, sourceApp, soundManager, layoutMode, onResultIntercept)
                 } else {
                     InvalidPayloadGate(config.id, "drag_drop_payload_mismatch", onInvalidPayload)
                 }

@@ -331,7 +331,8 @@ private class DrawScoreTracker(
         if (drawnCount < minStrokeCount || targetPixelCount == 0) return false
         val recall = targetCoveredCount.toFloat() / targetPixelCount.toFloat()
         val precision = onTargetDrawnCount.toFloat() / drawnCount.toFloat()
-        return recall >= 0.90f && precision >= 0.35f
+        // Relaxed thresholds: 65% recall (was 90%) and 25% precision (was 35%)
+        return recall >= 0.65f && precision >= 0.25f
     }
 
     private fun stampExpandedDrawn(cx: Int, cy: Int, radius: Int) {
@@ -343,8 +344,8 @@ private class DrawScoreTracker(
         for (yy in top..bottom) {
             val yDeltaSq = (yy - cy) * (yy - cy)
             for (xx in left..right) {
-                val xDelta = xx - cx
-                if ((xDelta * xDelta) + yDeltaSq > radiusSq) continue
+                val dx = xx - cx
+                if ((dx * dx) + yDeltaSq > radiusSq) continue
                 val idx = yy * safeWidth + xx
                 if (!expandedDrawnMask[idx]) {
                     expandedDrawnMask[idx] = true

@@ -96,9 +96,11 @@ private fun DragDropLandscapePreview() {
 @Composable
 private fun DrawMatchLandscapePreview() {
     PreviewTheme {
+        val context = LocalContext.current
         DrawMatchCard(
             config = previewDrawMatchConfig(),
             sourceApp = "Preview",
+            soundManager = SoundManager(context),
             layoutMode = QuizLayoutMode.HorizontalCompact,
             onResult = {}
         )

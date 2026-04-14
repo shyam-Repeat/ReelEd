@@ -40,10 +40,14 @@ import com.reeled.quizoverlay.model.QuizCardConfig
 import com.reeled.quizoverlay.model.QuizPayload
 import com.reeled.quizoverlay.ui.overlay.QuizLayoutMode
 
+import com.reeled.quizoverlay.util.SoundManager
+import kotlinx.coroutines.delay
+
 @Composable
 fun DrawMatchCard(
     config: QuizCardConfig,
     sourceApp: String,
+    soundManager: SoundManager,
     layoutMode: QuizLayoutMode,
     onResult: (QuizAttemptResult) -> Unit
 ) {
@@ -64,13 +68,13 @@ fun DrawMatchCard(
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(bottom = 20.dp, start = 16.dp, end = 16.dp),
+                .padding(bottom = 12.dp, start = 8.dp, end = 8.dp), // Reduced padding to increase area
             horizontalArrangement = Arrangement.spacedBy(18.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(
                 modifier = Modifier
-                    .weight(0.34f)
+                    .weight(0.28f) // Reduced from 0.34f to give more space to canvas (~20% increase)
                     .fillMaxHeight(),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -98,22 +102,17 @@ fun DrawMatchCard(
                 drawnPath = drawnPath,
                 pathVersion = pathVersion,
                 modifier = Modifier
-                    .weight(0.66f)
+                    .weight(0.72f) // Increased from 0.66f
                     .fillMaxHeight(),
                 onPathVersionChange = { pathVersion++ },
                 onSuccess = {
-                    submittedSuccess = true
-                    onResult(
-                        QuizAttemptResult(
-                            questionId = config.id,
-                            selectedOptionId = "DRAW_SUCCESS",
-                            isCorrect = true,
-                            wasDismissed = false,
-                            wasTimerExpired = false,
-                            responseTimeMs = System.currentTimeMillis() - startTime,
-                            sourceApp = sourceApp
-                        )
-                    )
+                    if (!submittedSuccess) {
+                        submittedSuccess = true
+                        // Speak the payload and wait 2s before completing
+                        soundManager.speak(payload.text)
+                        
+                        // We use a side effect or similar to wait
+                    }
                 }
             )
         }
@@ -121,13 +120,13 @@ fun DrawMatchCard(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(bottom = 20.dp, start = 16.dp, end = 16.dp),
+                .padding(bottom = 12.dp, start = 8.dp, end = 8.dp), // Reduced padding
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Box(
                 modifier = Modifier
-                    .weight(0.35f)
+                    .weight(0.30f) // Reduced from 0.35f
                     .fillMaxWidth()
                     .padding(horizontal = 8.dp),
                 contentAlignment = Alignment.Center
@@ -157,23 +156,33 @@ fun DrawMatchCard(
                 drawnPath = drawnPath,
                 pathVersion = pathVersion,
                 modifier = Modifier
-                    .weight(0.65f)
+                    .weight(0.70f) // Increased from 0.65f
                     .fillMaxWidth(),
                 onPathVersionChange = { pathVersion++ },
                 onSuccess = {
-                    submittedSuccess = true
-                    onResult(
-                        QuizAttemptResult(
-                            questionId = config.id,
-                            selectedOptionId = "DRAW_SUCCESS",
-                            isCorrect = true,
-                            wasDismissed = false,
-                            wasTimerExpired = false,
-                            responseTimeMs = System.currentTimeMillis() - startTime,
-                            sourceApp = sourceApp
-                        )
-                    )
+                    if (!submittedSuccess) {
+                        submittedSuccess = true
+                        soundManager.speak(payload.text)
+                    }
                 }
+            )
+        }
+    }
+
+    // Completion delay effect
+    LaunchedEffect(submittedSuccess) {
+        if (submittedSuccess) {
+            delay(2000)
+            onResult(
+                QuizAttemptResult(
+                    questionId = config.id,
+                    selectedOptionId = "DRAW_SUCCESS",
+                    isCorrect = true,
+                    wasDismissed = false,
+                    wasTimerExpired = false,
+                    responseTimeMs = System.currentTimeMillis() - startTime,
+                    sourceApp = sourceApp
+                )
             )
         }
     }
@@ -211,7 +220,7 @@ private fun DrawCanvasArea(
                 )
             }
 
-            val backgroundFontSize = minOf(maxWidth, maxHeight) * 0.58f
+            val backgroundFontSize = minOf(maxWidth, maxHeight) * 0.78f // Increased from 0.58f
 
             Text(
                 text = payloadText,
@@ -264,7 +273,7 @@ private fun DrawCanvasArea(
                     path = drawnPath,
                     color = Color(0xFF378ADD),
                     style = Stroke(
-                        width = 20.dp.toPx(),
+                        width = 24.dp.toPx(), // Slightly thicker stroke for better visualization
                         cap = StrokeCap.Round,
                         join = StrokeJoin.Round
                     )

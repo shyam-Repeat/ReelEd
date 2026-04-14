@@ -27,6 +27,7 @@ class SoundManager(private val context: Context) : TextToSpeech.OnInitListener {
     private val speechParams = Bundle().apply {
         putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, 1.0f)
     }
+    private var isTtsSpeaking = false
 
     init {
         val audioAttributes = AudioAttributes.Builder()
@@ -63,14 +64,23 @@ class SoundManager(private val context: Context) : TextToSpeech.OnInitListener {
                 it.setSpeechRate(1.1f) // Slightly faster as per user feedback
                 it.setAudioAttributes(
                     AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_MEDIA)
+                        .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
                         .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
                         .build()
                 )
                 it.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
-                    override fun onStart(utteranceId: String?) = Unit
-                    override fun onDone(utteranceId: String?) = Unit
-                    override fun onError(utteranceId: String?) = Unit
+                    override fun onStart(utteranceId: String?) {
+                        isTtsSpeaking = true
+                        mainHandler.post { duckBackgroundMusic(true) }
+                    }
+                    override fun onDone(utteranceId: String?) {
+                        isTtsSpeaking = false
+                        mainHandler.post { duckBackgroundMusic(false) }
+                    }
+                    override fun onError(utteranceId: String?) {
+                        isTtsSpeaking = false
+                        mainHandler.post { duckBackgroundMusic(false) }
+                    }
                 })
                 ttsReady = true
                 pendingSpeech?.let { text ->
@@ -110,6 +120,11 @@ class SoundManager(private val context: Context) : TextToSpeech.OnInitListener {
         } else {
             pendingSpeech = text
         }
+    }
+
+    private fun duckBackgroundMusic(duck: Boolean) {
+        val volume = if (duck) BACKGROUND_VOLUME_DUCKED else BACKGROUND_VOLUME
+        backgroundPlayer?.setVolume(volume, volume)
     }
 
     fun stopAll() {
@@ -159,6 +174,8 @@ class SoundManager(private val context: Context) : TextToSpeech.OnInitListener {
         val player = backgroundPlayer ?: createBackgroundPlayer() ?: return
         try {
             if (!player.isPlaying) {
+                val volume = if (isTtsSpeaking) BACKGROUND_VOLUME_DUCKED else BACKGROUND_VOLUME
+                player.setVolume(volume, volume)
                 player.start()
             }
         } catch (_: Exception) {
@@ -191,7 +208,8 @@ class SoundManager(private val context: Context) : TextToSpeech.OnInitListener {
         return try {
             MediaPlayer.create(context.applicationContext, R.raw.background)?.apply {
                 isLooping = true
-                setVolume(BACKGROUND_VOLUME, BACKGROUND_VOLUME)
+                val volume = if (isTtsSpeaking) BACKGROUND_VOLUME_DUCKED else BACKGROUND_VOLUME
+                setVolume(volume, volume)
             }.also { backgroundPlayer = it }
         } catch (_: Exception) {
             null
@@ -200,5 +218,6 @@ class SoundManager(private val context: Context) : TextToSpeech.OnInitListener {
 
     companion object {
         private const val BACKGROUND_VOLUME = 0.12f
+        private const val BACKGROUND_VOLUME_DUCKED = 0.04f
     }
 }

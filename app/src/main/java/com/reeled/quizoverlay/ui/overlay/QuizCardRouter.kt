@@ -325,7 +325,7 @@ private fun QuizCardContent(
             }
             QuizCardType.DRAW_MATCH -> {
                 if (config.payload is QuizPayload.DrawMatchPayload) {
-                    DrawMatchCard(config, sourceApp, layoutMode, onResultIntercept)
+                    DrawMatchCard(config, sourceApp, soundManager, layoutMode, onResultIntercept)
                 } else {
                     InvalidPayloadGate(config.id, "draw_match_payload_mismatch", onInvalidPayload)
                 }

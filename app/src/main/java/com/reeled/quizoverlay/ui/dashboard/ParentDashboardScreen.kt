@@ -171,6 +171,7 @@ private fun DashboardContent(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ControlsContent(
     isOverlayEnabled: Boolean,

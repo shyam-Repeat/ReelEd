@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.reeled.quizoverlay.R
+import com.reeled.quizoverlay.prefs.AppDetectionMode
 import com.reeled.quizoverlay.ui.devmode.DevModeUiState
 import com.reeled.quizoverlay.ui.devmode.DevModeViewModel
 import kotlinx.coroutines.delay
@@ -135,10 +136,12 @@ fun ParentDashboardScreen(
                     dailyCap = uiState.dailyCap,
                     quizTimerMinutes = uiState.quizTimerMinutes,
                     forceQuizEnabled = uiState.forceQuizEnabled,
+                    appDetectionMode = uiState.appDetectionMode,
                     onOverlayToggle = dashboardViewModel::setOverlayEnabled,
                     onDailyCapChange = dashboardViewModel::setDailyCap,
                     onQuizTimerMinutesChange = dashboardViewModel::setQuizTimerMinutes,
                     onForceQuizToggle = dashboardViewModel::setForceQuizEnabled,
+                    onAppDetectionModeChange = dashboardViewModel::setAppDetectionMode,
                     onFeedback = dashboardViewModel::openFeedback
                 )
                 DashboardTab.Settings -> SettingsContent(
@@ -174,10 +177,12 @@ private fun ControlsContent(
     dailyCap: Int,
     quizTimerMinutes: Int,
     forceQuizEnabled: Boolean,
+    appDetectionMode: AppDetectionMode,
     onOverlayToggle: (Boolean) -> Unit,
     onDailyCapChange: (Int) -> Unit,
     onQuizTimerMinutesChange: (Int) -> Unit,
     onForceQuizToggle: (Boolean) -> Unit,
+    onAppDetectionModeChange: (AppDetectionMode) -> Unit,
     onFeedback: () -> Unit
 ) {
     LazyColumn(
@@ -193,6 +198,52 @@ private fun ControlsContent(
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
+        }
+
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(stringResource(R.string.controls_detection_title), style = MaterialTheme.typography.titleMedium)
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    stringResource(R.string.controls_detection_help),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                SingleChoiceSegmentedButtonRow(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    SegmentedButton(
+                        selected = appDetectionMode == AppDetectionMode.USAGE_STATS,
+                        onClick = { onAppDetectionModeChange(AppDetectionMode.USAGE_STATS) },
+                        shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
+                    ) {
+                        Text(stringResource(R.string.controls_detection_usage_stats))
+                    }
+                    SegmentedButton(
+                        selected = appDetectionMode == AppDetectionMode.MEDIA_SESSION,
+                        onClick = { onAppDetectionModeChange(AppDetectionMode.MEDIA_SESSION) },
+                        shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
+                    ) {
+                        Text(stringResource(R.string.controls_detection_media_session))
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = if (appDetectionMode == AppDetectionMode.MEDIA_SESSION) {
+                        stringResource(R.string.controls_detection_media_session_note)
+                    } else {
+                        stringResource(R.string.controls_detection_usage_stats_note)
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
         }
 
         item {
@@ -240,7 +291,7 @@ private fun ControlsContent(
             }
         }
         }
-
+        
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),

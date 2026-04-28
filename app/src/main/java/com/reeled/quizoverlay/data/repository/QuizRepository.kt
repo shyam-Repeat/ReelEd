@@ -150,6 +150,18 @@ class QuizRepository(internal val context: Context) {
         eventLogDao.insert(event)
     }
 
+    suspend fun logLocalEvent(eventType: String, payloadJson: String) {
+        val event = EventLogEntity(
+            id = UUID.randomUUID().toString(),
+            testerId = appPrefs.getTesterId(),
+            eventType = eventType,
+            payloadJson = payloadJson,
+            createdAt = System.currentTimeMillis(),
+            synced = true
+        )
+        eventLogDao.insert(event)
+    }
+
     suspend fun getUnsyncedEvents(): List<EventLogEntity> = eventLogDao.getUnsynced()
 
     suspend fun getRecentEventLogs(limit: Int): List<EventLogEntity> = eventLogDao.getRecent(limit)

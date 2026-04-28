@@ -13,6 +13,16 @@ import java.util.UUID
 
 private val Context.appDataStore by preferencesDataStore(name = "app_prefs")
 
+enum class AppDetectionMode(val storageValue: String) {
+    USAGE_STATS("usage_stats"),
+    MEDIA_SESSION("media_session");
+
+    companion object {
+        fun fromStorageValue(value: String?): AppDetectionMode =
+            entries.firstOrNull { it.storageValue == value } ?: USAGE_STATS
+    }
+}
+
 class AppPrefs(private val context: Context) {
 
     companion object {
@@ -24,6 +34,7 @@ class AppPrefs(private val context: Context) {
         private val NICKNAME = stringPreferencesKey("nickname")
         private val IS_TEST_MODE = booleanPreferencesKey("is_test_mode")
         private val OVERLAY_ENABLED = booleanPreferencesKey("overlay_enabled")
+        private val APP_DETECTION_MODE = stringPreferencesKey("app_detection_mode")
     }
 
     val overlayEnabled: Flow<Boolean> = context.appDataStore.data.map { it[OVERLAY_ENABLED] ?: false }
@@ -39,6 +50,13 @@ class AppPrefs(private val context: Context) {
     val isTestMode: Flow<Boolean> = context.appDataStore.data.map { it[IS_TEST_MODE] ?: false }
     suspend fun setTestMode(enabled: Boolean) {
         context.appDataStore.edit { it[IS_TEST_MODE] = enabled }
+    }
+
+    val appDetectionMode: Flow<AppDetectionMode> = context.appDataStore.data.map {
+        AppDetectionMode.fromStorageValue(it[APP_DETECTION_MODE])
+    }
+    suspend fun setAppDetectionMode(mode: AppDetectionMode) {
+        context.appDataStore.edit { it[APP_DETECTION_MODE] = mode.storageValue }
     }
 
     suspend fun getTesterId(): String {

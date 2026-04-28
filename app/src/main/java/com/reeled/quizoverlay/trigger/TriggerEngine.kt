@@ -3,6 +3,7 @@ package com.reeled.quizoverlay.trigger
 import android.util.Log
 import com.reeled.quizoverlay.data.repository.QuizRepository
 import com.reeled.quizoverlay.model.QuizQuestion
+import com.reeled.quizoverlay.prefs.AppDetectionMode
 import com.reeled.quizoverlay.prefs.TriggerPrefs
 import com.reeled.quizoverlay.util.PermissionChecker
 
@@ -10,12 +11,16 @@ class TriggerEngine(
     private val repository: QuizRepository,
     private val prefs: TriggerPrefs,
     private val foregroundAppDetector: ForegroundAppDetector,
+    private val mediaSessionAppDetector: MediaSessionAppDetector,
     private val videoPlaybackDetector: VideoPlaybackDetector
 ) {
 
     private val TAG = "TriggerEngine"
 
-    suspend fun checkAndFire(monitoredApps: Set<String>): TriggerDecision {
+    suspend fun checkAndFire(
+        monitoredApps: Set<String>,
+        detectionMode: AppDetectionMode
+    ): TriggerDecision {
         val now = System.currentTimeMillis()
         val state = prefs.getTriggerState()
         val dailyCap = prefs.getDailyCap()
@@ -32,7 +37,10 @@ class TriggerEngine(
             return skip("overlay_active")
         }
 
-        val foregroundPackage = foregroundAppDetector.getCurrentForegroundPackage()
+        val foregroundPackage = when (detectionMode) {
+            AppDetectionMode.USAGE_STATS -> foregroundAppDetector.getCurrentForegroundPackage()
+            AppDetectionMode.MEDIA_SESSION -> mediaSessionAppDetector.getCurrentPlayingPackage(monitoredApps)
+        }
         val allTargets = if (monitoredApps.isNotEmpty()) monitoredApps else ForegroundAppDetector.TARGET_PACKAGES
         
         if (foregroundPackage == null || !allTargets.contains(foregroundPackage)) {
@@ -70,7 +78,7 @@ class TriggerEngine(
             return skip("interval_not_elapsed (${remaining}s)", foregroundPackage)
         }
 
-        val interruptScore = videoPlaybackDetector.getInterruptScore(monitoredApps)
+        val interruptScore = videoPlaybackDetector.getInterruptScore(monitoredApps, detectionMode)
         val remainingQuota = dailyCap - state.quizzesShownToday
         if (interruptScore.isPoor && remainingQuota > 1) {
             return skip("poor_interrupt_moment", foregroundPackage)
@@ -96,10 +104,11 @@ class TriggerEngine(
     private suspend fun skip(reason: String, foregroundPackage: String? = null): TriggerDecision {
         val overlayPerm = PermissionChecker.hasOverlayPermission(repository.context)
         val usagePerm = PermissionChecker.hasUsageStatsPermission(repository.context)
-        Log.d(TAG, "SKIP: $reason | app: $foregroundPackage | perm: O=$overlayPerm, U=$usagePerm")
+        val notifListenerPerm = PermissionChecker.hasNotificationListenerAccess(repository.context)
+        Log.d(TAG, "SKIP: $reason | app: $foregroundPackage | perm: O=$overlayPerm, U=$usagePerm, NL=$notifListenerPerm")
         
         // Enhance local event log for debugging in Dev Mode
-        val payload = "{\"reason\":\"${jsonSafe(reason)}\",\"app\":\"${jsonSafe(foregroundPackage.orEmpty())}\",\"perm_overlay\":$overlayPerm,\"perm_usage\":$usagePerm}"
+        val payload = "{\"reason\":\"${jsonSafe(reason)}\",\"app\":\"${jsonSafe(foregroundPackage.orEmpty())}\",\"perm_overlay\":$overlayPerm,\"perm_usage\":$usagePerm,\"perm_notif_listener\":$notifListenerPerm}"
         prefs.setLastSkipReason(reason)
         
         // try {

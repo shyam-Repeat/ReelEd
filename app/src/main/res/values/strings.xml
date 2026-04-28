@@ -92,6 +92,12 @@
     <string name="dashboard_feedback">Feedback</string>
     <string name="dashboard_no_email_app">No email app available</string>
     <string name="controls_title">Service Controls</string>
+    <string name="controls_detection_title">App Detection Mode</string>
+    <string name="controls_detection_help">Choose how ReelEd detects the app to interrupt. Media session mode is experimental and depends on notification listener access.</string>
+    <string name="controls_detection_usage_stats">Usage Stats</string>
+    <string name="controls_detection_media_session">Media Session</string>
+    <string name="controls_detection_usage_stats_note">Uses Android usage access to detect the foreground app package.</string>
+    <string name="controls_detection_media_session_note">Uses active media sessions to detect the package currently playing audio. Some apps or phones may not expose this reliably.</string>
     <string name="controls_overlay_title">Overlay Management</string>
     <string name="controls_overlay_enable">Enable Quiz Overlay</string>
     <string name="controls_overlay_help">Turn this ON before handing device to child. Quizzes and notification run only while this is ON.</string>

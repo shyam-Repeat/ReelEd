@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.reeled.quizoverlay.data.local.dao.QuizAttemptDao
 import com.reeled.quizoverlay.data.repository.QuizRepository
+import com.reeled.quizoverlay.prefs.AppDetectionMode
 import com.reeled.quizoverlay.prefs.AppPrefs
 import com.reeled.quizoverlay.prefs.TriggerPrefs
 import com.reeled.quizoverlay.service.OverlayServiceCoordinator
@@ -68,6 +69,7 @@ data class DashboardUiState(
     val dailyCap: Int = TriggerPrefs.DEFAULT_DAILY_CAP,
     val quizTimerMinutes: Int = TriggerPrefs.DEFAULT_QUIZ_TIMER_SECONDS / 60,
     val forceQuizEnabled: Boolean = false,
+    val appDetectionMode: AppDetectionMode = AppDetectionMode.USAGE_STATS,
 )
 
 sealed class DashboardAction {
@@ -110,6 +112,12 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
         viewModelScope.launch {
             triggerPrefs.forceQuizEnabled.collect { enabled ->
                 _uiState.value = _uiState.value.copy(forceQuizEnabled = enabled)
+            }
+        }
+
+        viewModelScope.launch {
+            appPrefs.appDetectionMode.collect { mode ->
+                _uiState.value = _uiState.value.copy(appDetectionMode = mode)
             }
         }
     }
@@ -203,6 +211,12 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     fun setForceQuizEnabled(enabled: Boolean) {
         viewModelScope.launch {
             triggerPrefs.setForceQuizEnabled(enabled)
+        }
+    }
+
+    fun setAppDetectionMode(mode: AppDetectionMode) {
+        viewModelScope.launch {
+            appPrefs.setAppDetectionMode(mode)
         }
     }
 

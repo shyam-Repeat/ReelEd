@@ -28,16 +28,15 @@ class SoundManager(private val context: Context) : TextToSpeech.OnInitListener {
         putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, 1.0f)
     }
     private var isTtsSpeaking = false
+    private val backgroundAudioAttributes = AudioAttributes.Builder()
+        .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
+        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+        .build()
 
     init {
-        val audioAttributes = AudioAttributes.Builder()
-            .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
-            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-            .build()
-
         soundPool = SoundPool.Builder()
             .setMaxStreams(5)
-            .setAudioAttributes(audioAttributes)
+            .setAudioAttributes(backgroundAudioAttributes)
             .build()
 
         // Preload sounds
@@ -206,7 +205,12 @@ class SoundManager(private val context: Context) : TextToSpeech.OnInitListener {
 
     private fun createBackgroundPlayer(): MediaPlayer? {
         return try {
-            MediaPlayer.create(context.applicationContext, R.raw.background)?.apply {
+            MediaPlayer.create(
+                context.applicationContext,
+                R.raw.background,
+                backgroundAudioAttributes,
+                0
+            )?.apply {
                 isLooping = true
                 val volume = if (isTtsSpeaking) BACKGROUND_VOLUME_DUCKED else BACKGROUND_VOLUME
                 setVolume(volume, volume)

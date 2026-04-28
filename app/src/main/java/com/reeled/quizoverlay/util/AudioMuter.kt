@@ -9,6 +9,7 @@ import android.os.Build
 class AudioMuter(private val context: Context) {
     private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
     private var isCurrentlyMuted = false
+    private var musicStreamMuted = false
     private var focusRequest: AudioFocusRequest? = null
     private val focusChangeListener = AudioManager.OnAudioFocusChangeListener { focusChange ->
         // We don't really care about focus changes as we are an overlay,
@@ -18,11 +19,11 @@ class AudioMuter(private val context: Context) {
     fun mute() {
         if (isCurrentlyMuted) return
         try {
-            // 1. Request transient exclusive audio focus to signal other apps to pause hard
+            // 1. Request transient exclusive audio focus to signal other apps to pause hard.
             requestAudioFocus()
 
-            // Removed STREAM_MUSIC mute as it also mutes our own SoundManager/TTS.
-            // Exclusive focus ownership should pause foreground video apps like YouTube.
+            // 2. Force mute the music stream for apps that ignore audio focus changes.
+            muteMusicStream()
 
             isCurrentlyMuted = true
         } catch (e: Exception) {
@@ -33,7 +34,8 @@ class AudioMuter(private val context: Context) {
     fun restore() {
         if (!isCurrentlyMuted) return
         try {
-            // 1. Abandon audio focus to let other apps resume
+            // Unmute before releasing focus so playback apps can resume normally.
+            restoreMusicStream()
             abandonAudioFocus()
 
             isCurrentlyMuted = false
@@ -73,5 +75,35 @@ class AudioMuter(private val context: Context) {
             @Suppress("DEPRECATION")
             audioManager.abandonAudioFocus(focusChangeListener)
         }
+    }
+
+    private fun muteMusicStream() {
+        if (musicStreamMuted) return
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            audioManager.adjustStreamVolume(
+                AudioManager.STREAM_MUSIC,
+                AudioManager.ADJUST_MUTE,
+                0
+            )
+        } else {
+            @Suppress("DEPRECATION")
+            audioManager.setStreamMute(AudioManager.STREAM_MUSIC, true)
+        }
+        musicStreamMuted = true
+    }
+
+    private fun restoreMusicStream() {
+        if (!musicStreamMuted) return
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            audioManager.adjustStreamVolume(
+                AudioManager.STREAM_MUSIC,
+                AudioManager.ADJUST_UNMUTE,
+                0
+            )
+        } else {
+            @Suppress("DEPRECATION")
+            audioManager.setStreamMute(AudioManager.STREAM_MUSIC, false)
+        }
+        musicStreamMuted = false
     }
 }

@@ -29,6 +29,18 @@ object PermissionChecker {
         return NotificationManagerCompat.from(context).areNotificationsEnabled()
     }
 
+    fun hasNotificationListenerAccess(context: Context): Boolean {
+        val enabledListeners = Settings.Secure.getString(
+            context.contentResolver,
+            "enabled_notification_listeners"
+        ) ?: return false
+
+        return enabledListeners.split(':').any { flattened ->
+            val component = android.content.ComponentName.unflattenFromString(flattened)
+            component?.packageName == context.packageName
+        }
+    }
+
     fun isIgnoringBatteryOptimizations(context: Context): Boolean {
         val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
         return powerManager.isIgnoringBatteryOptimizations(context.packageName)

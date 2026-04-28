@@ -26,8 +26,10 @@ import com.reeled.quizoverlay.data.repository.QuizRepository
 import com.reeled.quizoverlay.model.QuizAttemptResult
 import com.reeled.quizoverlay.model.QuizCardConfig
 import com.reeled.quizoverlay.prefs.AppPrefs
+import com.reeled.quizoverlay.prefs.AppDetectionMode
 import com.reeled.quizoverlay.prefs.TriggerPrefs
 import com.reeled.quizoverlay.trigger.ForegroundAppDetector
+import com.reeled.quizoverlay.trigger.MediaSessionAppDetector
 import com.reeled.quizoverlay.trigger.TriggerConfig
 import com.reeled.quizoverlay.trigger.TriggerDecision
 import com.reeled.quizoverlay.trigger.TriggerEngine
@@ -77,6 +79,7 @@ class OverlayForegroundService : Service() {
 
     private lateinit var triggerEngine: TriggerEngine
     private lateinit var foregroundAppDetector: ForegroundAppDetector
+    private lateinit var mediaSessionAppDetector: MediaSessionAppDetector
     private lateinit var repository: QuizRepository
     private lateinit var triggerPrefs: TriggerPrefs
     private lateinit var appPrefs: AppPrefs
@@ -105,6 +108,9 @@ class OverlayForegroundService : Service() {
     private var lastNotificationPaused: Boolean? = null
     private var configuredQuizTimerSeconds: Int = TriggerPrefs.DEFAULT_QUIZ_TIMER_SECONDS
     private var configuredForceQuizEnabled: Boolean = false
+    private var configuredAppDetectionMode: AppDetectionMode = AppDetectionMode.USAGE_STATS
+    private var configuredMonitoredApps: Set<String> = emptySet()
+    private var lastMediaSessionDebugSignature: String? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -116,11 +122,13 @@ class OverlayForegroundService : Service() {
         repository = QuizRepository(this)
 
         foregroundAppDetector = ForegroundAppDetector(this)
-        val videoPlaybackDetector = VideoPlaybackDetector(this, foregroundAppDetector)
+        mediaSessionAppDetector = MediaSessionAppDetector(this)
+        val videoPlaybackDetector = VideoPlaybackDetector(this, foregroundAppDetector, mediaSessionAppDetector)
         triggerEngine = TriggerEngine(
             repository,
             triggerPrefs,
             foregroundAppDetector,
+            mediaSessionAppDetector,
             videoPlaybackDetector
         )
 
@@ -143,6 +151,12 @@ class OverlayForegroundService : Service() {
         }
         serviceScope.launch {
             triggerPrefs.forceQuizEnabled.collect { configuredForceQuizEnabled = it }
+        }
+        serviceScope.launch {
+            appPrefs.appDetectionMode.collect { configuredAppDetectionMode = it }
+        }
+        serviceScope.launch {
+            appPrefs.monitoredApps.collect { configuredMonitoredApps = it }
         }
     }
 
@@ -317,7 +331,16 @@ class OverlayForegroundService : Service() {
 
     private suspend fun handleNormalPolling() {
         val monitoredApps = appPrefs.monitoredApps.first()
-        val decision = triggerEngine.checkAndFire(monitoredApps)
+        if (configuredAppDetectionMode == AppDetectionMode.MEDIA_SESSION) {
+            logMediaSessionSnapshotIfChanged(monitoredApps)
+        }
+        val decision = triggerEngine.checkAndFire(monitoredApps, configuredAppDetectionMode)
+        if (configuredAppDetectionMode == AppDetectionMode.MEDIA_SESSION) {
+            logLocalDebugEvent(
+                eventType = "debug_media_session_trigger",
+                payloadJson = "{\"decision\":\"${jsonSafe(decision.javaClass.simpleName)}\",\"reason\":\"${jsonSafe((decision as? TriggerDecision.Skip)?.reason.orEmpty())}\"}"
+            )
+        }
 
         when (decision) {
             is TriggerDecision.Fire -> {
@@ -447,9 +470,44 @@ class OverlayForegroundService : Service() {
 
     private fun triggerEngineForegroundPackage(): String? {
         return try {
-            foregroundAppDetector.getCurrentForegroundPackage()
+            when (configuredAppDetectionMode) {
+                AppDetectionMode.USAGE_STATS -> foregroundAppDetector.getCurrentForegroundPackage()
+                AppDetectionMode.MEDIA_SESSION -> mediaSessionAppDetector.getCurrentPlayingPackage(configuredMonitoredApps)
+            }
         } catch (_: Exception) {
             null
+        }
+    }
+
+    private fun logMediaSessionSnapshotIfChanged(monitoredApps: Set<String>) {
+        val snapshot = mediaSessionAppDetector.getSnapshot(monitoredApps)
+        val signature = buildString {
+            append(snapshot.notificationListenerGranted)
+            append('|')
+            append(snapshot.sessionCount)
+            append('|')
+            append(snapshot.detectedPackage.orEmpty())
+            append('|')
+            append(snapshot.playingPackages.joinToString(","))
+            append('|')
+            append(snapshot.activePackages.joinToString(","))
+        }
+        if (signature == lastMediaSessionDebugSignature) return
+        lastMediaSessionDebugSignature = signature
+
+        val payloadJson = "{\"mode\":\"media_session\",\"notif_listener\":${snapshot.notificationListenerGranted},\"session_count\":${snapshot.sessionCount},\"detected_package\":\"${jsonSafe(snapshot.detectedPackage.orEmpty())}\",\"playing_packages\":\"${jsonSafe(snapshot.playingPackages.joinToString(","))}\",\"active_packages\":\"${jsonSafe(snapshot.activePackages.joinToString(","))}\"}"
+        logLocalDebugEvent(
+            eventType = "debug_media_session_snapshot",
+            payloadJson = payloadJson
+        )
+    }
+
+    private fun logLocalDebugEvent(eventType: String, payloadJson: String) {
+        serviceScope.launch(Dispatchers.IO) {
+            try {
+                repository.logLocalEvent(eventType, payloadJson)
+            } catch (_: Exception) {
+            }
         }
     }
 
